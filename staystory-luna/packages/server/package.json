@@ -10,6 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20.19.43"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.1.1"
   }
 }

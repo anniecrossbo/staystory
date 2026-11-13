@@ -2,7 +2,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { handleApi } from '../packages/server/src/index';
+import { handleApi, db } from '../packages/server/src/index';
 
 const designDir = resolve(__dirname, '../design');
 
@@ -24,7 +24,14 @@ const serveDesign = (): Plugin => ({
  * and stay on the server: they are never sent to the browser. Works in `vite` and `vite preview`.
  */
 const api = (env: Record<string, string>): Plugin => {
+  let dbReady = false;
+  const ensureDb = () => {
+    if (dbReady) return;
+    dbReady = true;
+    db(resolve(__dirname, '..', 'data'));
+  };
   const mount = (server: { middlewares: { use: (path: string, fn: any) => void } }): void => { server.middlewares.use('/api', async (req: any, res: any, next: any) => {
+    if ((req.url as string)?.startsWith('/db/')) ensureDb();
     try {
       const url = new URL(`/api${req.url}`, 'http://localhost');
       let body: unknown;

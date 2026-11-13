@@ -5,3 +5,5 @@ export { staticMapUrl } from './maps';
 export { handleApi, type ApiResponse } from './api';
 export { SAMPLE_REELS, findSampleByCaption, type SampleReel } from './samples';
 export { CITIES, PLACE_COORDS, coordsFor } from './catalog';
+export { db, closeDb } from './db';
+export * as queries from './queries';
