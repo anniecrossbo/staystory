@@ -14,7 +14,7 @@ function usePersisted<T>(name: string, init: () => T): [T, (v: T | ((p: T) => T)
   return [v, set];
 }
 
-export interface Profile { handle: string; channels: { ig: boolean; yt: boolean; blog: boolean }; regions: string[]; payMode: 'upi' | 'bank'; upi: string; account: string; ifsc: string; pan: string; gstin: string; agree: boolean }
+export interface Profile { handle: string; bio: string; channels: { ig: boolean; yt: boolean; blog: boolean }; regions: string[]; payMode: 'upi' | 'bank'; upi: string; account: string; ifsc: string; pan: string; gstin: string; agree: boolean }
 export interface Prefs { booking: boolean; offers: boolean; weekly: boolean }
 export interface Draft {
   editId?: string; reel: number; analyzed: number; link: string; place: string; details: Record<DetailKey, string>; title: string; days: Day[];
@@ -38,7 +38,7 @@ interface Ui {
 const Ctx = createContext<Ui | null>(null);
 export const useUi = () => { const v = useContext(Ctx); if (!v) throw new Error('useUi outside provider'); return v; };
 
-const defaultProfile = (): Profile => ({ handle: 'anaya', channels: { ig: true, yt: false, blog: false }, regions: ['Rajasthan', 'Karnataka'], payMode: 'upi', upi: 'anaya@okaxis', account: '', ifsc: '', pan: 'ABCDE1234F', gstin: '', agree: true });
+const defaultProfile = (): Profile => ({ handle: 'anaya', bio: 'Slow travel, Rajasthan and the South', channels: { ig: true, yt: false, blog: false }, regions: ['Rajasthan', 'Karnataka'], payMode: 'upi', upi: 'anaya@okaxis', account: '', ifsc: '', pan: 'ABCDE1234F', gstin: '', agree: true });
 
 /** A fresh draft for a destination. The link name avoids ones this creator already uses. */
 export function draftFor(s: MarketState, reel: number, opts: { pickHotelId?: string; place?: string } = {}): Draft {

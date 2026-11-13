@@ -93,7 +93,7 @@ export function ChromeTopBar({ go }: { go: (flow: string, screen?: string) => vo
     else {
       ui.set({ bookingFilter: i === 2 ? 'Upcoming' : 'In house' });
       toast(i === 2 ? `7 arrivals today from your channel manager, ${arrivals} through StayStory` : `4 departures today from your channel manager, ${departures} through StayStory`, { tone: 'info' });
-      go('console', 'bookings');
+      go('console', 'overview');
     }
   };
   const labels = ['Sync rates and availability', 'Account menu', 'Arrivals today', 'Departures today'];
@@ -108,7 +108,7 @@ export function ChromeTopBar({ go }: { go: (flow: string, screen?: string) => vo
           <Menu items={[
             { section: s.hotel.name },
             { label: 'Property and payout details', icon: 'home_work', onClick: () => { setMenu(null); go('onboarding', 'property'); } },
-            { label: 'Create campaign', icon: 'add', onClick: () => { setMenu(null); go('campaign', 'offer'); } },
+            { label: 'Create campaign', icon: 'add', onClick: () => { setMenu(null); go('console', 'newCampaign'); } },
             { sep: true },
             { label: 'Reset demo data', icon: 'restart_alt', danger: true, onClick: () => { setMenu(null); if (window.confirm('Reset the shared demo marketplace for this namespace? Bookings, campaigns and Gap Nights return to the sample data.')) { market.reset(); ui.set({ dismissed: [], lastInvited: '', launched: '' }); toast('Demo data reset', { tone: 'info' }); go('console', 'overview'); } } },
           ]} />

@@ -36,6 +36,7 @@
 .overlay-box { outline: none; }
 .overlay-box.center { width: 480px; max-width: calc(100% - 32px); max-height: calc(100% - 32px); overflow: auto; }
 .overlay-box.center.wide, .print-area .overlay-box.center { width: 560px; }
+.overlay-box.center:has(.campaign-builder) { width: min(1100px, calc(100% - 32px)); max-height: calc(100% - 64px); border-radius: var(--radius-xl); background: var(--canvas); overflow: auto; }
 
 /* Interaction affordances for rendered Luna elements and rows */
 .table-row { display: grid; grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr; gap: 12px; align-items: center; min-height: 52px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--divider); background: transparent; text-align: left; cursor: pointer; font: inherit; color: inherit; border-radius: var(--radius-sm); }
