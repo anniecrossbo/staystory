@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { formatINR, withdrawal } from '@staystory/core';
 import {
   availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
-  market, useMarket, type LedgerFilter, type OfferView, type RangeKey,
+  market, useMarket, type LedgerFilter, type MCreator, type OfferView, type RangeKey,
 } from '@staystory/market';
 import {
   AIAction, AISummary, Avatar, Badge, Banner, Button, Checkbox, Dock, EmptyState, FilterPill, Icon, IconButton, LineChart,
-  ProgressBar, SegmentedControl, StatTile, Stepper, TextField, Tag, Toggle, Widget,
+  ProgressBar, SegmentedControl, Skeleton, StatTile, Stepper, TextField, Tag, Toggle, Widget,
 } from '@staystory/ui';
 import { asset, CREATOR_ID } from '../data';
 import type { Go } from '../router';
@@ -19,7 +19,7 @@ const TAB_OF: Record<string, string> = { insights: 'insights', empty: 'insights'
 const BACK: Record<string, string> = { trip: 'insights', offerDetail: 'offers', counter: 'offerDetail', accepted: 'offers' };
 const SUB = ['trip', 'offerDetail', 'counter', 'accepted'];
 const NOTE: Record<string, string> = { 'winter-pichola': 'My Udaipur audience books for Christmas week. Could we run this through January?' };
-const DOCK = [{ id: 'insights', icon: 'insights', label: 'Insights' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
+const DOCK_BASE = [{ id: 'insights', icon: 'insights', label: 'Insights' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
 const shortDate = (iso: string) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
 const words = ['no', 'one', 'two', 'three', 'four', 'five'];
 
@@ -36,7 +36,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const sub = SUB.includes(screen);
   const newCount = views.filter((o) => o.tab === 'new').length;
   const creatorHandle = s.creators[CREATOR_ID]?.handle ?? '@anaya.explores';
-  const [sheet, setSheet] = useState<null | 'notifications' | 'decline' | 'withdraw' | 'handle' | 'channels' | 'payout' | 'tax'>(null);
+  const [sheet, setSheet] = useState<null | 'notifications' | 'decline' | 'withdraw' | 'handle' | 'channels' | 'payout' | 'tax' | 'bio'>(null);
   const [counter, setCounter] = useState<{ id: string; pct: number; extras: boolean[]; message: string; tried: boolean } | null>(null);
   const copy = useCopy();
 
@@ -135,7 +135,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
     {screen === 'counter' && offer && <div className="glass-bar"><div className="grow1"><Button variant="primary" size="lg" block icon="send" onClick={sendCounter}>Send counter</Button></div></div>}
 
     {(!sub || screen === 'trip') && (
-      <div className="dock-bar"><Dock aria-label="Creator navigation" active={TAB_OF[screen]} orb={false} onSelect={(id) => to(id)} items={DOCK} /></div>
+      <div className="dock-bar"><Dock aria-label="Creator navigation" active={TAB_OF[screen]} orb={false} onSelect={(id) => to(id)} items={DOCK_BASE} /></div>
     )}
 
     {sheet === 'notifications' && (
@@ -157,7 +157,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
     {sheet === 'withdraw' && (() => { const w = withdrawal(bal.available); return (
       <Sheet title={`Withdraw ${formatINR(w.gross)}?`} subtitle={`${formatINR(w.tds)} TDS is deducted at 10%. You receive ${formatINR(w.net)} in ${payoutLabel} in 1 to 2 working days.`} onClose={() => setSheet(null)}
         footer={<><CloseFooter onClose={() => setSheet(null)} label="Not now" /><Button variant="primary" icon="account_balance" onClick={() => { doWithdraw(); to('withdrawn'); }}>Withdraw {formatINR(w.net)}</Button></>} />); })()}
-    {(sheet === 'handle' || sheet === 'channels' || sheet === 'payout' || sheet === 'tax') && <ProfileSheet kind={sheet} close={() => setSheet(null)} />}
+    {(sheet === 'handle' || sheet === 'channels' || sheet === 'payout' || sheet === 'tax' || sheet === 'bio') && <ProfileSheet kind={sheet} close={() => setSheet(null)} />}
   </>);
 }
 
@@ -307,7 +307,7 @@ function Offers({ views, to }: { views: OfferView[]; to: (s: string, p?: Record<
   return (<>
     <SegmentedControl size="sm" aria-label="Offer status" value={tab} onChange={(v) => setOfferTab(v as typeof tab)}
       options={[{ value: 'new', label: 'New', count: count('new') || undefined }, { value: 'active', label: 'Active' }, { value: 'past', label: 'Past' }]} />
-    {list.length === 0 && <EmptyState icon="handshake" title={`No ${tab} offers`} action={tab !== 'new' ? <Button variant="secondary" size="sm" onClick={() => setOfferTab('new')}>See new offers</Button> : undefined}>{tab === 'new' ? 'New hotel offers show up here.' : tab === 'active' ? 'Offers you accept or counter show up here.' : 'Declined offers show up here.'}</EmptyState>}
+    {list.length === 0 && <EmptyState icon={tab === 'new' ? 'mail' : tab === 'active' ? 'handshake' : 'history'} title={tab === 'new' ? 'No new offers' : tab === 'active' ? 'No active offers' : 'No past offers'} action={tab !== 'new' ? <Button variant="secondary" size="sm" onClick={() => setOfferTab('new')}>See new offers</Button> : undefined}>{tab === 'new' ? 'Hotels send offers when your audience matches their guests. Keep posting and they will come.' : tab === 'active' ? 'Offers you accept or counter move here. Check New for pending ones.' : 'Declined offers show up here.'}</EmptyState>}
     {list.map((o) => (
       <Widget key={o.campaign.id} title={o.listTitle} subtitle={`${o.city} · ${o.when}`}>
         <div className="stack gap12">
@@ -325,7 +325,9 @@ function Offers({ views, to }: { views: OfferView[]; to: (s: string, p?: Record<
 }
 
 function OfferDetail({ v, accepted }: { v: OfferView; accepted: boolean }) {
+  const s = useMarket();
   const c = v.campaign;
+  const me: MCreator | undefined = s.creators[CREATOR_ID];
   const terms = [
     ['Follower price', `${formatINR(v.followerPrice)} for ${c.nights} nights`],
     ['Includes', c.perks.map((p, i) => (i ? p.toLowerCase() : p)).join(', ')],
@@ -333,12 +335,30 @@ function OfferDetail({ v, accepted }: { v: OfferView; accepted: boolean }) {
     ['Your share', `About ${v.creatorSharePct}% of booking value`],
     ['Your perk', v.perk],
   ];
+  const matchStats: [string, string, string][] = [];
+  if (me?.conv) matchStats.push(['percent', me.conv, 'Conversion rate']);
+  if (me?.bookingsPerMonth) matchStats.push(['shopping_bag', `${me.bookingsPerMonth}/mo`, 'Bookings driven']);
+  if (me?.followers) matchStats.push(['group', me.followers, 'Followers']);
   return (<>
     <div style={{ height: 180, borderRadius: 'var(--radius-lg)', overflow: 'hidden', flex: 'none' }}><img src={asset(v.img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
     {accepted && <Banner tone="success" icon="handshake" title="Offer accepted">{v.hotelName} is now the stay in your {v.city} trip. Every follower who books within 60 days of opening your link earns you commission.</Banner>}
     {v.status === 'countered' && <Banner tone="warning" icon="schedule" title="Counter sent">You asked for {v.counter?.pct}%. {v.hotelName} usually replies within a day.</Banner>}
     {v.status === 'declined' && <Banner tone="danger" icon="cancel" title="You declined this offer">It stays under Past. The hotel can invite you again.</Banner>}
     <AIAction title="Why they picked you" body={v.why} />
+    {matchStats.length > 0 && (
+      <Widget title="Your match stats" subtitle={me?.score ? `${me.score} match` : undefined}>
+        <div className="stack gap12">
+          {matchStats.map(([icon, val, label]) => (
+            <div key={label} className="line" style={{ minHeight: 40 }}>
+              <span className="muted-ic" style={{ color: 'var(--primary)' }}><Icon name={icon} size={20} /></span>
+              <span className="t-b" style={{ flex: 1 }}>{label}</span>
+              <span className="t-s" style={{ fontWeight: 600 }}>{val}</span>
+            </div>
+          ))}
+          {me?.niche && <div className="t-cap">Niche: {me.niche}</div>}
+        </div>
+      </Widget>
+    )}
     <Widget title="Terms">
       <div className="stack">
         {terms.map(([k, val]) => (
@@ -350,13 +370,59 @@ function OfferDetail({ v, accepted }: { v: OfferView; accepted: boolean }) {
   </>);
 }
 
-function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payout' | 'tax') => void }) {
+function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payout' | 'tax' | 'bio') => void }) {
+  const s = useMarket();
   const { profile: p, prefs, setPrefs, flash } = useUi();
+  const copy = useCopy();
+  const me: MCreator | undefined = s.creators[CREATOR_ID];
+  const myTrips = s.trips.filter((t) => t.creatorId === CREATOR_ID);
+  const connected = Object.values(p.channels).filter(Boolean).length;
   const rows: ['handle' | 'channels' | 'payout' | 'tax', string, string, string][] = [
-    ['handle', 'link', 'Handle and link', `/${p.handle}`], ['channels', 'photo_camera', 'Connected channels', String(Object.values(p.channels).filter(Boolean).length)],
+    ['handle', 'link', 'Handle and link', `/${p.handle}`], ['channels', 'photo_camera', 'Connected channels', String(connected)],
     ['payout', 'account_balance', 'Payout method', p.payMode === 'upi' ? 'UPI' : 'Bank'], ['tax', 'receipt_long', 'Tax details', /^[A-Z]{5}\d{4}[A-Z]$/i.test(p.pan) ? 'PAN added' : 'Add PAN'],
   ];
   return (<>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '8px 0 4px' }}>
+      <Avatar initials={me?.ini ?? 'AR'} size={48} tone="solid" name={me?.name ?? 'Anaya Rao'} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <span className="t-s" style={{ fontSize: 16, fontWeight: 700 }}>{me?.name ?? 'Anaya Rao'}</span>
+        <span className="t-cap">{me?.handle ?? `@${p.handle}`} · {me?.followers ?? '0'} followers</span>
+        {me?.niche && <Tag hue="moss">{me.niche}</Tag>}
+      </div>
+      <button className="t-cap" onClick={() => open('bio')} style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--ink-2)', padding: 0 }}>
+        {p.bio || 'Add a bio'} <Icon name="edit" size={14} />
+      </button>
+    </div>
+    {me && (
+      <div className="tiles" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+        <StatTile label="Trips" value={me.tripsCount} />
+        <StatTile label="Conversion" value={me.conv ?? '—'} />
+        <StatTile label="Score" value={me.score ?? '—'} />
+      </div>
+    )}
+    {p.regions.length > 0 && (
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {p.regions.map((r) => <Tag key={r} hue="charcoal">{r}</Tag>)}
+      </div>
+    )}
+    {myTrips.length > 0 && (
+      <Widget title="Trip links" count={myTrips.length}>
+        <div className="stack">
+          {myTrips.map((t) => {
+            const st = tripStats(s, t.id);
+            return (
+              <div key={t.id} className="line" style={{ padding: '8px 0' }}>
+                <button className="link-row" onClick={() => go('app', 'trip', { t: t.id })}>
+                  <img src={asset(t.img)} alt="" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
+                  <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{st ? tripVisitsLine(st) : 'No data yet'}{t.status === 'paused' ? ' · paused' : ''}</span></span>
+                </button>
+                <Button variant="secondary" size="sm" icon="content_copy" onClick={() => copy(`https://${tripUrl(p.handle, t.slug)}`)}>Copy</Button>
+              </div>
+            );
+          })}
+        </div>
+      </Widget>
+    )}
     <Widget title="Storefront" subtitle={`staystory.in/${p.handle}`}>
       <div className="stack">
         {rows.map(([k, icon, label, value]) => (
@@ -380,9 +446,9 @@ function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payo
   </>);
 }
 
-function ProfileSheet({ kind, close }: { kind: 'handle' | 'channels' | 'payout' | 'tax'; close: () => void }) {
+function ProfileSheet({ kind, close }: { kind: 'handle' | 'channels' | 'payout' | 'tax' | 'bio'; close: () => void }) {
   const { profile: p, setProfile, flash } = useUi();
-  const [f, setF] = useState({ handle: p.handle, channels: p.channels, payMode: p.payMode, upi: p.upi, account: p.account, ifsc: p.ifsc, pan: p.pan, gstin: p.gstin });
+  const [f, setF] = useState({ handle: p.handle, channels: p.channels, payMode: p.payMode, upi: p.upi, account: p.account, ifsc: p.ifsc, pan: p.pan, gstin: p.gstin, bio: p.bio });
   const [tried, setTried] = useState(false);
   const errs = payoutErrors(f);
   const handleErr = /^[a-z0-9-]{3,30}$/.test(f.handle) ? undefined : 'Use 3 to 30 lowercase letters, numbers or hyphens';
@@ -393,9 +459,10 @@ function ProfileSheet({ kind, close }: { kind: 'handle' | 'channels' | 'payout' 
     if (kind === 'channels') { setProfile({ channels: f.channels }); flash('Channels updated'); }
     if (kind === 'payout') { if (errs.upi || errs.account || errs.ifsc) return; setProfile({ payMode: f.payMode, upi: f.upi.trim(), account: f.account, ifsc: f.ifsc }); flash('Payout method saved'); }
     if (kind === 'tax') { if (errs.pan || errs.gstin) return; setProfile({ pan: f.pan.trim(), gstin: f.gstin.trim() }); flash('Tax details saved'); }
+    if (kind === 'bio') { setProfile({ bio: f.bio.trim() }); flash('Bio updated'); }
     close();
   };
-  const title = { handle: 'Handle and link', channels: 'Connected channels', payout: 'Payout method', tax: 'Tax details' }[kind];
+  const title = { handle: 'Handle and link', channels: 'Connected channels', payout: 'Payout method', tax: 'Tax details', bio: 'About you' }[kind];
   return (
     <Sheet title={title} onClose={close} footer={<><CloseFooter onClose={close} label="Cancel" /><Button variant="primary" onClick={save}>Save</Button></>}>
       <div className="stack gap12">
@@ -416,6 +483,9 @@ function ProfileSheet({ kind, close }: { kind: 'handle' | 'channels' | 'payout' 
           <TextField label="PAN" value={f.pan} hint="Needed for TDS" error={vis('pan')} onChange={(e) => setF({ ...f, pan: e.target.value.toUpperCase() })} />
           <TextField label="GSTIN (optional)" placeholder="If registered" value={f.gstin} error={vis('gstin')} onChange={(e) => setF({ ...f, gstin: e.target.value.toUpperCase() })} />
         </>)}
+        {kind === 'bio' && (
+          <TextField multiline label="Bio" value={f.bio} hint="Hotels see this when deciding to send you offers" placeholder="Slow travel, Rajasthan and the South" onChange={(e) => setF({ ...f, bio: e.target.value })} />
+        )}
       </div>
     </Sheet>
   );
