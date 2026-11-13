@@ -223,5 +223,36 @@ function migrate(d: Database.Database): void {
       name  TEXT PRIMARY KEY,
       value INTEGER NOT NULL DEFAULT 0
     );
+
+    -- One row per session per live trip (MVisit).
+    CREATE TABLE IF NOT EXISTS visits (
+      trip_id    TEXT NOT NULL,
+      creator_id TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      at         TEXT NOT NULL,
+      PRIMARY KEY (trip_id, session_id)
+    );
+
+    -- Reel comments and whether the automation DMed (MReelComment).
+    CREATE TABLE IF NOT EXISTS reel_comments (
+      id          TEXT NOT NULL,
+      trip_id     TEXT NOT NULL,
+      traveler_id TEXT NOT NULL,
+      name        TEXT NOT NULL,
+      text        TEXT NOT NULL,
+      at          TEXT NOT NULL,
+      dm_sent     INTEGER NOT NULL DEFAULT 0
+    );
   `);
+
+  // Additive columns for optional state fields that have no column of their own (JSON object, NULL when empty).
+  // Guarded so database files created before these columns existed are upgraded in place.
+  //   creators.extra: campaignScore   trips.extra: shopTitle, stayLine, savedStatus
+  //   ledger.extra: summary, ini      bookings.extra: selfBooking
+  for (const t of ['creators', 'trips', 'ledger', 'bookings']) addColumn(d, t, 'extra', 'TEXT');
+}
+
+function addColumn(d: Database.Database, table: string, column: string, type: string): void {
+  const cols = d.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) d.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }

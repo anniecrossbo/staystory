@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Design sweep</title>
+<style>body{margin:0;font:12px system-ui}iframe{position:absolute;left:0;top:0;border:0;visibility:hidden}</style></head>
+<body><pre id="out">running…</pre>
+<script>
+/*
+ * /viewer/sweep.html?set=hotel|creator|traveler   Runs the design-vs-app geometry diff over every screen state of one product.
+ * Results: window.__sweep = { done, rows:[{key, issues, matched, designText, appText, top:[...]}] }
+ */
+const set = new URLSearchParams(location.search).get('set');
+const HIDE = new URLSearchParams(location.search).get('hide');
+let NS = 'sweep';
+const H = (file, screens, flow, w, h, root) => screens.map((s) => ({ key: `${file}:${s}`, file, screen: s, app: `/${root}/?ns=${NS}#/${flow}/${s}`, w, h }));
+const SETS = {
+  hotel: [
+    ...H('LunaHotel', ['overview','bookings','bookingDetail','bookingsEmpty','creators','invited','gap','gapConfirm','released','payouts'], 'console', 1470, 956, 'hotel'),
+    ...H('LHOnboard', ['property','rooms','commission','payouts','review','submitted'], 'onboarding', 1470, 956, 'hotel'),
+    ...H('LHCampaign', ['offer','commission','creators','review','launched'], 'campaign', 1470, 956, 'hotel'),
+  ],
+  creator: [
+    ...H('LunaCreator', ['insights','empty','trip','earnings','withdrawn','offers','offerDetail','counter','accepted','profile'], 'app', 393, 852, 'creator'),
+    ...H('LCOnboard', ['welcome','connect','audience','payout','terms','done'], 'onboard', 393, 852, 'creator'),
+    ...H('LCCreate', ['pick','analyzing','error','detected','days','stays','preview','published'], 'create', 393, 852, 'creator'),
+  ],
+  traveler: [
+    ...H('LunaTraveler', ['trip','saved','customize','checkout','payfail','booked','foryou','held'], 'trip', 393, 852, 'traveler'),
+    ...H('LTAuth', ['welcome','phone','otp','otpError','prefs','done'], 'auth', 393, 852, 'traveler'),
+    ...H('LTDiscover', ['feed','filtered','loading','empty','creator'], 'discover', 393, 852, 'traveler'),
+    ...H('LTTrips', ['upcoming','past','saved','empty','detail','change','cancel','cancelled','review'], 'trips', 393, 852, 'traveler'),
+    ...H('LTSocial', ['reel','comments','dm'], 'social', 393, 852, 'traveler'),
+  ],
+};
+const norm = (s) => s.toLowerCase().replace(/[^a-z0-9₹]/g, '');
+function diff(A, B, tol = 1.5) {
+  const used = new Set(), out = []; let matched = 0;
+  for (const a of A.text) {
+    let best = -1, bd = 1e9;
+    B.text.forEach((b, i) => { if (used.has(i) || norm(b.t) !== norm(a.t)) return; const d = Math.abs(b.y - a.y) + Math.abs(b.x - a.x); if (d < bd) { bd = d; best = i; } });
+    if (best < 0) { out.push(`missing "${a.t.slice(0, 40)}"`); continue; }
+    used.add(best); matched++; const b = B.text[best], d = [];
+    if (Math.abs(b.x - a.x) > tol) d.push(`dx${(b.x - a.x).toFixed(0)}`);
+    if (Math.abs(b.y - a.y) > tol) d.push(`dy${(b.y - a.y).toFixed(0)}`);
+    if (Math.abs(b.w - a.w) > tol * 2) d.push(`dw${(b.w - a.w).toFixed(0)}`);
+    if (Math.abs(b.fs - a.fs) > 0.1) d.push(`fs${a.fs}>${b.fs}`);
+    if (b.fw !== a.fw) d.push(`fw${a.fw}>${b.fw}`);
+    if (b.c !== a.c) d.push('color');
+    if (d.length) out.push(`"${a.t.slice(0, 32)}" ${d.join(' ')}`);
+  }
+  B.text.forEach((b, i) => { if (!used.has(i)) out.push(`extra "${b.t.slice(0, 40)}"`); });
+  const ui = new Set();
+  for (const a of A.imgs) {
+    const i = B.imgs.findIndex((b, k) => !ui.has(k) && b.s === a.s && Math.abs(b.y - a.y) < 500);
+    if (i < 0) { out.push(`img missing ${a.s}`); continue; }
+    ui.add(i); const b = B.imgs[i], d = [];
+    for (const k of ['x', 'y', 'w', 'h']) if (Math.abs(b[k] - a[k]) > tol) d.push(`d${k}${(b[k] - a[k]).toFixed(0)}`);
+    if (d.length) out.push(`img ${a.s} ${d.join(' ')}`);
+  }
+  return { issues: out.length, matched, top: out };
+}
+const mk = (src, w, h) => { const f = document.createElement('iframe'); f.style.width = w + 'px'; f.style.height = h + 'px'; f.src = src; document.body.appendChild(f); return f; };
+const loaded = (f) => new Promise((r) => f.addEventListener('load', () => setTimeout(r, 1400)));
+async function geom(f, root) {
+  if (!f.contentWindow.__geom) { const s = f.contentDocument.createElement('script'); s.src = '/geom.js'; f.contentDocument.head.appendChild(s); await new Promise((r) => (s.onload = r)); }
+  return f.contentWindow.__geom(f.contentDocument, root);
+}
+window.__sweep = { done: false, rows: [] };
+(async () => {
+  let idx = 0;
+  for (const it of SETS[set] || []) {
+    // A fresh marketplace per screen, so one deep link cannot change what the next one sees.
+    it.app = it.app.replace(/ns=[^#]*/, `ns=sw${set[0]}${idx++}${Date.now().toString(36)}`);
+    const fd = mk(`/viewer/?file=${it.file}&screen=${it.screen}`, it.w, it.h), fa = mk(it.app, it.w, it.h);
+    try {
+      await Promise.all([loaded(fd), loaded(fa)]);
+      // Measure the settled layout: animations off (a hidden tab never finishes them), and optionally hide intentional additions.
+      { const st = fa.contentDocument.createElement('style'); st.textContent = `*,*::before,*::after{animation:none!important;transition:none!important}${HIDE ? `${HIDE}{display:none !important}` : ''}`; fa.contentDocument.head.appendChild(st); await new Promise((r) => setTimeout(r, 200)); }
+      const A = await geom(fd, '#design-root'); const B = await geom(fa, it.w > 600 ? '#root' : '.phone, #root');
+      const r = diff(A, B); window.__sweep.rows.push({ key: it.key, designText: A.text.length, appText: B.text.length, ...r });
+    } catch (e) { window.__sweep.rows.push({ key: it.key, error: String(e) }); }
+    fd.remove(); fa.remove();
+  }
+  window.__sweep.done = true; document.getElementById('out').textContent = JSON.stringify(window.__sweep.rows.map((r) => [r.key, r.issues]), null, 0);
+})();
+</script></body></html>

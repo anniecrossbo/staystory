@@ -1,4 +1,5 @@
 import { formatINR, pctOf } from '@staystory/core';
+import { photo } from '@staystory/ui/src/photos';
 import { bookingCommission, seedState, type MBooking, type MCampaign, type MCreator, type MarketState, type MSettlement } from '@staystory/market';
 
 /* ---------- Gap Night demand ---------- */
@@ -78,7 +79,7 @@ const FACTOR: Record<Range, { vol: number; cpa: number }> = { '7': { vol: 0.24, 
 export const scaleVol = (n: number, r: Range) => Math.round(n * FACTOR[r].vol);
 export const scaleCpa = (n: number, r: Range) => Math.round((n * FACTOR[r].cpa) / 10) * 10;
 export const fmtLakh = (n: number) => (n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : formatINR(n));
-export const asset = (name: string) => `/assets/${name}.jpg`;
+export const asset = (name: string) => photo(name);
 export const fmtCount = (n: number) => n.toLocaleString('en-IN');
 
 /* ---------- Overview figures: history plus what the live store adds ---------- */
@@ -152,7 +153,9 @@ export const PRONOUN: Record<string, string> = { anaya: 'Her', riya: 'Her', mia:
 export const SHORT_NICHE: Record<string, string> = { 'Weekend escapes': 'Weekends', 'Food and culture': 'Food', 'Solo travel': 'Solo' };
 /** Creators the console can recommend (those with a match score), as the design lists them. */
 export const matchedCreators = (s: MarketState): MCreator[] => Object.values(s.creators).filter((c) => c.score);
-export const scoreNum = (c: MCreator) => parseInt(c.score ?? '0', 10);
+export const scoreNum = (c: MCreator, key: 'score' | 'campaignScore' = 'score') => parseInt(c[key] ?? '0', 10);
+/** Creators shown in the campaign builder, ranked by their campaign match. */
+export const campaignPool = (s: MarketState): MCreator[] => Object.values(s.creators).filter((c) => c.campaignScore).sort((a, b) => scoreNum(b, 'campaignScore') - scoreNum(a, 'campaignScore'));
 export const liveCampaigns = (s: MarketState) => s.campaigns.filter((c) => c.hotelId === s.hotel.id && c.status === 'live');
 
 export type DecisionKind = 'unsold' | 'accepted' | 'countered' | 'declined';
@@ -193,3 +196,15 @@ export function downloadText(name: string, text: string, type = 'text/html') {
 export const STATUS_LABEL = { upcoming: 'Upcoming', in_house: 'In house', completed: 'Completed', cancelled: 'Cancelled' } as const;
 export const STATUS_TONE = { upcoming: 'info', in_house: 'warning', completed: 'success', cancelled: 'danger' } as const;
 export const commissionLabel = (s: MarketState, b: MBooking) => (b.status === 'cancelled' ? 'Waived' : formatINR(bookingCommission(s, b)));
+
+/** Bookings created in the last N days, or whose stay has not ended before that window began. Stays are in 2026. */
+export function inRange(b: MBooking, r: Range, now = new Date()): boolean {
+  const from = now.getTime() - Number(r) * 86_400_000;
+  if (new Date(b.createdAt).getTime() >= from) return true;
+  const m = /^([A-Za-z]{3}) (\d{1,2}) – (?:([A-Za-z]{3}) )?(\d{1,2})$/.exec(b.datesLabel.trim());
+  if (!m) return true;
+  const m1 = MONTHS.indexOf(m[1]!); const m2 = m[3] ? MONTHS.indexOf(m[3]) : m1;
+  if (m1 < 0 || m2 < 0) return true;
+  const end = new Date(2026 + (m2 < m1 ? 1 : 0), m2, Number(m[4]), 23, 59).getTime();
+  return end >= from;
+}

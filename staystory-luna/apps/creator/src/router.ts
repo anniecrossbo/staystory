@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { withViewTransition } from '@staystory/ui';
 
 /** Hash routes shaped `#/<flow>/<screen>?key=value`. Every design state has its own URL. */
 export interface Route { flow: string; screen: string; q: URLSearchParams }
@@ -13,7 +14,7 @@ function parse(): Route {
 export function useRoute(): [Route, Go] {
   const [route, setRoute] = useState<Route>(parse);
   useEffect(() => {
-    const on = () => setRoute(parse());
+    const on = () => withViewTransition(() => setRoute(parse()));
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);

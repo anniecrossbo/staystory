@@ -11,6 +11,8 @@ const LISTS = ['upcoming', 'past', 'saved', 'empty'];
 const BACK: Record<string, string> = { detail: 'upcoming', change: 'detail', cancel: 'detail', cancelled: 'upcoming', review: 'past' };
 const HOTEL_PHONE = '+91 294 242 0000';
 const SUPPORT = { phone: '+91 80 4000 1234', whatsapp: '918040001234', email: 'help@staystory.in' };
+/** The saved list names two trips differently from their shop cards. */
+const SAVED_TITLE: Record<string, string> = { 'hari-rishikesh': 'Rishikesh reset', 'kabir-gokarna': 'Cliffs and coves, Gokarna' };
 const GOA = { id: 'goa-past', title: 'Monsoon Goa', dates: 'Aug 14 – 18', handle: '@kabir.coast', tripId: 'kabir-goa' };
 const MONTH_YEAR = (label: string) => (label.startsWith('Dec') ? { year: 2026, month: 11 } : label.startsWith('Jan') ? { year: 2027, month: 0 } : { year: 2027, month: 1 });
 
@@ -23,6 +25,8 @@ export function Trips({ screen }: { screen: string }) {
   const cancelledB = mine.filter((b) => b.status === 'cancelled');
   const reviewedIds = new Set(s.reviews.map((r) => r.bookingId));
   const unreviewed = completed.filter((b) => !reviewedIds.has(b.id));
+  // The Past tab counts stays waiting for a review; the upcoming stay is the one that will be, until a review exists.
+  const pending = unreviewed.length || (s.reviews.length === 0 && upcoming.length > 0 ? 1 : 0);
   const isList = LISTS.includes(screen);
   const bid = route.params.b;
   const byId = mine.find((b) => b.id === bid);
@@ -51,7 +55,7 @@ export function Trips({ screen }: { screen: string }) {
   const detailScreen = screen === 'cancelled' && !cancelled ? 'detail' : screen === 'detail' && cancelled ? 'cancelled' : screen;
 
   return (<>
-    {isList ? <Lists screen={screen} upcoming={upcoming} completed={completed} cancelled={cancelledB} reviewedIds={reviewedIds} unreviewed={unreviewed.length} />
+    {isList ? <Lists screen={screen} upcoming={upcoming} completed={completed} cancelled={cancelledB} reviewedIds={reviewedIds} unreviewed={pending} />
       : isGoa ? <GoaDetail />
       : <Detail screen={detailScreen} b={b!} trip={trip!} to={to} back={back} />}
     <ToastHost />
@@ -80,7 +84,7 @@ function Lists({ screen, upcoming, completed, cancelled, reviewedIds, unreviewed
   ];
   const savedRows = savedTrips.map((t) => {
     const st = savedStatus(s, me.id, t);
-    return { key: t.id, title: t.title, meta: st.meta, img: t.img, status: t.status === 'paused' ? 'Paused' : st.label, tone: t.status === 'paused' ? 'neutral' as const : st.tone, open: () => (st.gap ? go('trip', 'foryou', { c: t.creatorId, s: t.slug, from: 'saved' }) : window.location.assign(tripHash(t, 'trip', { from: 'saved' }))) };
+    return { key: t.id, title: SAVED_TITLE[t.id] ?? t.title, meta: st.meta, img: t.img, status: t.status === 'paused' ? 'Paused' : !st.gap && t.savedStatus ? t.savedStatus.text : st.label, tone: t.status === 'paused' ? 'neutral' as const : !st.gap && t.savedStatus ? t.savedStatus.tone : st.tone, open: () => (st.gap ? go('trip', 'foryou', { c: t.creatorId, s: t.slug, from: 'saved' }) : window.location.assign(tripHash(t, 'trip', { from: 'saved' }))) };
   });
   const rows = screen === 'past' ? pastRows : savedRows;
 
@@ -126,7 +130,7 @@ function Lists({ screen, upcoming, completed, cancelled, reviewedIds, unreviewed
         <Button variant="primary" size="lg" block icon="explore" onClick={() => go('discover', 'feed')}>Discover trips</Button>
       </>))}
     </div>
-    <TravelerDock active={screen === 'saved' ? 'saved' : 'trips'} />
+    <TravelerDock active="trips" />
   </>);
 }
 
@@ -182,7 +186,7 @@ function Detail({ screen, b, trip, to, back }: { screen: string; b: MBooking; tr
 
   const vouchers = [
     { name: `${stay?.name ?? b.roomName} · ${b.nights} night${b.nights === 1 ? '' : 's'}`, meta: `${sentence(b.roomName)}${room ? ` · ${room.meal.toLowerCase()}` : ''}`, img: stay?.img ?? trip.img },
-    ...trip.experiences.filter((e) => b.experienceIds.includes(e.id)).map((e) => ({ name: e.name, meta: `Day ${e.day} · ${e.time.split('·')[0]!.trim()} · ${b.guests} ${/class|workshop|lesson/i.test(e.name) ? 'seats' : 'tickets'}`, img: e.img })),
+    ...trip.experiences.filter((e) => b.experienceIds.includes(e.id)).map((e) => ({ name: e.name, meta: `Day ${e.day} · ${e.time.split('·')[0]!.trim()} · ${b.guests} ${/class|workshop|lesson/i.test(e.name) ? 'seats' : 'tickets'}`, img: e.id === 'cook' ? 'verandah' : e.img })),
   ];
 
   // Calendar: move between months and pick a weekend by its day.

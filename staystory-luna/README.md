@@ -27,6 +27,16 @@ Add `?ns=name` to any URL for an isolated copy of the marketplace. The traveler 
 - `apps/*`: the three apps, the design viewer and the demo page
 - `specs/`: product specs and `journeys.md` (the end-to-end chain and the quality bar)
 
+## Database
+
+State is stored in SQLite (`data/staystory.db`, git-ignored), served by the dev server at `/api/db/*`. The database is created and seeded on the first request, so a fresh clone just works. The apps hydrate from it on load and send every action to it, in order; the browser also keeps a local copy so tabs stay in sync. Add `?ns=name` to any URL for an isolated copy that never touches the database (tests, audits, parallel runs). The demo page's Reset button resets the database.
+
+SQLite uses a native module (`better-sqlite3`). npm may hold back its install script; if the database cannot open, run `npm rebuild better-sqlite3`. `packages/server/test/db-differential.test.ts` runs the same 80 actions through the shared reducer and the database and requires identical state after every step, so the two cannot drift apart. The API only runs under `npm run dev` (not `vite preview`).
+
+## Photos
+
+The apps show real photographs from `apps/public/assets/photos/` (Unsplash, credits in `CREDITS.md`, focal points in `manifest.json`). Only real photographs ship; the original illustrations live in `design/assets` as the design source and are not served. A missing photo shows as a tinted block. A test (`packages/market/test/photos.test.ts`) fails if any image the apps can show has no photo. To swap a photo, replace the file and adjust its `focal` point; hotels and creators will upload their own photos in the real product.
+
 ## Tests
 
 ```bash

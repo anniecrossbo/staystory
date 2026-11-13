@@ -51,3 +51,25 @@ The original designs are the source of truth. `/viewer/?file=LunaHotel&screen=ga
 - `packages/market` is shared: additive changes only (new fields, actions, selectors, seed rows), re-read the file right before editing, keep `npx vitest run --root packages/market` green, and say what you changed in your report. Do not change existing behaviour another app relies on.
 - Use your own browser tab (create one) and your own `?ns=` on every URL. Do not start or stop the dev server (already running on 5173). Reset your viewport to desktop when done.
 - Typecheck (`npx tsc --noEmit -p apps/<app>`) and `npx vitest run --root packages/core` must pass before you finish.
+
+## The feel layer
+
+`packages/ui/src/polish.css` holds the motion and feedback shared by all three apps: press dip and hover depth on controls, one keyboard focus ring, content rising into place, dialogs that pop, sheets that travel, toasts that slide in, and a short cross-fade between screens (`withViewTransition`, with the dock and action bars held still). Everything is switched off under `prefers-reduced-motion`.
+
+The rule for changing it: nothing may change the size or position of anything at rest, so the layouts keep matching the designs. The sweep and compare pages switch animations off in the app frame before measuring, because a hidden tab never finishes them. After any change to this file, re-run all three sweeps and expect the same counts as before.
+
+## The Apple visual layer
+
+`packages/ui/src/apple.css` restyles all three apps in Apple's visual language while keeping every screen's content and structure: a grouped grey canvas with white cards, system separators (inset hairlines on lists), softer continuous depth, squircle corners where the browser supports `corner-shape`, frosted bars and sheets, filled borderless fields with a focus ring, SF-style tracking that tightens as text grows, 34px large titles on top-level phone screens and a 17px nav title where there is a back button. The brand stays teal. It loads after Luna's styles and overrides Luna's tokens, so `design/styles/luna-tokens.css` is untouched.
+
+This changes type and spacing slightly, so the design sweeps are no longer the visual bar: use them to check content, states and structure (missing or extra text), not pixel offsets. Scrolling screens also no longer squash their content (the designs' flex layout shrank fixed-height blocks, which read as a bug with real photography).
+
+Rules for changing it: keep layouts free of horizontal scroll at 375 (phones) and 1024 (hotel); keep error states visible (they have their own classes); text set inline is overridden by attribute selectors, and sizes need `!important`.
+
+## The layout audit
+
+`/viewer/audit.html?set=hotel|creator|traveler` loads every screen state of one product in a fresh marketplace (hotel at 1470 and 1024, phones at 393 and 375) and reports, per route, any control that is not centred on its title and any horizontal overflow. `await` until `window.__audit.done`, then expect `window.__audit.rows` to be empty. The check itself lives in `apps/public/align.js`.
+
+- A big title (24px and up) is judged on its own line; a block of several smaller lines (a name and a caption) is judged as a block; dialog and sheet close buttons are judged on the title line.
+- Headers with a large title use a grid in `apple.css` that centres the back button, avatar, bell or step chips on the title line. A header's text wrapper is recognised by holding the title (`.h1`, `.h2`, `.h-title` or an inline 20px title), so a new header needs one of those, or its name added to the selector list.
+- Run all three after any change to `packages/ui/src/apple.css`, `polish.css` or a screen header. The audit was checked with a negative control: switching the fix off reproduces the 7px offset it exists to catch.

@@ -4,7 +4,7 @@ import { AISummary, Avatar, Badge, Banner, Button, Chip, EmptyState, FilterPill,
 import { hotelBookings, hotelCommissionPct, market, useMarket, type MBooking, type MarketState } from '@staystory/market';
 import { Overlay } from '../components';
 import type { Go } from '../actions';
-import { commissionLabel, longDates, STATUS_LABEL, STATUS_TONE } from '../lib';
+import { commissionLabel, inRange, longDates, STATUS_LABEL, STATUS_TONE } from '../lib';
 import { toast, ui, useUi } from '../ui';
 
 const FILTERS = ['All', 'Upcoming', 'In house', 'Completed', 'Cancelled'] as const;
@@ -17,14 +17,14 @@ export const bookingLink = (id: string) => `bookingDetail?b=${encodeURIComponent
 
 export function Bookings({ screen, go }: { screen: string; go: Go }) {
   const s = useMarket();
-  const { bookingFilter } = useUi();
+  const { bookingFilter, range } = useUi();
   const [search, setSearch] = useState(screen === 'bookingsEmpty' ? 'Kapoor' : '');
   const [voucher, setVoucher] = useState(false);
   const [compose, setCompose] = useState(false);
   useEffect(() => { if (screen === 'bookingsEmpty') setSearch('Kapoor'); }, [screen]);
   useEffect(() => { setVoucher(false); setCompose(false); }, [screen]);
 
-  const all = hotelBookings(s);
+  const all = hotelBookings(s).filter((b) => inRange(b, range) || b.id === selectedId());
   const q = search.trim().toLowerCase();
   const handle = (b: MBooking) => s.creators[b.creatorId]?.handle ?? '';
   const matches = (b: MBooking) => !q || b.guestName.toLowerCase().includes(q) || b.id.toLowerCase().includes(q) || handle(b).toLowerCase().includes(q);

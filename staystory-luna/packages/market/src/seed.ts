@@ -4,12 +4,12 @@ import type { MBooking, MCampaign, MCreator, MExperience, MLedger, MStay, MStop,
 const NOW = () => new Date().toISOString();
 
 export const CREATORS: MCreator[] = [
-  { id: 'anaya', handle: '@anaya.explores', name: 'Anaya Rao', ini: 'AR', followers: '412K', niche: 'Slow travel', bio: 'Slow travel, Rajasthan and the South', tripsCount: '3', travelers: '1.2K', hue: 'moss', cover: 'udaipur', score: '96%', conv: '0.37%', bookingsPerMonth: '46', ncr: '15%', top: true, why: 'Already your top converter. 312 of her followers saved her Udaipur trip.', meta: '412K · 9 Udaipur trips · 0.37% conversion' },
-  { id: 'riya', handle: '@roamwithriya', name: 'Riya Malhotra', ini: 'RM', followers: '238K', niche: 'Weekend escapes', bio: 'Weekends from Delhi under ₹10k', tripsCount: '1', travelers: '860', hue: 'sky', cover: 'jaipur', score: '88%', conv: '0.52%', bookingsPerMonth: '18', ncr: '41%', why: 'Weekend audience from Delhi. Good for Courtyard Room offers.', meta: '238K · 0.52% conversion' },
-  { id: 'couples', handle: '@couplesgoplaces', name: 'Couples Go Places', ini: 'CG', followers: '96K', niche: 'Couples', bio: 'Romantic escapes in India', tripsCount: '2', travelers: '210', hue: 'plum', cover: 'palace', score: '80%', conv: '0.44%', bookingsPerMonth: '7', ncr: '35%', why: 'Small but high intent. Suited to Heritage Suite packages.', meta: '96K · 0.44% conversion' },
-  { id: 'food', handle: '@thefoodtrail', name: 'The Food Trail', ini: 'FT', followers: '520K', niche: 'Food and culture', bio: 'Eat your way across India', tripsCount: '4', travelers: '940', hue: 'ochre', cover: 'pushkar', score: '83%', conv: '0.29%', bookingsPerMonth: '14', ncr: '30%', why: 'Pairs with your rooftop breakfast and cooking experiences.', meta: '520K · 0.29% conversion' },
-  { id: 'mia', handle: '@wander.mia', name: 'Mia Wanders', ini: 'MW', followers: '64K', niche: 'Solo travel', bio: 'Solo travel, safely', tripsCount: '2', travelers: '180', hue: 'violet', cover: 'jodhpur', score: '77%', conv: '0.33%', bookingsPerMonth: '5', ncr: '28%', why: 'Safety-minded audience values your central location.', meta: '64K · 0.33% conversion' },
-  { id: 'desi', handle: '@desi.nomad', name: 'Desi Nomad', ini: 'DN', followers: '180K', niche: 'Budget', bio: 'Backpacking on a budget', tripsCount: '3', travelers: '520', hue: 'clay', cover: 'hampi', score: '72%', conv: '0.21%', bookingsPerMonth: '9', ncr: '22%', why: 'Large reach, lower budget. Better for Courtyard Room offers.', meta: '180K · 0.21% conversion' },
+  { id: 'anaya', handle: '@anaya.explores', name: 'Anaya Rao', ini: 'AR', followers: '412K', niche: 'Slow travel', bio: 'Slow travel, Rajasthan and the South', tripsCount: '3', travelers: '1.2K', hue: 'moss', cover: 'udaipur', score: '94%', campaignScore: '96%', conv: '0.37%', bookingsPerMonth: '46', ncr: '15%', top: true, why: 'Already your top converter. 312 of her followers saved her Udaipur trip.', meta: '412K · 9 Udaipur trips · 0.37% conversion' },
+  { id: 'riya', handle: '@roamwithriya', name: 'Riya Malhotra', ini: 'RM', followers: '238K', niche: 'Weekend escapes', bio: 'Weekends from Delhi under ₹10k', tripsCount: '1', travelers: '860', hue: 'sky', cover: 'jaipur', score: '88%', campaignScore: '84%', conv: '0.52%', bookingsPerMonth: '18', ncr: '41%', why: 'Weekend audience from Delhi. Good for Courtyard Room offers.', meta: '238K · 0.52% conversion' },
+  { id: 'couples', handle: '@couplesgoplaces', name: 'Couples Go Places', ini: 'CG', followers: '96K', niche: 'Couples', bio: 'Romantic escapes in India', tripsCount: '2', travelers: '210', hue: 'plum', cover: 'palace', score: '80%', campaignScore: '80%', conv: '0.44%', bookingsPerMonth: '7', ncr: '35%', why: 'Small but high intent. Suited to Heritage Suite packages.', meta: '96K · 0.44% conversion' },
+  { id: 'food', handle: '@thefoodtrail', name: 'The Food Trail', ini: 'FT', followers: '520K', niche: 'Food and culture', bio: 'Eat your way across India', tripsCount: '4', travelers: '940', hue: 'ochre', cover: 'pushkar', score: '83%', campaignScore: '83%', conv: '0.29%', bookingsPerMonth: '14', ncr: '30%', why: 'Pairs with your rooftop breakfast and cooking experiences.', meta: '520K · 0.29% conversion' },
+  { id: 'mia', handle: '@wander.mia', name: 'Mia Wanders', ini: 'MW', followers: '64K', niche: 'Solo travel', bio: 'Solo travel, safely', tripsCount: '2', travelers: '180', hue: 'violet', cover: 'jodhpur', score: '77%', campaignScore: '77%', conv: '0.33%', bookingsPerMonth: '5', ncr: '28%', why: 'Safety-minded audience values your central location.', meta: '64K · 0.33% conversion' },
+  { id: 'desi', handle: '@desi.nomad', name: 'Desi Nomad', ini: 'DN', followers: '180K', niche: 'Budget', bio: 'Backpacking on a budget', tripsCount: '3', travelers: '520', hue: 'clay', cover: 'hampi', score: '72%', campaignScore: '72%', conv: '0.21%', bookingsPerMonth: '9', ncr: '22%', why: 'Large reach, lower budget. Better for Courtyard Room offers.', meta: '180K · 0.21% conversion' },
   { id: 'kabir', handle: '@kabir.coast', name: 'Kabir Fernandes', ini: 'KF', followers: '156K', niche: 'Coast', bio: 'Konkan coast, surf and seafood', tripsCount: '2', travelers: '410', hue: 'sky', cover: 'goa' },
   { id: 'hari', handle: '@himalayan.hari', name: 'Hari Negi', ini: 'HN', followers: '97K', niche: 'Mountains', bio: 'Treks, cafés and hill towns', tripsCount: '1', travelers: '330', hue: 'moss', cover: 'rishikesh' },
 ];
@@ -52,8 +52,8 @@ const withMisty = (t: MTrip): MTrip => ({
   stays: [{ id: 'coorg-misty', hotelId: 'misty-estate', roomTypeId: 'estate-room', name: 'Misty Estate Coorg', tier: 'creator_pick', desc: 'Plantation stay with coffee tasting', nightly: 3300, img: 'coorg', commissionPct: 12, campaignId: 'misty-coorg' }],
 });
 
-export const SEED_TRIPS: MTrip[] = [
-  { id: 'anaya-udaipur', creatorId: 'anaya', slug: 'udaipur', title: 'Three days in Udaipur', place: 'Udaipur', days: 3, img: 'udaipur', tags: ['Heritage'], saves: 2184, travelersBooked: 312, creatorSaving: 600, status: 'live', reelUrl: 'instagram.com/reel/udaipur', dmKeyword: 'link', publishedAt: '2026-10-20T00:00:00.000Z', itinerary: UDAIPUR_DAYS, stays: UDAIPUR_STAYS, pickStayId: 'jheel', experiences: EXPERIENCES },
+const BASE_TRIPS: MTrip[] = [
+  { id: 'anaya-udaipur', creatorId: 'anaya', slug: 'udaipur', title: 'Three days in Udaipur', place: 'Udaipur', days: 3, img: 'udaipur', tags: ['Heritage'], saves: 2184, travelersBooked: 312, creatorSaving: 600, status: 'live', reelUrl: 'instagram.com/reel/udaipur', dmKeyword: 'link', publishedAt: '2026-10-20T00:00:00.000Z', itinerary: UDAIPUR_DAYS, stays: UDAIPUR_STAYS, pickStayId: 'jheel', experiences: EXPERIENCES, stayLine: 'Haveli Jheel · boat ride · cooking class' },
   simpleTrip('riya-jaipur', 'riya', 'jaipur', 'Jaipur', 2, 'Pink City weekend with friends', 'jaipur', 3200, 1400, ['Heritage']),
   simpleTrip('kabir-goa', 'kabir', 'goa', 'Goa', 4, 'Monsoon Goa, the quiet south', 'goa', 3800, 972, ['Beaches']),
   simpleTrip('hari-rishikesh', 'hari', 'rishikesh', 'Rishikesh', 3, 'River, yoga and a café trail', 'rishikesh', 2100, 1100, ['Mountains']),
@@ -61,6 +61,14 @@ export const SEED_TRIPS: MTrip[] = [
   simpleTrip('kabir-gokarna', 'kabir', 'gokarna', 'Gokarna', 3, 'Cliffs, coves and slow sunsets', 'gokarna', 2800, 640, ['Beaches']),
   simpleTrip('anaya-jodhpur', 'anaya', 'jodhpur', 'Jodhpur', 2, 'The blue city on foot', 'jodhpur', 3500, 590, ['Heritage']),
 ];
+
+/** Copy and statuses the traveler designs show for the seeded trips. */
+const TRIP_EXTRAS: Record<string, Partial<MTrip>> = {
+  'hari-rishikesh': { savedStatus: { text: '₹600 cheaper', tone: 'success' } },
+  'anaya-coorg': { shopTitle: 'Coffee estates and misty mornings', stayLine: 'Misty Estate · plantation walk', savedStatus: { text: '2 rooms left', tone: 'warning' } },
+  'anaya-jodhpur': { stayLine: 'Blue House stay · old city walk' },
+};
+export const SEED_TRIPS: MTrip[] = BASE_TRIPS.map((t) => ({ ...t, ...TRIP_EXTRAS[t.id] }));
 
 const campaign: MCampaign = {
   id: 'winter-pichola', hotelId: 'haveli-jheel', name: 'Winter on Lake Pichola', roomTypeId: 'lake-deluxe', windowLabel: 'Nov 15 to Jan 31', nights: 2,
@@ -96,9 +104,9 @@ export const SEED_LEDGER: MLedger[] = [
   L('l2', 'Udaipur · Rohan S.', 'Haveli Jheel · checked out Nov 10', 1168, 'available'),
   L('l3', 'Coorg · Divya K.', 'Misty Estate · checked out Nov 3', 1032, 'available'),
   L('l4', 'Udaipur · Arjun P.', 'Pichola Courtyard', 0, 'cancelled'),
-  L('l5', 'Earlier bookings', '14 stays · checked out in October and November', 19560, 'available'),
-  L('l6', 'Upcoming stays', '9 bookings waiting for check-out', 11440, 'pending_stay'),
-  L('l7', 'October payout', 'Paid Nov 5', 48160, 'paid'),
+  { ...L('l5', 'Earlier bookings', '14 stays · checked out in October and November', 19560, 'available'), summary: true },
+  { ...L('l6', 'Upcoming stays', '9 bookings waiting for check-out', 11440, 'pending_stay'), summary: true },
+  { ...L('l7', 'October payout', 'Paid Nov 5', 48160, 'paid'), ini: 'OK' },
 ];
 
 const room = sampleHotel.rooms;

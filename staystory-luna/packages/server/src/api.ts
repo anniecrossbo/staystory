@@ -62,6 +62,8 @@ export async function handleApi(method: string, url: URL, body: unknown, env: En
   // Lazy-load the DB modules to avoid pulling @staystory/market into Vite's config bundle
   if (path.startsWith('/api/db/')) {
     const Q = await import('./queries');
+    // A fresh database is empty: seed it (once per connection, idempotent) before serving any /api/db request.
+    (await import('./seed-db')).seedDatabase();
 
     // GET /api/db/state — full MarketState assembled from all tables
     if (path === '/api/db/state' && method === 'GET') {

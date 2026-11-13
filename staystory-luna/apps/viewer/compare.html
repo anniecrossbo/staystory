@@ -21,6 +21,7 @@ const tol = +q.get('tol') || 1.5;
 window.__compare = async () => {
   await ready;
   for (const f of [fd, fa]) if (!f.contentWindow.__geom) { const s = f.contentDocument.createElement('script'); s.src = '/geom.js'; f.contentDocument.head.appendChild(s); await new Promise((r) => (s.onload = r)); }
+  { const st = fa.contentDocument.createElement('style'); st.textContent = '*,*::before,*::after{animation:none!important;transition:none!important}'; fa.contentDocument.head.appendChild(st); await new Promise((r) => setTimeout(r, 150)); }
   const A = fd.contentWindow.__geom(fd.contentDocument, '#design-root');
   const B = fa.contentWindow.__geom(fa.contentDocument, q.get('root') || '.phone, #root');
   const norm = (s) => s.toLowerCase().replace(/[^a-z0-9₹]/g, '');

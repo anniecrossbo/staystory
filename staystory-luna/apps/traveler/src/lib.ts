@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from 'react';
+import { withViewTransition } from '@staystory/ui';
+import { photo } from '@staystory/ui/src/photos';
 import type { MTrip } from '@staystory/market';
 
-export const asset = (n: string) => `/assets/${n}.jpg`;
+export const asset = (n: string) => photo(n);
 export const ME = 'meera';
 export const DEFAULT_TRIP = { c: 'anaya', s: 'udaipur' };
 export const SITE = 'https://staystory.in';
@@ -29,7 +31,7 @@ export function hashFor(flow: string, screen = '', params: Record<string, string
 }
 export const go: Go = (flow, screen, params) => { window.location.hash = hashFor(flow, screen, params); };
 
-const subscribe = (cb: () => void) => { window.addEventListener('hashchange', cb); return () => window.removeEventListener('hashchange', cb); };
+const subscribe = (cb: () => void) => { const on = () => withViewTransition(cb); window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on); };
 const snap = () => window.location.hash;
 /** The current hash route; re-renders on every hash change. */
 export function useRoute(): Route {
@@ -48,7 +50,7 @@ export const clock = (d: Date) => d.toLocaleTimeString('en-IN', { hour: '2-digit
 /** 2184 -> `2.1K` (the design truncates). */
 export const compact = (n: number) => (n >= 10000 ? `${Math.floor(n / 1000)}K` : n >= 1000 ? `${(Math.floor(n / 100) / 10).toString()}K` : String(n));
 /** The feed and shop title of a trip. The design shows Udaipur with its price promise. */
-export const cardTitle = (t: { id: string; title: string }) => (t.id === 'anaya-udaipur' ? `${t.title} under ₹15,000` : t.title);
+export const cardTitle = (t: { id: string; title: string; shopTitle?: string }) => (t.id === 'anaya-udaipur' ? `${t.title} under ₹15,000` : t.shopTitle ?? t.title);
 
 export async function copyText(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { /* clipboard blocked: fall back */ }

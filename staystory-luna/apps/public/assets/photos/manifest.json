@@ -1,0 +1,182 @@
+{
+  "udaipur": {
+    "file": "udaipur.jpg",
+    "alt": "City Palace of Udaipur rising above the water of Lake Pichola on a clear day.",
+    "focal": {
+      "x": 50,
+      "y": 52
+    },
+    "photographer": "Pranav Panchal",
+    "photographerUrl": "https://unsplash.com/@pranavpanchal",
+    "sourceUrl": "https://unsplash.com/photos/city-palace-on-lake-pichola-udaipur-IEArgDckRuQ",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 787,
+    "bytes": 294888
+  },
+  "jaipur": {
+    "file": "jaipur.jpg",
+    "alt": "The pink sandstone facade of Hawa Mahal in Jaipur under a pale sky.",
+    "focal": {
+      "x": 50,
+      "y": 60
+    },
+    "photographer": "Annie Spratt",
+    "photographerUrl": "https://unsplash.com/@anniespratt",
+    "sourceUrl": "https://unsplash.com/photos/RugN1OsUwHM",
+    "license": "Unsplash License",
+    "width": 1500,
+    "height": 1033,
+    "bytes": 292209
+  },
+  "jodhpur": {
+    "file": "jodhpur.jpg",
+    "alt": "Mehrangarh Fort on its rocky hill with the blue-washed old city of Jodhpur stretching away to the right.",
+    "focal": {
+      "x": 32,
+      "y": 52
+    },
+    "photographer": "MAKM PHOTOGRAPHY",
+    "photographerUrl": "https://unsplash.com/@makmphotography",
+    "sourceUrl": "https://unsplash.com/photos/grasses-on-hill-u0irC_UnbOk",
+    "license": "Unsplash License",
+    "width": 1600,
+    "height": 1067,
+    "bytes": 296142
+  },
+  "goa": {
+    "file": "goa.jpg",
+    "alt": "A quiet sandy Goa beach with dark rocks in the foreground and a wooded headland beyond.",
+    "focal": {
+      "x": 50,
+      "y": 58
+    },
+    "photographer": "Zoshua Colah",
+    "photographerUrl": "https://unsplash.com/@zoshuacolah",
+    "sourceUrl": "https://unsplash.com/photos/a-sandy-beach-next-to-the-ocean-pjbixgSFdN8",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 1050,
+    "bytes": 262536
+  },
+  "coorg": {
+    "file": "coorg.jpg",
+    "alt": "Green grassy hilltop in Coorg looking over forested valleys with low cloud and mist.",
+    "focal": {
+      "x": 50,
+      "y": 62
+    },
+    "photographer": "Paras Hazare",
+    "photographerUrl": "https://unsplash.com/@paras_787",
+    "sourceUrl": "https://unsplash.com/photos/6GfRiJBkzwA",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 1050,
+    "bytes": 249768
+  },
+  "rishikesh": {
+    "file": "rishikesh.jpg",
+    "alt": "A suspension bridge over the Ganges at Rishikesh with houses on the bank and forested hills under a moody sky.",
+    "focal": {
+      "x": 45,
+      "y": 58
+    },
+    "photographer": "Niloy Banerjee",
+    "photographerUrl": "https://unsplash.com/@niloyhimu96",
+    "sourceUrl": "https://unsplash.com/photos/w2uhp5VrF8M",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 788,
+    "bytes": 221345
+  },
+  "pushkar": {
+    "file": "pushkar.jpg",
+    "alt": "Pushkar lake and the ghat-lined town below dry Aravalli hills in soft evening light.",
+    "focal": {
+      "x": 50,
+      "y": 68
+    },
+    "photographer": "Sudev Kiyada",
+    "photographerUrl": "https://unsplash.com/@sudev_kiyada",
+    "sourceUrl": "https://unsplash.com/photos/hCkGZZYshbo",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 934,
+    "bytes": 263375
+  },
+  "hampi": {
+    "file": "hampi.jpg",
+    "alt": "The carved stone pillared hall of a ruined temple at Hampi under a deep blue sky.",
+    "focal": {
+      "x": 50,
+      "y": 55
+    },
+    "photographer": "Sandip Kalal",
+    "photographerUrl": "https://unsplash.com/@atomsmasher",
+    "sourceUrl": "https://unsplash.com/photos/a-large-building-with-many-pillars-TN6WLhneISI",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 933,
+    "bytes": 235580
+  },
+  "gokarna": {
+    "file": "gokarna.jpg",
+    "alt": "A quiet cove at Gokarna with a green wooded cliff, dark rocks and gentle waves on golden sand.",
+    "focal": {
+      "x": 45,
+      "y": 55
+    },
+    "photographer": "Darshan Gajara",
+    "photographerUrl": "https://unsplash.com/@weirdowizard",
+    "sourceUrl": "https://unsplash.com/photos/grass-covered-mountain-island-during-day-9L7Trfh_H0E",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 933,
+    "bytes": 245151
+  },
+  "haveli": {
+    "file": "haveli.jpg",
+    "alt": "Cream-coloured heritage lakefront buildings with arched windows and a domed pavilion beside Lake Pichola at dusk.",
+    "focal": {
+      "x": 42,
+      "y": 62
+    },
+    "photographer": "Maitree Patel",
+    "photographerUrl": "https://unsplash.com/@maitree_",
+    "sourceUrl": "https://unsplash.com/photos/city-palace-on-lake-pichola-udaipur-t2x2R0ZpXpw",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 933,
+    "bytes": 340133
+  },
+  "verandah": {
+    "file": "verandah.jpg",
+    "alt": "A marble pavilion with a scalloped arch and fountain in a lakeside heritage courtyard in Udaipur.",
+    "focal": {
+      "x": 50,
+      "y": 50
+    },
+    "photographer": "Vikram Chouhan Udaipur Web Designer",
+    "photographerUrl": "https://unsplash.com/@vikramudaipur",
+    "sourceUrl": "https://unsplash.com/photos/a-building-with-a-large-archway-adm8BTKBkTc",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 930,
+    "bytes": 288424
+  },
+  "palace": {
+    "file": "palace.jpg",
+    "alt": "Umaid Bhawan Palace in Jodhpur glowing in pink sandstone at sunset behind a wide green lawn.",
+    "focal": {
+      "x": 50,
+      "y": 45
+    },
+    "photographer": "Tharun Thejas",
+    "photographerUrl": "https://unsplash.com/@tharunthejas",
+    "sourceUrl": "https://unsplash.com/photos/castle-n5BfwGe74FU",
+    "license": "Unsplash License",
+    "width": 1400,
+    "height": 1050,
+    "bytes": 301387
+  }
+}

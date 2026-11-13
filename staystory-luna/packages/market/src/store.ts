@@ -13,6 +13,10 @@ export class MarketStore {
   private state: MarketState;
   private listeners = new Set<Listener>();
   private apiUrl?: string;
+  /** Server writes go out one at a time, in order, so the database sees the same sequence the reducer did. */
+  private outbox: Promise<unknown> = Promise.resolve();
+  /** Actions dispatched between asking for the server state and receiving it; they are replayed on top of it. */
+  private during: Action[] | null = null;
   constructor(private persist = typeof window !== 'undefined') {
     this.state = this.load();
     if (this.persist) window.addEventListener('storage', (e) => {
@@ -29,18 +33,38 @@ export class MarketStore {
   private emit() { this.listeners.forEach((l) => l()); }
   get = () => this.state;
   subscribe = (l: Listener) => { this.listeners.add(l); return () => this.listeners.delete(l); };
-  /** Connect to a DB-backed API. Hydrates state from the server and persists future dispatches. */
+  /**
+   * Connect to a DB-backed API. Hydrates state from the server and persists future dispatches.
+   * A page with `?ns=name` is an isolated marketplace (tests, sweeps, audits, parallel agents): it stays in its own
+   * localStorage namespace and never reads or writes the shared database. Only the default namespace uses the API.
+   */
   async connectApi(url: string): Promise<void> {
+    if (ns) return;
     this.apiUrl = url;
-    try {
-      const res = await fetch(`${url}/state`);
-      if (res.ok) { this.state = await res.json(); this.emit(); }
-    } catch { /* fall back to localStorage/seed */ }
+    this.during = [];
+    // The state request joins the outbox, so it is answered after every write queued before it.
+    const hydrate = this.outbox.then(async () => {
+      try {
+        const res = await fetch(`${url}/state`);
+        if (!res.ok) return;
+        // Anything the app dispatched while this was in flight (a staged deep link, a fast tap) is applied on top of the
+        // server state; those writes are queued behind this request, so the server catches up.
+        this.state = (this.during ?? []).reduce(reduce, (await res.json()) as MarketState);
+        this.emit();
+      } catch { /* fall back to localStorage/seed */ }
+    });
+    this.outbox = hydrate;
+    await hydrate;
+    this.during = null;
   }
   dispatch = (a: Action) => {
     this.state = reduce(this.state, a);
     if (this.persist) try { localStorage.setItem(KEY, JSON.stringify(this.state)); } catch { /* quota or private mode: keep in memory */ }
-    if (this.apiUrl) fetch(`${this.apiUrl}/dispatch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(a) }).catch(() => {});
+    if (this.apiUrl) {
+      this.during?.push(a);
+      const url = `${this.apiUrl}/dispatch`;
+      this.outbox = this.outbox.then(() => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(a) }).catch(() => {}));
+    }
     this.emit();
   };
   reset = () => this.dispatch({ type: 'dev/reset' });

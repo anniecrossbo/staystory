@@ -1,18 +1,41 @@
 import { db, closeDb } from './db';
-import { seedState, SEED_CREATORS, type MCreator } from '@staystory/market';
+import type Database from 'better-sqlite3';
+import { seedState } from '@staystory/market';
 
-let _seeded = false;
+/** The connection already known to be seeded, so the API can call seedDatabase() on every request for the price of one comparison. */
+let seededOn: Database.Database | null = null;
+
+const extra = (o: Record<string, unknown>): string | null => {
+  const clean = Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+  return Object.keys(clean).length ? JSON.stringify(clean) : null;
+};
 
 /** Populate the database with the same fixtures the localStorage store uses. Idempotent: skips if data exists. */
 export function seedDatabase(dataDir?: string): void {
-  if (_seeded) return;
   const d = db(dataDir);
-  const count = (d.prepare('SELECT count(*) as n FROM hotels').get() as { n: number }).n;
-  if (count > 0) { _seeded = true; return; }
-
-  const s = seedState();
-
+  if (seededOn === d) return;
+  // IMMEDIATE so two processes opening a fresh file cannot both seed it.
   d.transaction(() => {
+    const count = (d.prepare('SELECT count(*) as n FROM hotels').get() as { n: number }).n;
+    if (count === 0) insertSeed(d);
+  }).immediate();
+  seededOn = d;
+}
+
+/** Wipe every table and seed again (the reducer's `dev/reset`). */
+export function resetDatabase(): void {
+  const d = db();
+  d.transaction(() => {
+    for (const t of ['visits', 'reel_comments', 'reviews', 'attributions', 'withdrawals', 'ledger', 'bookings', 'gap_nights', 'trips', 'campaign_invites', 'campaigns', 'settlements', 'travelers', 'creators', 'room_types', 'hotels', 'sequences']) d.exec(`DELETE FROM ${t}`);
+    insertSeed(d);
+  }).immediate();
+  seededOn = d;
+}
+
+/** Insert order is the array order of seedState(); assembleState reads tables in rowid order, so the order round-trips. */
+function insertSeed(d: Database.Database): void {
+  const s = seedState();
+  {
     // Hotel
     d.prepare('INSERT INTO hotels (id, name, city, commission_pct, floor_rate, status, sync_mode) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
       s.hotel.id, s.hotel.name, s.hotel.city, s.hotel.commissionPct, s.hotel.floorRate, s.hotel.status, s.hotel.syncMode,
@@ -21,10 +44,10 @@ export function seedDatabase(dataDir?: string): void {
     for (const r of s.hotel.rooms) insRoom.run(r.id, s.hotel.id, r.name, r.count, r.sleeps, r.rackRate, r.meal);
 
     // Creators
-    const insCreator = d.prepare(`INSERT INTO creators (id, handle, name, ini, followers, niche, bio, trips_count, travelers, hue, cover, score, conv, bookings_per_month, ncr, why, top, meta)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-    for (const c of SEED_CREATORS) {
-      insCreator.run(c.id, c.handle, c.name, c.ini, c.followers, c.niche, c.bio, c.tripsCount ?? null, c.travelers ?? null, c.hue, c.cover ?? null, c.score ?? null, c.conv ?? null, c.bookingsPerMonth ?? null, c.ncr ?? null, c.why ?? null, c.top ? 1 : 0, c.meta ?? null);
+    const insCreator = d.prepare(`INSERT INTO creators (id, handle, name, ini, followers, niche, bio, trips_count, travelers, hue, cover, score, conv, bookings_per_month, ncr, why, top, meta, extra)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    for (const c of Object.values(s.creators)) {
+      insCreator.run(c.id, c.handle, c.name, c.ini, c.followers, c.niche, c.bio, c.tripsCount ?? null, c.travelers ?? null, c.hue, c.cover ?? null, c.score ?? null, c.conv ?? null, c.bookingsPerMonth ?? null, c.ncr ?? null, c.why ?? null, c.top ? 1 : 0, c.meta ?? null, extra({ campaignScore: c.campaignScore }));
     }
 
     // Insert placeholder hotels for any campaign that references one not yet in the table
@@ -51,23 +74,23 @@ export function seedDatabase(dataDir?: string): void {
     }
 
     // Trips
-    const insTrip = d.prepare(`INSERT INTO trips (id, creator_id, slug, title, place, days, img, itinerary, stays, pick_stay_id, experiences, creator_saving, saves, travelers_booked, tags, status, reel_url, dm_keyword, published_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    const insTrip = d.prepare(`INSERT INTO trips (id, creator_id, slug, title, place, days, img, itinerary, stays, pick_stay_id, experiences, creator_saving, saves, travelers_booked, tags, status, reel_url, dm_keyword, published_at, extra)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     for (const t of s.trips) {
-      insTrip.run(t.id, t.creatorId, t.slug, t.title, t.place, t.days, t.img, JSON.stringify(t.itinerary), JSON.stringify(t.stays), t.pickStayId, JSON.stringify(t.experiences), t.creatorSaving, t.saves, t.travelersBooked, JSON.stringify(t.tags), t.status, t.reelUrl, t.dmKeyword, t.publishedAt);
+      insTrip.run(t.id, t.creatorId, t.slug, t.title, t.place, t.days, t.img, JSON.stringify(t.itinerary), JSON.stringify(t.stays), t.pickStayId, JSON.stringify(t.experiences), t.creatorSaving, t.saves, t.travelersBooked, JSON.stringify(t.tags), t.status, t.reelUrl, t.dmKeyword, t.publishedAt, extra({ shopTitle: t.shopTitle, stayLine: t.stayLine, savedStatus: t.savedStatus }));
     }
 
     // Bookings
-    const insBooking = d.prepare(`INSERT INTO bookings (id, traveler_id, guest_name, guest_initials, trip_id, creator_id, hotel_id, room_type_id, room_name, stay_id, dates_label, nights, guests, room_value, experiences_value, creator_saving, total, experience_ids, source, status, created_at, gap_night_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    const insBooking = d.prepare(`INSERT INTO bookings (id, traveler_id, guest_name, guest_initials, trip_id, creator_id, hotel_id, room_type_id, room_name, stay_id, dates_label, nights, guests, room_value, experiences_value, creator_saving, total, experience_ids, source, status, created_at, gap_night_id, extra)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     for (const b of s.bookings) {
-      insBooking.run(b.id, b.travelerId, b.guestName, b.guestInitials, b.tripId, b.creatorId, b.hotelId, b.roomTypeId, b.roomName, b.stayId, b.datesLabel, b.nights, b.guests, b.roomValue, b.experiencesValue, b.creatorSaving, b.total, JSON.stringify(b.experienceIds), b.source, b.status, b.createdAt, b.gapNightId ?? null);
+      insBooking.run(b.id, b.travelerId, b.guestName, b.guestInitials, b.tripId, b.creatorId, b.hotelId, b.roomTypeId, b.roomName, b.stayId, b.datesLabel, b.nights, b.guests, b.roomValue, b.experiencesValue, b.creatorSaving, b.total, JSON.stringify(b.experienceIds), b.source, b.status, b.createdAt, b.gapNightId ?? null, extra({ selfBooking: b.selfBooking }));
     }
 
     // Ledger
-    const insLedger = d.prepare('INSERT INTO ledger (id, creator_id, booking_id, label, meta, amount, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    const insLedger = d.prepare('INSERT INTO ledger (id, creator_id, booking_id, label, meta, amount, status, created_at, extra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     for (const l of s.ledger) {
-      insLedger.run(l.id, l.creatorId, l.bookingId ?? null, l.label, l.meta, l.amount, l.status, l.createdAt);
+      insLedger.run(l.id, l.creatorId, l.bookingId ?? null, l.label, l.meta, l.amount, l.status, l.createdAt, extra({ summary: l.summary, ini: l.ini }));
     }
 
     // Travelers
@@ -87,7 +110,10 @@ export function seedDatabase(dataDir?: string): void {
     for (const [name, value] of Object.entries(s.seq)) {
       insSeq.run(name, value);
     }
-  })();
+    // Withdrawals, attributions, reviews, visits, reel comments and gap nights start empty in the seed.
+    for (const v of s.visits ?? []) d.prepare('INSERT INTO visits (trip_id, creator_id, session_id, at) VALUES (?, ?, ?, ?)').run(v.tripId, v.creatorId, v.sessionId, v.at);
+    for (const c of s.reelComments ?? []) d.prepare('INSERT INTO reel_comments (id, trip_id, traveler_id, name, text, at, dm_sent) VALUES (?, ?, ?, ?, ?, ?, ?)').run(c.id, c.tripId, c.travelerId, c.name, c.text, c.at, c.dmSent ? 1 : 0);
+  }
 }
 
 /** CLI entry: `npx tsx packages/server/src/seed-db.ts` */
