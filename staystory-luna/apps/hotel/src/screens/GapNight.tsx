@@ -59,15 +59,16 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
       </Banner>
     )}
     <div className="lu-grid fill">
-      <Widget className="span-3" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+      <Widget className="span-2" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             <Select label="Room type" value={roomType.id}
               onChange={(v) => { const r = s.hotel.rooms.find((x) => x.id === v)!; set({ room: v, rooms: Math.min(gap.rooms, Math.max(1, unsoldRooms(s, v))), rate: Math.min(gap.rate, gapRateMax(r.rackRate)) }); }}
               options={['lake-deluxe', 'courtyard'].map((id) => ({ value: id, label: `${s.hotel.rooms.find((r) => r.id === id)?.name ?? id} · ${unsoldRooms(s, id)} unsold` }))} />
             <Select label="Dates" value={gap.dates} onChange={(v) => set({ dates: v })} options={[{ value: 'wknd', label: 'Sat 19 to Mon 21 Dec' }, { value: 'tonight', label: 'Tonight only' }]} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        </div>
+      </Widget>
+      <Widget className="span-1" title="Rooms and rate" subtitle="What you release">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
               <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--ink-2)' }}>Rooms</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--ink-2)' }}>{unsold} unsold{mine ? ` · ${mine.rooms} released` : ''}</span></span>
               <Stepper value={rooms} min={frozen ? rooms : 1} max={frozen ? rooms : Math.max(1, unsold)} onChange={(v) => set({ rooms: v })} aria-label="Rooms to release" />
@@ -76,23 +77,10 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
               <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--ink-2)' }}>Gap Night rate per night</span><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{formatINR(rate)}</span></span>
               <Stepper value={rate / 100} min={frozen ? rate / 100 : floor / 100} max={frozen ? rate / 100 : gapRateMax(roomType.rackRate) / 100} onChange={(v) => set({ rate: v * 100 })} aria-label="Price in hundreds of rupees" />
             </div>
-          </div>
-          {error && !frozen && <span className="err" role="alert">{error}</span>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span className="eyebrow">Send to travelers who</span>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {AUDIENCE.map((a) => <Chip key={a.key} selected={frozen ? mine!.audience.includes(a.key) : gap.aud[a.key]} disabled={frozen} onClick={() => { const cur = ui.get().gap.aud; set({ aud: { ...cur, [a.key]: !cur[a.key] } }); }}>{a.label}</Chip>)}
-            </div>
-          </div>
-          {blocker && !frozen && !error && <span className="err" role="alert">{blocker}</span>}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--divider)', paddingTop: 16 }}>
-            <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{matches} travelers match · fronted by {fronted} · campaign rate {formatINR(campRate)}</span>
-            <Button variant="primary" size="lg" icon="send" disabled={!canRelease} onClick={() => go('console', 'gapConfirm')}>Release {rooms} room{rooms > 1 ? 's' : ''}</Button>
-          </div>
         </div>
       </Widget>
-      <Widget title="What travelers see" subtitle="WhatsApp alert and offer card" className="span-1">
-        <div style={{ position: 'relative', height: 340, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+      <Widget title="What travelers see" subtitle="WhatsApp alert and offer card" className="span-1 row-2">
+        <div style={{ position: 'relative', height: '100%', minHeight: 200, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           <img src={asset('udaipur')} alt="Lake Pichola at dusk" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', left: 12, right: 12, top: 16, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--glass-card)', backdropFilter: 'blur(var(--blur-chrome))', border: '1px solid var(--glass-edge)', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: '15px', color: 'var(--ink-2)' }}><span style={{ fontWeight: 600 }}>StayStory · Gap Night</span><span>now</span></div>
@@ -100,6 +88,19 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
             <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>Anaya’s pick drops to {formatINR(rate)} a night on the dates you saved.</span>
           </div>
         </div>
+      </Widget>
+      <Widget className="span-2" title="Send to travelers who" subtitle={`${matches} travelers match`}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {AUDIENCE.map((a) => <Chip key={a.key} selected={frozen ? mine!.audience.includes(a.key) : gap.aud[a.key]} disabled={frozen} onClick={() => { const cur = ui.get().gap.aud; set({ aud: { ...cur, [a.key]: !cur[a.key] } }); }}>{a.label}</Chip>)}
+            </div>
+        </div>
+      </Widget>
+      <Widget className="span-1" title="Release" subtitle={`Campaign rate ${formatINR(campRate)}`}>
+        <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{matches} travelers match · fronted by {fronted}</span>
+        {error && !frozen && <span className="err" role="alert">{error}</span>}
+        {blocker && !frozen && !error && <span className="err" role="alert">{blocker}</span>}
+        <Button variant="primary" size="lg" block icon="send" disabled={!canRelease} onClick={() => go('console', 'gapConfirm')}>Release {rooms} room{rooms > 1 ? 's' : ''}</Button>
       </Widget>
     </div>
 
