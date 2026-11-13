@@ -1,13 +1,12 @@
 /**
- * Real photographs with the original illustrations as a safety net.
+ * Real photographs only.
  *
- * Apps ask for `photo('udaipur')`. If /assets/photos/udaipur.jpg is missing or fails, the illustration at
- * /assets/udaipur.jpg is shown instead, so a screen never has a broken image. Each photo's focal point (from
+ * Apps ask for `photo('udaipur')`. Only real photographs ship: if one is missing or fails to load, the image shows as a calm
+ * tinted block (never a broken-image icon and never a stand-in illustration). Each photo's focal point (from
  * /assets/photos/manifest.json) is applied so the subject survives cropping with object-fit: cover, and photos fade in as
  * they load instead of popping.
  */
 const PHOTOS = '/assets/photos/';
-const ILLUSTRATIONS = '/assets/';
 
 export const photo = (name: string) => `${PHOTOS}${name}.jpg`;
 
@@ -41,9 +40,8 @@ export function installPhotos(): void {
   document.addEventListener('error', (e) => {
     const t = e.target;
     if (!(t instanceof HTMLImageElement)) return;
-    const key = keyOf(t.src);
-    if (key && !t.dataset.fallback) { t.dataset.fallback = '1'; t.src = `${ILLUSTRATIONS}${key}.jpg`; }
-    else t.classList.remove('lu-img-loading');
+    t.classList.remove('lu-img-loading');
+    if (keyOf(t.src)) t.classList.add('lu-img-missing');
   }, true);
 
   const scan = (root: ParentNode) => root.querySelectorAll('img').forEach(prepare);

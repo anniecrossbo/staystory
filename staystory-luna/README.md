@@ -29,7 +29,7 @@ Add `?ns=name` to any URL for an isolated copy of the marketplace. The traveler 
 
 ## Photos
 
-The apps show real photographs from `apps/public/assets/photos/` (Unsplash, credits in `CREDITS.md`, focal points in `manifest.json`). If a photo is missing the matching illustration in `apps/public/assets/` shows instead. To swap a photo, replace the file and adjust its `focal` point; hotels and creators will upload their own photos in the real product.
+The apps show real photographs from `apps/public/assets/photos/` (Unsplash, credits in `CREDITS.md`, focal points in `manifest.json`). Only real photographs ship; the original illustrations live in `design/assets` as the design source and are not served. A missing photo shows as a tinted block. A test (`packages/market/test/photos.test.ts`) fails if any image the apps can show has no photo. To swap a photo, replace the file and adjust its `focal` point; hotels and creators will upload their own photos in the real product.
 
 ## Tests
 

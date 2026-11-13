@@ -82,3 +82,4 @@ button { -webkit-user-select: none; user-select: none; }
 /* ----- Photographs fade in as they arrive (see photos.ts) ----- */
 img[src^='/assets/'] { transition: opacity 420ms var(--ease-out); }
 img.lu-img-loading { opacity: 0; }
+img.lu-img-missing { background: var(--surface-tint); color: transparent; }
