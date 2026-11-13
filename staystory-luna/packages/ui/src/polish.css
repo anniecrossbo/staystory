@@ -1,0 +1,80 @@
+/*
+ * The feel of the apps: motion, press and focus feedback, depth.
+ * Nothing in this file changes the size or position of anything at rest, so the layouts still match the Luna designs.
+ * Everything animated is turned off under prefers-reduced-motion (Luna's bundle already shortens all durations to ~0).
+ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --press-scale: 0.97;
+}
+html { -webkit-tap-highlight-color: transparent; text-rendering: optimizeLegibility; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+::selection { background: var(--primary-tint-strong); }
+button, [role='button'], a, summary { touch-action: manipulation; }
+button { -webkit-user-select: none; user-select: none; }
+
+/* ----- Press feedback: controls dip under a finger and spring back ----- */
+/* :root raises specificity: Luna's stylesheet loads after this one and sets its own transitions on these controls */
+:root .lu-btn, :root .lu-iconbtn, :root .lu-chip, :root .lu-seg button, :root .lu-tab, :root .link-btn, :root .pick-card, :root .stay-card, :root .trip-card, :root .reel, :root .table-row {
+  transition-property: transform, background, background-color, border-color, box-shadow, color, opacity;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
+}
+.lu-btn:active:not(:disabled), .lu-iconbtn:active:not(:disabled), .lu-chip:active, .lu-seg button:active, .lu-tab:active,
+.pick-card:active, .stay-card:active, .trip-card:active, .reel:active, .link-btn:active { transform: scale(var(--press-scale)); transition-duration: 90ms; }
+.lu-btn:disabled, .lu-iconbtn:disabled { cursor: not-allowed; }
+
+/* ----- Hover depth, only on devices that hover ----- */
+@media (hover: hover) {
+  .trip-card:hover, .stay-card:hover, .pick-card:hover:not([aria-pressed='true']) { box-shadow: var(--shadow-lift); }
+  .lu-btn-primary:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(15, 85, 99, 0.28); }
+}
+
+/* ----- Focus: one visible ring everywhere, for keyboard use only ----- */
+:where(button, a, [role='button'], [tabindex]):focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+:where(button, a, [role='button'], [tabindex]):focus:not(:focus-visible) { outline: none; }
+.lu-input-wrap:focus-within { box-shadow: 0 0 0 3px var(--primary-ring); }
+
+/* ----- Entrance: content rises into place, a few milliseconds apart ----- */
+@keyframes lu-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes lu-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lu-pop { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes lu-slide-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes lu-slide-left { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes lu-toast-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* backwards fill: the transform is gone once settled, so nothing is left offset or trapping fixed children */
+.scroll > *, .page > :not(.overlay):not(.dock-wrap):not(.toaster):not(.dock-bar),
+.campaign-body main > *, .campaign-body aside > *, .onboard main > * {
+  animation: lu-rise 420ms var(--ease-out) backwards;
+}
+.scroll > :nth-child(2), .page > :nth-child(2), .campaign-body main > :nth-child(2) { animation-delay: 40ms; }
+.scroll > :nth-child(3), .page > :nth-child(3), .campaign-body main > :nth-child(3) { animation-delay: 80ms; }
+.scroll > :nth-child(4), .page > :nth-child(4), .campaign-body main > :nth-child(4) { animation-delay: 120ms; }
+.scroll > :nth-child(5), .page > :nth-child(5), .campaign-body main > :nth-child(5) { animation-delay: 160ms; }
+.scroll > :nth-child(n + 6), .page > :nth-child(n + 6), .campaign-body main > :nth-child(n + 6) { animation-delay: 200ms; }
+
+/* ----- Overlays: scrim fades, sheets travel, dialogs pop ----- */
+.overlay, .lu-scrim { animation: lu-fade 220ms var(--ease-out) both; }
+.lu-modal { animation: lu-pop 280ms var(--ease-sheet) both; }
+.sheet-wrap .lu-modal, .lu-bsheet { animation: lu-slide-up 380ms var(--ease-sheet) both; }
+.lu-sheet { animation: lu-slide-left 360ms var(--ease-sheet) both; }
+.lu-toast { animation: lu-toast-in 340ms var(--ease-sheet) both; }
+
+/* ----- Scrolling: contained, smooth, and the phone frames lose the desktop scrollbar ----- */
+.scroll { overscroll-behavior: contain; scroll-behavior: smooth; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ----- Moving between screens: a short cross-fade, with the bars staying put ----- */
+@media (prefers-reduced-motion: no-preference) {
+  .dock-bar, .dock-wrap { view-transition-name: dock; }
+  .cta-bar, .footer-bar { view-transition-name: action-bar; }
+  ::view-transition-old(root) { animation: lu-fade 140ms var(--ease-out) reverse both; }
+  ::view-transition-new(root) { animation: lu-rise 300ms var(--ease-out) both; }
+  ::view-transition-group(dock), ::view-transition-group(action-bar) { animation-duration: 240ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

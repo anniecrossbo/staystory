@@ -72,7 +72,8 @@ window.__sweep = { done: false, rows: [] };
     const fd = mk(`/viewer/?file=${it.file}&screen=${it.screen}`, it.w, it.h), fa = mk(it.app, it.w, it.h);
     try {
       await Promise.all([loaded(fd), loaded(fa)]);
-      if (HIDE) { const st = fa.contentDocument.createElement('style'); st.textContent = `${HIDE}{display:none !important}`; fa.contentDocument.head.appendChild(st); await new Promise((r) => setTimeout(r, 200)); }
+      // Measure the settled layout: animations off (a hidden tab never finishes them), and optionally hide intentional additions.
+      { const st = fa.contentDocument.createElement('style'); st.textContent = `*,*::before,*::after{animation:none!important;transition:none!important}${HIDE ? `${HIDE}{display:none !important}` : ''}`; fa.contentDocument.head.appendChild(st); await new Promise((r) => setTimeout(r, 200)); }
       const A = await geom(fd, '#design-root'); const B = await geom(fa, it.w > 600 ? '#root' : '.phone, #root');
       const r = diff(A, B); window.__sweep.rows.push({ key: it.key, designText: A.text.length, appText: B.text.length, ...r });
     } catch (e) { window.__sweep.rows.push({ key: it.key, error: String(e) }); }

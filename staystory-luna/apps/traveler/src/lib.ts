@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { withViewTransition } from '@staystory/ui';
 import type { MTrip } from '@staystory/market';
 
 export const asset = (n: string) => `/assets/${n}.jpg`;
@@ -29,7 +30,7 @@ export function hashFor(flow: string, screen = '', params: Record<string, string
 }
 export const go: Go = (flow, screen, params) => { window.location.hash = hashFor(flow, screen, params); };
 
-const subscribe = (cb: () => void) => { window.addEventListener('hashchange', cb); return () => window.removeEventListener('hashchange', cb); };
+const subscribe = (cb: () => void) => { const on = () => withViewTransition(cb); window.addEventListener('hashchange', on); return () => window.removeEventListener('hashchange', on); };
 const snap = () => window.location.hash;
 /** The current hash route; re-renders on every hash change. */
 export function useRoute(): Route {

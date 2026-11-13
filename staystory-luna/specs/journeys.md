@@ -51,3 +51,9 @@ The original designs are the source of truth. `/viewer/?file=LunaHotel&screen=ga
 - `packages/market` is shared: additive changes only (new fields, actions, selectors, seed rows), re-read the file right before editing, keep `npx vitest run --root packages/market` green, and say what you changed in your report. Do not change existing behaviour another app relies on.
 - Use your own browser tab (create one) and your own `?ns=` on every URL. Do not start or stop the dev server (already running on 5173). Reset your viewport to desktop when done.
 - Typecheck (`npx tsc --noEmit -p apps/<app>`) and `npx vitest run --root packages/core` must pass before you finish.
+
+## The feel layer
+
+`packages/ui/src/polish.css` holds the motion and feedback shared by all three apps: press dip and hover depth on controls, one keyboard focus ring, content rising into place, dialogs that pop, sheets that travel, toasts that slide in, and a short cross-fade between screens (`withViewTransition`, with the dock and action bars held still). Everything is switched off under `prefers-reduced-motion`.
+
+The rule for changing it: nothing may change the size or position of anything at rest, so the layouts keep matching the designs. The sweep and compare pages switch animations off in the app frame before measuring, because a hidden tab never finishes them. After any change to this file, re-run all three sweeps and expect the same counts as before.
