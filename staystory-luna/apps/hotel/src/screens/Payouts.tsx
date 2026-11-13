@@ -17,12 +17,12 @@ export function Payouts() {
     toast(`GST invoice for ${st.period} downloaded`);
   };
   return (<>
-    <div className="stat-grid w220">
-      <StatTile label="Next settlement · Mon 16" value={formatINR(f.next)} />
-      <StatTile label={`Commission this ${rangeInfo(range).label.toLowerCase()}`} value={formatINR(f.commission)} />
-      <StatTile label="Waived on cancellations" value={formatINR(f.waived)} />
+    <div className="lu-grid">
+      <div className="span-1"><StatTile label="Next settlement · Mon 16" value={formatINR(f.next)} /></div>
+      <div className="span-1"><StatTile label={`Commission this ${rangeInfo(range).label.toLowerCase()}`} value={formatINR(f.commission)} /></div>
+      <div className="span-1"><StatTile label="Waived on cancellations" value={formatINR(f.waived)} /></div>
     </div>
-    <Widget title="Weekly statements" subtitle="Each comes with a GST invoice">
+    <div className="lu-grid"><Widget className="span-full" title="Weekly statements" subtitle="Each comes with a GST invoice">
       <div style={{ overflowX: 'auto' }}>
         <Activatable selector="tbody tr" onActivate={download} label={(i) => `Download GST invoice for ${rows[i]?.period ?? 'statement'}`}>
           <DataTable columns={[{ key: 'period', label: 'Period' }, { key: 'stays', label: 'Stays', align: 'right' }, { key: 'gross', label: 'Gross', align: 'right' }, { key: 'comm', label: 'Commission', align: 'right' }, { key: 'net', label: 'Settled', align: 'right' }]}
@@ -30,6 +30,6 @@ export function Payouts() {
         </Activatable>
       </div>
       <span className="caption" style={{ display: 'block', paddingTop: 8 }}>Select a statement to download its GST invoice.</span>
-    </Widget>
+    </Widget></div>
   </>);
 }

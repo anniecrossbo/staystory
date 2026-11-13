@@ -1,7 +1,7 @@
 import { formatINR } from '@staystory/core';
 import { photo } from '@staystory/ui/src/photos';
 import type { MStay, MarketState } from '@staystory/market';
-import { acceptedOffers } from '@staystory/market';
+import { acceptedOffers, compactCount, SEED_REELS } from '@staystory/market';
 
 export const asset = (n: string) => photo(n);
 export const CREATOR_ID = 'anaya';
@@ -32,10 +32,9 @@ const generic = (place: string): Day[] => {
 };
 
 export interface Dest { place: string; region: string; views: string; img: string; days: Day[]; details: Record<DetailKey, string>; tags: string[]; extras: MStay[]; suggest: { name: string; kind: string }[] }
-const DEST_ROWS: [string, string, string, string][] = [
-  ['Udaipur', 'Rajasthan', '1.2M', 'udaipur'], ['Coorg', 'Karnataka', '640K', 'coorg'], ['Jodhpur', 'Rajasthan', '310K', 'jodhpur'],
-  ['Pushkar', 'Rajasthan', '220K', 'pushkar'], ['Hampi', 'Karnataka', '180K', 'hampi'], ['Gokarna', 'Karnataka', '96K', 'gokarna'],
-];
+/** The reel grid reads its view counts from the one reel catalog (SEED_REELS in @staystory/market). */
+const REGION_OF: Record<string, string> = { udaipur: 'Rajasthan', coorg: 'Karnataka', jodhpur: 'Rajasthan', pushkar: 'Rajasthan', hampi: 'Karnataka', gokarna: 'Karnataka' };
+const DEST_ROWS: [string, string, string, string][] = SEED_REELS.filter((r) => r.creatorId === CREATOR_ID).map((r) => [r.place, REGION_OF[r.id] ?? '', compactCount(r.views), r.img]);
 const stay = (id: string, hotelId: string, name: string, tier: MStay['tier'], nightly: number, img: string, pct: number): MStay => ({ id, hotelId, roomTypeId: 'std', name, tier, desc: `${name}, partner stay`, nightly, img, commissionPct: pct });
 const extrasFor = (place: string, img: string): MStay[] => {
   const k = place.toLowerCase();

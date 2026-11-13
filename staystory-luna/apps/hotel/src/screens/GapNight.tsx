@@ -58,8 +58,8 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
         Sent to {g.sentTo} travelers who saved Anaya’s trip. {g.booked > 0 ? `${g.booked} room${g.booked > 1 ? 's' : ''} booked so far.` : 'No rooms booked yet.'}
       </Banner>
     )}
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
-      <Widget title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`} style={{ flex: '2 1 520px', minWidth: 0 }}>
+    <div className="lu-grid">
+      <Widget className="span-3" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
             <Select label="Room type" value={roomType.id}
@@ -91,7 +91,7 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
           </div>
         </div>
       </Widget>
-      <Widget title="What travelers see" subtitle="WhatsApp alert and offer card" style={{ flex: '1 1 300px', minWidth: 0 }}>
+      <Widget title="What travelers see" subtitle="WhatsApp alert and offer card" className="span-1">
         <div style={{ position: 'relative', height: 340, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           <img src={asset('udaipur')} alt="Lake Pichola at dusk" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', left: 12, right: 12, top: 16, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--glass-card)', backdropFilter: 'blur(var(--blur-chrome))', border: '1px solid var(--glass-edge)', display: 'flex', flexDirection: 'column', gap: 4 }}>

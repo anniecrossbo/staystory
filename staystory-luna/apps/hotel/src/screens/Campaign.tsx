@@ -101,7 +101,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
   ];
 
   return (
-    <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--canvas)', fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums', padding: '20px clamp(16px, 3.4vw, 48px) 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="lu-page campaign-page" style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
       <div className="page-head">
         <IconButton icon="arrow_back" label="Back to console" variant="white" onClick={() => go('console', 'overview')} />
         <div className="ph-title">
@@ -115,8 +115,8 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
-        <main style={{ flex: '999 1 600px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="lu-grid" style={{ alignItems: 'start' }}>
+        <main className="span-3 col-stack">
           {screen === 'offer' && (<>
             <Widget title="The offer">
               <div className="form-grid">
@@ -182,7 +182,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
           )}
 
           {screen === 'review' && (<>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+            <div className="review-grid">
               {review.map((r) => (
                 <Widget key={r.k} title={r.k}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -218,7 +218,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
           </div>
         </main>
 
-        <aside style={{ flex: '1 1 340px', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <aside className="span-1 col-stack">
           <Widget title="What creators see" subtitle="Private offer in their StayStory app">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <img src={asset('haveli')} alt="" style={{ width: '100%', height: 160, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />

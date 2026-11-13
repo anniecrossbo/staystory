@@ -23,14 +23,14 @@ export function Console({ screen, go }: { screen: string; go: Go }) {
   const view = VIEW_OF[screen]!;
   const toScreen = (id: string) => go('console', id);
   return (
-    <div className="page">
+    <div className="page lu-page">
       <ChromeTopBar go={go} />
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="page-title-row">
+        <div className="titles">
           <span className="eyebrow">StayStory for hotels · {s.hotel.name}, {s.hotel.city}</span>
           <span className="h1">{HEAD[view]}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
+        <div className="controls">
           <SegmentedControl size="sm" aria-label="Date range" value={range} onChange={(v) => ui.set({ range: v as Range })}
             options={RANGES.map(({ value, label }) => ({ value, label }))} />
           <Button variant="primary" icon="add" onClick={() => go('campaign', 'offer')}>Create campaign</Button>

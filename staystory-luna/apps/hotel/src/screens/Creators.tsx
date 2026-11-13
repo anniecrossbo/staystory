@@ -33,7 +33,7 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
   return (<>
     {screen === 'invited' && banner && <Banner tone="success" icon="send" title={`Invite sent to ${banner.handle}`}>They usually reply within a day. You'll see it in Needs your decision.</Banner>}
     <span className="body">Matched on destination, audience cities, budget and booking performance.</span>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+    <div className="lu-grid">
       {creators.map((m) => {
         const st = status(m.id);
         const btn = !st
@@ -43,8 +43,8 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
           : st === 'countered' ? { variant: 'primary' as const, icon: 'forum', label: 'Countered, review offer', disabled: false, onClick: () => go('console', 'overview') }
           : { variant: 'secondary' as const, icon: 'block', label: 'Declined this campaign', disabled: true, onClick: () => {} };
         return (
-          <div key={m.id} id={`creator-${m.id}`} className={focusCreator === m.id ? 'hl' : undefined} style={{ minWidth: 0 }}>
-            <Widget title={m.handle} subtitle={`${m.followers} followers · ${m.score} match`}>
+          <div key={m.id} id={`creator-${m.id}`} className={`span-1${focusCreator === m.id ? ' hl' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
+            <Widget style={{ flex: 1 }} title={m.handle} subtitle={`${m.followers} followers · ${m.score} match`}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <img src={asset(m.cover)} alt="" style={{ width: '100%', height: 96, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue={m.hue}>{m.niche}</Tag>{m.top && <Badge tone="vip" icon="star">Top converter</Badge>}</div>

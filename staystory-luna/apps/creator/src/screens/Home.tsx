@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { formatINR, withdrawal } from '@staystory/core';
+import { formatINR, matchesKeyword, withdrawal } from '@staystory/core';
 import {
-  availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
-  market, useMarket, type LedgerFilter, type OfferView, type RangeKey,
+  availableShare, compactCount, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
+  market, reelCaption, reelComments, reelInsights, reelRows, useMarket, type LedgerFilter, type OfferView, type RangeKey,
 } from '@staystory/market';
 import {
   AIAction, AISummary, Avatar, Badge, Banner, Button, Checkbox, Dock, EmptyState, FilterPill, Icon, IconButton, LineChart,
@@ -14,10 +14,10 @@ import { useUi } from '../store';
 import { payoutErrors } from './Onboard';
 import { CloseFooter, Sheet, travelerHref, tripUrl, useCopy } from '../ui';
 
-export const HOME_SCREENS = ['insights', 'empty', 'trip', 'earnings', 'withdrawn', 'offers', 'offerDetail', 'counter', 'accepted', 'profile'];
-const TAB_OF: Record<string, string> = { insights: 'insights', empty: 'insights', trip: 'insights', earnings: 'earnings', withdrawn: 'earnings', offers: 'offers', offerDetail: 'offers', counter: 'offers', accepted: 'offers', profile: 'profile' };
-const BACK: Record<string, string> = { trip: 'insights', offerDetail: 'offers', counter: 'offerDetail', accepted: 'offers' };
-const SUB = ['trip', 'offerDetail', 'counter', 'accepted'];
+export const HOME_SCREENS = ['insights', 'empty', 'trip', 'reel', 'earnings', 'withdrawn', 'offers', 'offerDetail', 'counter', 'accepted', 'profile'];
+const TAB_OF: Record<string, string> = { insights: 'insights', empty: 'insights', trip: 'insights', reel: 'insights', earnings: 'earnings', withdrawn: 'earnings', offers: 'offers', offerDetail: 'offers', counter: 'offers', accepted: 'offers', profile: 'profile' };
+const BACK: Record<string, string> = { trip: 'insights', reel: 'insights', offerDetail: 'offers', counter: 'offerDetail', accepted: 'offers' };
+const SUB = ['trip', 'reel', 'offerDetail', 'counter', 'accepted'];
 const NOTE: Record<string, string> = { 'winter-pichola': 'My Udaipur audience books for Christmas week. Could we run this through January?' };
 const DOCK = [{ id: 'insights', icon: 'insights', label: 'Insights' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
 const shortDate = (iso: string) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
@@ -39,6 +39,8 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const [sheet, setSheet] = useState<null | 'notifications' | 'decline' | 'withdraw' | 'handle' | 'channels' | 'payout' | 'tax'>(null);
   const [counter, setCounter] = useState<{ id: string; pct: number; extras: boolean[]; message: string; tried: boolean } | null>(null);
   const copy = useCopy();
+  const reelId = (reelRows(s, CREATOR_ID).find((r) => r.id === q.get('r')) ?? reelRows(s, CREATOR_ID)[0])?.id;
+  const reelView = reelId ? reelInsights(s, reelId) : undefined;
 
   // Deep links to a resulting state show that state.
   useEffect(() => {
@@ -57,6 +59,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const unread = notes.filter((n) => !ui.read.includes(n.id));
   const HEAD: Record<string, [string, string]> = {
     insights: [creatorHandle, 'Insights'], empty: ['Welcome, Anaya', 'Insights'], trip: [tripUrl(profile.handle, trip?.slug ?? ''), trip?.title ?? 'Trip'],
+    reel: [reelView ? `Posted ${reelView.reel.postedLabel}` : creatorHandle, reelView ? `${reelView.reel.place} reel` : 'Reel'],
     earnings: [creatorHandle, 'Earnings'], withdrawn: [creatorHandle, 'Earnings'], offers: [newCount ? `${newCount} new this week` : 'No new offers', 'Hotel offers'],
     offerDetail: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], counter: [offer?.hotelName ?? '', 'Counter offer'], accepted: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], profile: ['Anaya Rao', 'Profile'],
   };
@@ -95,7 +98,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   return (<>
     <div className="scroll">
       <div className="head">
-        {sub ? <IconButton icon="arrow_back" label="Back" variant="white" onClick={() => to(BACK[screen]!, offer && screen !== 'trip' ? { o: offer.campaign.id } : undefined)} /> : <Avatar initials="AR" size={40} tone="solid" name="Anaya Rao" />}
+        {sub ? <IconButton icon="arrow_back" label="Back" variant="white" onClick={() => to(BACK[screen]!, offer && screen !== 'trip' && screen !== 'reel' ? { o: offer.campaign.id } : undefined)} /> : <Avatar initials="AR" size={40} tone="solid" name="Anaya Rao" />}
         <div className="ttl">
           <span className="meta">{screen === 'trip' && trip ? <a className="plain" href={travelerHref(trip.slug)} target="_blank" rel="noreferrer" title="Open the follower page">{HEAD.trip![0]}</a> : HEAD[screen]![0]}</span>
           <span className="h-title">{HEAD[screen]![1]}</span>
@@ -109,6 +112,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
       {screen === 'insights' && (myTrips.length ? <Insights go={go} /> : <Empty onNew={() => { ui.startNewTrip(); go('create', 'pick'); }} />)}
       {screen === 'empty' && <Empty onNew={() => { ui.startNewTrip(); go('create', 'pick'); }} />}
       {screen === 'trip' && <TripScreen go={go} />}
+      {screen === 'reel' && <ReelScreen go={go} reelId={reelId} />}
       {(screen === 'earnings' || screen === 'withdrawn') && <Earnings screen={screen} payout={payoutLabel} onWithdraw={() => setSheet('withdraw')} />}
       {screen === 'offers' && <Offers views={views} to={to} />}
       {(screen === 'offerDetail' || screen === 'accepted') && (offer ? <OfferDetail v={offer} accepted={offer.status === 'accepted'} /> : <NoOffer to={to} />)}
@@ -134,7 +138,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
     {ctaOffer}
     {screen === 'counter' && offer && <div className="glass-bar"><div className="grow1"><Button variant="primary" size="lg" block icon="send" onClick={sendCounter}>Send counter</Button></div></div>}
 
-    {(!sub || screen === 'trip') && (
+    {(!sub || screen === 'trip' || screen === 'reel') && (
       <div className="dock-bar"><Dock aria-label="Creator navigation" active={TAB_OF[screen]} orb={false} onSelect={(id) => to(id)} items={DOCK} /></div>
     )}
 
@@ -171,6 +175,7 @@ function Insights({ go }: { go: Go }) {
   const copy = useCopy();
   const m = creatorInsights(s, CREATOR_ID, range);
   const links = s.trips.filter((t) => t.creatorId === CREATOR_ID);
+  const rows = reelRows(s, CREATOR_ID);
   return (<>
     <SegmentedControl size="sm" aria-label="Date range" value={range} onChange={(v) => setRange(v as RangeKey)}
       options={[{ value: '7', label: '7 days' }, { value: '30', label: '30 days' }, { value: '90', label: '90 days' }]} />
@@ -187,6 +192,17 @@ function Insights({ go }: { go: Go }) {
     <AISummary label="AI summary" title="Udaipur is doing the work"
       bullets={['Udaipur drives 61% of bookings at a 0.42% conversion', 'Followers often switch to the budget stay; keep it listed', 'Coorg visits are up 38% since the monsoon reel']}
       next="Pin the Udaipur link in your bio before the December long weekend." />
+    <Widget title="Reel performance" subtitle="Since posted · from your Instagram">
+      <div className="stack">
+        {rows.map((r) => (
+          <button key={r.id} className="link-row reel-row" onClick={() => go('app', 'reel', { r: r.id })} aria-label={`${r.place} reel, ${reelCaption(r)}${r.hasTrip ? `, ${formatINR(r.commission)} earned` : ', no trip yet'}`}>
+            <img src={asset(r.img)} alt="" className="reel-thumb" />
+            <span className="col1"><span className="t-s">{r.place}</span><span className="t-cap">{reelCaption(r)}</span></span>
+            <span className="reel-end">{r.hasTrip ? <span className="t-s" style={{ color: 'var(--success-ink)' }}>{formatINR(r.commission)}</span> : <Tag hue="ochre">No trip yet</Tag>}{r.topEarner && <Badge tone="success" icon="trending_up">Top earner</Badge>}</span>
+          </button>
+        ))}
+      </div>
+    </Widget>
     <Widget title="Your trip links" count={links.length}>
       <div className="stack">
         {links.map((t) => { const st = tripStats(s, t.id)!; return (
@@ -254,6 +270,86 @@ function TripScreen({ go }: { go: Go }) {
       <Button variant="secondary" icon="edit" onClick={() => { ui.startEdit(trip); go('create', 'days'); }}>Edit trip</Button>
       <Button variant="tertiary" icon={paused ? 'play_arrow' : 'pause'} onClick={() => { market.dispatch({ type: 'trip/status', tripId: trip.id, status: paused ? 'live' : 'paused' }); ui.flash(paused ? 'Link live again' : 'Link paused'); }}>{paused ? 'Resume link' : 'Pause link'}</Button>
     </div>
+  </>);
+}
+
+const KW_KEY = (tripId: string) => `staystory.creator.kw:${new URLSearchParams(window.location.search).get('ns') ?? ''}:${tripId}`;
+const lastKeyword = (tripId: string): string | undefined => { try { return localStorage.getItem(KW_KEY(tripId)) || undefined; } catch { return undefined; } };
+const rememberKeyword = (tripId: string, kw: string) => { try { localStorage.setItem(KW_KEY(tripId), kw); } catch { /* private mode */ } };
+
+function ReelScreen({ go, reelId }: { go: Go; reelId?: string }) {
+  const s = useMarket();
+  const ui = useUi();
+  const i = reelId ? reelInsights(s, reelId) : undefined;
+  const trip = i?.trip;
+  const [kw, setKw] = useState(trip?.dmKeyword ?? '');
+  useEffect(() => { setKw(trip?.dmKeyword || lastKeyword(trip?.id ?? '') || 'link'); }, [trip?.id, trip?.dmKeyword]);
+  if (!i) return <EmptyState icon="movie" title="No reels yet" action={<Button variant="secondary" onClick={() => go('app', 'insights')}>Back to Insights</Button>}>Reels from your Instagram show up here.</EmptyState>;
+  const { reel } = i;
+  const on = !!trip?.dmKeyword;
+  const comments = trip ? reelComments(s, trip.id) : [];
+  const saveKeyword = (enabled: boolean, raw: string) => {
+    if (!trip) return;
+    const clean = raw.replace(/\s/g, '').toLowerCase() || trip.dmKeyword || lastKeyword(trip.id) || 'link';
+    const next = enabled ? clean : '';
+    if (enabled) rememberKeyword(trip.id, clean);
+    setKw(clean);
+    if (trip.dmKeyword !== next) { market.dispatch({ type: 'trip/publish', trip: { ...trip, dmKeyword: next } }); ui.flash(enabled ? (trip.dmKeyword ? 'Keyword saved' : 'Auto-DM on') : 'Auto-DM off'); }
+  };
+  const turnIntoTrip = () => { ui.startNewTrip({ place: reel.place }); ui.setDraft({ analyzed: -1 }); go('create', 'pick'); };
+  return (<>
+    <div className="reel-hero">
+      <img src={asset(reel.img)} alt={`${reel.place} reel`} />
+      <span className="reel-play" aria-hidden="true"><Icon name="play_arrow" size={28} fill /></span>
+    </div>
+    <Button variant="secondary" block icon="open_in_new" onClick={() => { window.open(`https://${reel.url}`, '_blank', 'noopener'); ui.flash('Opening the reel on Instagram'); }}>Open on Instagram</Button>
+    <div className="tiles">
+      <StatTile label="Views" value={compactCount(i.views)} /><StatTile label="Comments" value={compactCount(i.comments)} />
+      <StatTile label="DMs sent" value={countLabel(i.dms)} /><StatTile label="Commission" value={formatINR(i.commission)} />
+    </div>
+    {trip ? (<>
+      <Widget title="From reel to booking" subtitle="Since posted">
+        <div className="stack gap12">
+          {i.funnel.map((f) => (
+            <div key={f.label} className="stack gap4">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }} className="t-b"><span style={{ color: 'var(--ink-2)' }}>{f.label}</span><span style={{ fontWeight: 600 }}>{f.label === 'Views' ? compactCount(f.value) : countLabel(f.value)}</span></div>
+              <ProgressBar value={f.w} aria-label={f.label} />
+            </div>
+          ))}
+          <div className="t-cap">{i.openRate} of viewers opened the trip.</div>
+        </div>
+      </Widget>
+      <Widget title="Auto-DM" subtitle={on ? `Answers “${trip.dmKeyword}” comments` : 'Off. Keyword comments get no DM'}>
+        <div className="stack gap12">
+          <span className="t-b">{countLabel(i.dms)} of {countLabel(i.keywordComments)} keyword comments were answered with a DM.</span>
+          <Toggle checked={on} onChange={(v) => saveKeyword(v, kw)} label={on ? 'Auto-DM is on' : 'Auto-DM is off'} />
+          <TextField label="Change keyword" value={kw} disabled={!on} hint="Anyone who comments this on your reel gets the trip in their DMs"
+            onChange={(e) => setKw(e.target.value.replace(/\s/g, '').toLowerCase())} onBlur={() => saveKeyword(on, kw)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { saveKeyword(on, kw); (e.target as HTMLElement).blur(); } }} />
+        </div>
+      </Widget>
+      <Widget title="Recent comments" count={comments.length || undefined}>
+        {comments.length ? (
+          <div className="stack">
+            {comments.slice(0, 8).map((c) => {
+              const hit = matchesKeyword(c.text, trip.dmKeyword);
+              return (
+                <div key={c.id} className="line" style={{ minHeight: 52, padding: '8px 0', alignItems: 'flex-start' }}>
+                  <Avatar initials={c.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()} size={34} tone="muted" />
+                  <span className="col1"><span className="t-s">{c.name}</span><span className="t-cap" style={{ overflowWrap: 'anywhere' }}>{c.text}</span></span>
+                  {c.dmSent ? <Badge tone="success">DM sent</Badge> : hit ? <Badge tone="neutral">Already DMed</Badge> : <Badge tone="neutral">No keyword</Badge>}
+                </div>);
+            })}
+          </div>
+        ) : <EmptyState icon="chat_bubble" title="No comments yet">Comments on this reel show up here.</EmptyState>}
+      </Widget>
+      <div className="row8">
+        <Button variant="secondary" icon="insights" onClick={() => go('app', 'trip', { t: trip.id })}>View trip performance</Button>
+        <Button variant="tertiary" icon="edit" onClick={() => { ui.startEdit(trip); go('create', 'days'); }}>Edit trip</Button>
+      </div>
+    </>) : (
+      <EmptyState icon="movie" title="No trip from this reel yet" action={<Button variant="primary" icon="add" onClick={turnIntoTrip}>Turn this reel into a trip</Button>}>Followers who watch it have nowhere to book. Turn it into a trip in a few minutes.</EmptyState>
+    )}
   </>);
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { creatorCommission, formatINR } from '@staystory/core';
-import { AISummary, Avatar, Badge, Banner, Button, Chip, EmptyState, FilterPill, Modal, SearchField, SideSheet, StatTile, Tag, TextField, Widget } from '@staystory/ui';
+import { AISummary, Avatar, Badge, Banner, Button, Chip, EmptyState, FilterPill, Modal, SearchField, StatTile, Tag, TextField, Widget } from '@staystory/ui';
 import { hotelBookings, hotelCommissionPct, market, useMarket, type MBooking, type MarketState } from '@staystory/market';
 import { Overlay } from '../components';
 import type { Go } from '../actions';
@@ -36,15 +36,16 @@ export function Bookings({ screen, go }: { screen: string; go: Go }) {
   const clear = () => { setSearch(''); ui.set({ bookingFilter: 'All' }); if (screen !== 'bookings') go('console', 'bookings'); };
 
   return (<>
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+    <div className="filters-row">
       {FILTERS.map((f) => <FilterPill key={f} selected={bookingFilter === f} count={count(f)} onClick={() => { ui.set({ bookingFilter: f }); if (screen !== 'bookings') go('console', 'bookings'); }}>{f}</FilterPill>)}
-      <span style={{ flex: 1 }} />
-      <div style={{ width: 280 }}>
+      <span className="grow" />
+      <div className="search-w">
         <SearchField placeholder="Search guest or booking" aria-label="Search guest or booking" value={search} onChange={(e) => { setSearch(e.target.value); if (screen === 'bookingsEmpty') go('console', 'bookings'); }} />
       </div>
     </div>
+    <div className="lu-grid">
     {rows.length > 0 ? (
-      <Widget title="Attributed bookings" count={rows.length}>
+      <Widget className="span-full" title="Attributed bookings" count={rows.length}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {rows.map((b) => (
             <button key={b.id} className={`table-row${detail?.id === b.id ? ' on' : ''}`} aria-label={`Open booking ${b.id} for ${b.guestName}`} onClick={() => go('console', bookingLink(b.id))}>
@@ -60,12 +61,13 @@ export function Bookings({ screen, go }: { screen: string; go: Go }) {
         </div>
       </Widget>
     ) : (
-      <Widget title="Attributed bookings" count={0}>
+      <Widget className="span-full" title="Attributed bookings" count={0}>
         <div style={{ padding: '48px 0' }}>
           <EmptyState icon="event_busy" title={`No bookings match “${search || bookingFilter}”`} action={<Button variant="secondary" icon="close" onClick={clear}>Clear search and filters</Button>}>Check the spelling, or search by booking number such as SS-UDR-48213.</EmptyState>
         </div>
       </Widget>
     )}
+    </div>
 
     {detail && <Detail b={detail} s={s} onClose={close} onVoucher={() => setVoucher(true)} onMessage={() => setCompose(true)} />}
     {detail && compose && <Composer b={detail} onClose={() => setCompose(false)} />}
@@ -87,8 +89,14 @@ function Detail({ b, s, onClose, onVoucher, onMessage }: { b: MBooking; s: Marke
     toast(b.selfBooking ? 'Check-out confirmed. No creator commission on this booking' : `Check-out confirmed. ${formatINR(creatorCommission(b.total))} is now available to ${handle}`);
   };
   return (
-    <Overlay side="right" label={`Booking ${b.id}`} onClose={onClose}>
-      <SideSheet title={`${b.guestName} · ${b.guests} guest${b.guests > 1 ? 's' : ''}`} subtitle={`${b.id} · ${b.selfBooking ? 'booked by' : 'via'} ${handle}`} onClose={onClose}>
+    <Overlay side="center" wide label={`Booking ${b.id}`} onClose={onClose}>
+      <Modal title={`${b.guestName} · ${b.guests} guest${b.guests > 1 ? 's' : ''}`} subtitle={`${b.id} · ${b.selfBooking ? 'booked by' : 'via'} ${handle}`} layout="dialog" onClose={onClose}
+        footer={<>
+          <Button variant="tertiary" icon="receipt_long" onClick={onVoucher}>Voucher</Button>
+          <Button variant={b.status === 'upcoming' || b.status === 'in_house' ? 'secondary' : 'primary'} icon="mail" onClick={onMessage}>Message guest</Button>
+          {b.status === 'upcoming' && <Button variant="primary" icon="login" onClick={checkIn}>Mark checked in</Button>}
+          {b.status === 'in_house' && <Button variant="primary" icon="task_alt" onClick={checkOut}>Confirm check-out</Button>}
+        </>}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Badge tone={STATUS_TONE[b.status]} dot>{STATUS_LABEL[b.status]}{gap ? ' · booked through Gap Night' : ''}</Badge>
@@ -111,22 +119,12 @@ function Detail({ b, s, onClose, onVoucher, onMessage }: { b: MBooking; s: Marke
               : gap
               ? [`Saved ${s.creators[b.creatorId]?.name.split(' ')[0]}’s trip on Nov 13 and booked when the Gap Night alert arrived`, extras ? `Booked ${b.experienceIds.length} experience${b.experienceIds.length > 1 ? 's' : ''}, so plan a lake-side table for dinner` : 'Booked the room only']
               : [`Opened ${handle}’s link and booked within the 60-day credit window`, b.nights > 2 ? `${b.nights}-night stay, a good fit for an in-room welcome` : 'Short stay, so keep check-in quick']} />
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="primary" icon="mail" onClick={onMessage}>Message guest</Button>
-            <Button variant="secondary" icon="receipt_long" onClick={onVoucher}>Voucher</Button>
-          </div>
-          {b.status === 'upcoming' && (<>
-            <Button block variant="secondary" icon="login" onClick={checkIn}>Mark checked in</Button>
-            <span className="caption">Mark {first} as checked in when they arrive. Check-out comes next.</span>
-          </>)}
-          {b.status === 'in_house' && (<>
-            <Button block variant="primary" icon="task_alt" onClick={checkOut}>Confirm check-out</Button>
-            <span className="caption">{b.selfBooking ? 'Confirming check-out completes the stay. There is no creator commission on this booking.' : `Confirming check-out completes the stay and makes ${handle}’s commission available to withdraw.`}</span>
-          </>)}
+          {b.status === 'upcoming' && <span className="caption">Mark {first} as checked in when they arrive. Check-out comes next.</span>}
+          {b.status === 'in_house' && <span className="caption">{b.selfBooking ? 'Confirming check-out completes the stay. There is no creator commission on this booking.' : `Confirming check-out completes the stay and makes ${handle}’s commission available to withdraw.`}</span>}
           {b.status === 'completed' && <span className="caption">{b.selfBooking ? 'Stay completed. No creator commission on this booking.' : `Stay completed. ${handle}’s commission is available to withdraw.`}</span>}
           {b.status === 'cancelled' && <span className="caption">Cancelled by the guest. Commission is waived and the room is back in your inventory.</span>}
         </div>
-      </SideSheet>
+      </Modal>
     </Overlay>
   );
 }

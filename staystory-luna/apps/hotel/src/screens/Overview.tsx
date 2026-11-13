@@ -35,14 +35,14 @@ export function Overview({ go }: { go: Go }) {
   };
 
   return (<>
-    <div className="split">
-      <Widget title="Needs your decision" count={decs.length} style={{ flex: '2 1 560px', minWidth: 0 }}>
+    <div className="lu-grid">
+      <Widget className="span-3" title="Needs your decision" count={decs.length}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {decs.length === 0 && <EmptyState icon="task_alt" title="Nothing needs your decision">Creator replies and unsold rooms for saved demand show up here.</EmptyState>}
           {decs.map((d) => <DecisionItem key={d.key} d={d} s={s} go={go} dismiss={dismiss} />)}
         </div>
       </Widget>
-      <Widget title="Live campaign" subtitle={camp?.name ?? 'No live campaign'} style={{ flex: '1 1 280px', minWidth: 0 }}>
+      <Widget title="Live campaign" subtitle={camp?.name ?? 'No live campaign'} className="span-1">
         {camp ? (() => {
           const p = campaignProgress(s, camp);
           return (
@@ -57,14 +57,14 @@ export function Overview({ go }: { go: Go }) {
         )}
       </Widget>
     </div>
-    <div className="stat-grid">
-      <StatTile label="Attributed bookings" value={fmtCount(fig.bookings)} />
-      <StatTile label="Booking value" value={fmtLakh(fig.value)} />
-      <StatTile label="Cost per acquired guest" value={formatINR(fig.cpa)} />
-      <StatTile label="Cancellations" value={`${fig.cancelPct.toFixed(1)}%`} />
+    <div className="lu-grid">
+      <div className="span-1"><StatTile label="Attributed bookings" value={fmtCount(fig.bookings)} /></div>
+      <div className="span-1"><StatTile label="Booking value" value={fmtLakh(fig.value)} /></div>
+      <div className="span-1"><StatTile label="Cost per acquired guest" value={formatINR(fig.cpa)} /></div>
+      <div className="span-1"><StatTile label="Cancellations" value={`${fig.cancelPct.toFixed(1)}%`} /></div>
     </div>
-    <div className="split">
-      <Widget title="Creator performance" subtitle={`Attributed bookings · ${days}`} style={{ flex: '2 1 560px', minWidth: 0 }}>
+    <div className="lu-grid">
+      <Widget className="span-3" title="Creator performance" subtitle={`Attributed bookings · ${days}`}>
         <div style={{ overflowX: 'auto' }}>
           <Activatable selector="tbody tr" onActivate={(i) => openCreator(rows[i]!.id, go)} label={(i) => `Open ${rows[i]?.handle ?? 'creator'} in Creators`}>
             <DataTable compact columns={[{ key: 'handle', label: 'Creator' }, { key: 'visits', label: 'Visits', align: 'right' }, { key: 'bookings', label: 'Bookings', align: 'right' }, { key: 'conv', label: 'Conversion', align: 'right' }, { key: 'value', label: 'Value', align: 'right' }, { key: 'cpa', label: 'Cost per guest', align: 'right' }]}
@@ -72,7 +72,7 @@ export function Overview({ go }: { go: Go }) {
           </Activatable>
         </div>
       </Widget>
-      <div style={{ flex: '1 1 280px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="span-1 col-stack">
         <Widget title="Bookings by creator">
           <BarChart height={140} aria-label="Bookings by creator" data={[...rows].sort((a, b) => b.bookings - a.bookings).map((r) => ({ label: r.short, value: r.bookings }))} />
         </Widget>

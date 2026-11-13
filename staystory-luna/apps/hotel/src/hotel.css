@@ -1,9 +1,17 @@
 /* Layout primitives copied from the design's inline styles. */
-.page { box-sizing: border-box; min-height: 100vh; position: relative; padding: 20px clamp(16px, 3.4vw, 48px) 0; display: flex; flex-direction: column; gap: 20px; background: var(--canvas); }
+/* Page chrome. Side margin, widget gap and the grid itself come from packages/ui/src/grid.css (.lu-page, .lu-grid). */
+.page { box-sizing: border-box; min-height: 100vh; position: relative; padding-top: 20px; padding-bottom: 0; background: var(--canvas); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-.stat-grid.w220 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-.split { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+.col-stack { display: flex; flex-direction: column; gap: var(--layout-gap); min-width: 0; }
+.page-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.page-title-row .titles { display: flex; flex-direction: column; gap: 4px; }
+.page-title-row .controls { display: flex; gap: 8px; align-items: center; position: relative; }
+.filters-row { display: flex; gap: 8px; align-items: center; }
+.filters-row .grow { flex: 1; }
+.filters-row .search-w { width: 280px; }
+.campaign-page { box-sizing: border-box; min-height: 100vh; background: var(--canvas); padding-top: 20px; padding-bottom: 40px; }
+.review-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--layout-gap); }
+@media (max-width: 1199px) { .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* The design pins the dock 24px above the page end. Sticky keeps that at the page end and holds it above the fold on tall pages. */
 .dock-wrap { position: sticky; bottom: 0; height: 128px; margin-top: -20px; box-sizing: border-box; padding-bottom: 24px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 40; flex: none; }
 .dock-wrap > div { pointer-events: auto; }
@@ -12,10 +20,8 @@
 
 /* Overlays */
 .overlay { position: fixed; inset: 0; background: var(--scrim); display: flex; z-index: 60; }
-.overlay.right { justify-content: flex-end; }
 .overlay.center { align-items: center; justify-content: center; z-index: 80; }
 .overlay-box { outline: none; }
-.overlay-box.right { width: 440px; max-width: 100%; height: 100%; }
 .overlay-box.center { width: 480px; max-width: calc(100% - 32px); max-height: calc(100% - 32px); overflow: auto; }
 .overlay-box.center.wide, .print-area .overlay-box.center { width: 560px; }
 

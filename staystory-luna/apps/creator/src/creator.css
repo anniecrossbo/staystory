@@ -46,3 +46,12 @@ button { font-family: inherit; }
 .drag-handle { border: 0; background: transparent; padding: 0; color: var(--muted); cursor: grab; display: inline-flex; touch-action: none; border-radius: var(--radius-sm); }
 .dragging { opacity: .6; background: var(--surface-sunken); }
 a.plain { color: inherit; text-decoration: none; }
+
+/* Reel insights */
+.reel-row { padding: 8px 0; border-bottom: 1px solid var(--divider); }
+.reel-row:last-child { border-bottom: 0; }
+.reel-thumb { width: 36px; height: 48px; border-radius: var(--radius-sm); object-fit: cover; flex: none; display: block; }
+.reel-end { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.reel-hero { position: relative; height: 180px; border-radius: var(--radius-lg); overflow: hidden; flex: none; }
+.reel-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.reel-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; background: rgba(0, 0, 0, .55); color: #fff; display: inline-flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }

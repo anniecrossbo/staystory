@@ -8,7 +8,7 @@ import { RANGES } from './lib';
 const stack: symbol[] = [];
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Overlay({ side, onClose, label, children, z, print }: { side: 'right' | 'center'; onClose: () => void; label: string; children: ReactNode; z?: number; print?: boolean }) {
+export function Overlay({ side = 'center', onClose, label, children, z, print, wide }: { side?: 'center'; onClose: () => void; label: string; children: ReactNode; z?: number; print?: boolean; wide?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -38,7 +38,7 @@ export function Overlay({ side, onClose, label, children, z, print }: { side: 'r
   }, []);
   return (
     <div className={`overlay ${side}${print ? ' print-area' : ''}`} style={z ? { zIndex: z } : undefined} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={box} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`overlay-box ${side}`}>{children}</div>
+      <div ref={box} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`overlay-box ${side}${wide ? ' wide' : ''}`}>{children}</div>
     </div>
   );
 }
