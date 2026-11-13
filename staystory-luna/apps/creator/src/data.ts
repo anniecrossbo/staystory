@@ -5,7 +5,7 @@ import { acceptedOffers } from '@staystory/market';
 export const asset = (n: string) => `/assets/${n}.jpg`;
 export const CREATOR_ID = 'anaya';
 
-export interface DayItem { id: string; name: string; kind: string; bookable: boolean; price?: number; time?: string; img?: string; dur?: string }
+export interface DayItem { id: string; name: string; kind: string; bookable: boolean; price?: number; time?: string; img?: string; dur?: string; lat?: number; lng?: number }
 export interface Day { n: number; title: string; items: DayItem[] }
 export const DETAIL_KEYS = ['Destination', 'Length', 'Budget', 'Vibe', 'Best for'] as const;
 export type DetailKey = (typeof DETAIL_KEYS)[number];
@@ -55,7 +55,15 @@ export const DESTS: Dest[] = DEST_ROWS.map(([place, region, views, img]) => ({
     { name: place === 'Udaipur' ? 'Monsoon Palace' : 'Craft market', kind: place === 'Udaipur' ? 'Palace' : 'Market' }, { name: 'Street food walk', kind: 'Restaurant' }, { name: 'Café with a view', kind: 'Restaurant' },
   ],
 }));
-export const destFor = (place: string): Dest => DESTS.find((d) => d.place === place) ?? { ...DESTS[0]!, place, days: generic(place), details: { ...DESTS[0]!.details, Destination: place }, extras: extrasFor(place, 'udaipur') };
+/** Photos we ship. Any other destination borrows the Udaipur one. */
+const PHOTOS = ['udaipur', 'jaipur', 'jodhpur', 'coorg', 'goa', 'hampi', 'gokarna', 'pushkar', 'rishikesh'];
+export const destFor = (place: string): Dest => {
+  const known = DESTS.find((d) => d.place === place); if (known) return known;
+  const k = place.toLowerCase(); const img = PHOTOS.includes(k) ? k : 'udaipur';
+  return { ...DESTS[0]!, place, img, days: generic(place), details: { ...DESTS[0]!.details, Destination: place }, extras: extrasFor(place, img) };
+};
+export const REGIONS: Record<string, string> = { Jaipur: 'Rajasthan', Goa: 'Goa', Rishikesh: 'Uttarakhand' };
+export const regionFor = (place: string) => DESTS.find((d) => d.place === place)?.region ?? REGIONS[place];
 
 /** Hotels the creator can attach in this place: stays from trips already in the store plus partner extras. */
 export function stayCatalog(s: MarketState, place: string, own: MStay[] = []): MStay[] {

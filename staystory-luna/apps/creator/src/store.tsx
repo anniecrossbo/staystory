@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { market, makeCreatorTrip, acceptedOffers, type LedgerFilter, type MTrip, type MarketState, type OfferTab, type RangeKey } from '@staystory/market';
+import { market, makeCreatorTrip, acceptedOffers, type LedgerFilter, type MStay, type MTrip, type MarketState, type OfferTab, type RangeKey } from '@staystory/market';
 import { CREATOR_ID, DESTS, destFor, stayCatalog, stayCard, type Day, type DetailKey } from './data';
 
 /**
@@ -19,6 +19,10 @@ export interface Prefs { booking: boolean; offers: boolean; weekly: boolean }
 export interface Draft {
   editId?: string; reel: number; analyzed: number; link: string; place: string; details: Record<DetailKey, string>; title: string; days: Day[];
   pick: string; inc: Record<string, boolean>; slug: string; keyword: string; autoReply: boolean; published?: string; manual?: boolean;
+  /** The reel caption the creator pasted, and what reading it gave. */
+  caption: string; source?: 'ai' | 'cache' | 'rules'; provider?: string; extractError?: string;
+  /** Live partner stays the creator chose (plain stays, no commission). */
+  liveStays: MStay[];
 }
 interface Ui {
   profile: Profile; setProfile: (p: Partial<Profile>) => void; prefs: Prefs; setPrefs: (p: Partial<Prefs>) => void;
@@ -35,8 +39,8 @@ export const useUi = () => { const v = useContext(Ctx); if (!v) throw new Error(
 const defaultProfile = (): Profile => ({ handle: 'anaya', channels: { ig: true, yt: false, blog: false }, regions: ['Rajasthan', 'Karnataka'], payMode: 'upi', upi: 'anaya@okaxis', account: '', ifsc: '', pan: 'ABCDE1234F', gstin: '', agree: true });
 
 /** A fresh draft for a destination. The link name avoids ones this creator already uses. */
-export function draftFor(s: MarketState, reel: number, opts: { pickHotelId?: string } = {}): Draft {
-  const d = DESTS[reel] ?? DESTS[0]!;
+export function draftFor(s: MarketState, reel: number, opts: { pickHotelId?: string; place?: string } = {}): Draft {
+  const d = opts.place ? destFor(opts.place) : DESTS[reel] ?? DESTS[0]!;
   const cat = stayCatalog(s, d.place);
   const offered = acceptedOffers(s, CREATOR_ID);
   const pickStay = (opts.pickHotelId && cat.find((x) => x.hotelId === opts.pickHotelId)) || cat.find((x) => offered[x.hotelId]) || cat[0]!;
@@ -47,7 +51,7 @@ export function draftFor(s: MarketState, reel: number, opts: { pickHotelId?: str
   const base = d.place.toLowerCase();
   let slug = base; for (let i = 2; s.trips.some((t) => t.id === `${CREATOR_ID}-${slug}`); i++) slug = `${base}-${i}`;
   return {
-    reel, analyzed: -1, link: '', place: d.place, details: { ...d.details }, title: `Three days in ${d.place} under ₹15,000`,
+    reel, analyzed: -1, link: '', place: d.place, details: { ...d.details }, title: `Three days in ${d.place} under ₹15,000`, caption: '', liveStays: [],
     days: d.days.map((x) => ({ ...x, items: x.items.map((i) => ({ ...i })) })), pick: pickStay.id, inc, slug, keyword: 'link', autoReply: true,
   };
 }
@@ -57,8 +61,8 @@ export function draftFromTrip(t: MTrip): Draft {
   return {
     editId: t.id, reel: Math.max(0, DESTS.findIndex((x) => x.place === t.place)), analyzed: 1, link: t.reelUrl, place: t.place,
     details: { ...d.details, Destination: `${t.place}${d.place === t.place ? ', ' + d.region : ''}`, Length: `${t.days} days, ${Math.max(1, t.days - 1)} nights` }, title: t.title,
-    days: t.itinerary.map((day) => ({ n: day.n, title: day.title, items: day.stops.map((p) => ({ id: p.id, name: p.name, kind: p.kind, bookable: p.bookable, price: p.pricePerPerson && p.kind !== 'Stay' ? p.pricePerPerson : undefined, time: p.time, img: p.img, dur: t.experiences.find((e) => e.id === p.id)?.time.split(' · ')[1] })) })),
-    pick: t.pickStayId, inc, slug: t.slug, keyword: t.dmKeyword || 'link', autoReply: !!t.dmKeyword,
+    days: t.itinerary.map((day) => ({ n: day.n, title: day.title, items: day.stops.map((p) => ({ id: p.id, name: p.name, kind: p.kind, bookable: p.bookable, price: p.pricePerPerson && p.kind !== 'Stay' ? p.pricePerPerson : undefined, time: p.time, img: p.img, lat: p.lat, lng: p.lng, dur: t.experiences.find((e) => e.id === p.id)?.time.split(' · ')[1] })) })),
+    pick: t.pickStayId, inc, slug: t.slug, keyword: t.dmKeyword || 'link', autoReply: !!t.dmKeyword, caption: '', liveStays: [],
   };
 }
 

@@ -41,8 +41,8 @@ export interface MCampaign {
 }
 
 export interface MExperience { id: string; name: string; day: number; time: string; pricePerPerson: Rupees; img: string }
-export interface MStay { id: string; hotelId: string; roomTypeId: string; name: string; tier: 'creator_pick' | 'budget' | 'mid' | 'luxury'; desc: string; nightly: Rupees; img: string; commissionPct: number; campaignId?: string }
-export interface MStop { id: string; name: string; kind: string; bookable: boolean; pricePerPerson?: Rupees; time?: string; img?: string }
+export interface MStay { id: string; hotelId: string; roomTypeId: string; name: string; tier: 'creator_pick' | 'budget' | 'mid' | 'luxury'; desc: string; nightly: Rupees; img: string; commissionPct: number; campaignId?: string; lat?: number; lng?: number }
+export interface MStop { id: string; name: string; kind: string; bookable: boolean; pricePerPerson?: Rupees; time?: string; img?: string; lat?: number; lng?: number }
 export interface MTrip {
   id: string; creatorId: string; slug: string; title: string; place: string; days: number; img: string;
   itinerary: { n: number; title: string; stops: MStop[] }[];

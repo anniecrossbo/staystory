@@ -21,14 +21,14 @@ const EXPERIENCES: MExperience[] = [
 ];
 const stop = (id: string, name: string, kind: string, extra: Partial<MStop> = {}): MStop => ({ id, name, kind, bookable: false, ...extra });
 const UDAIPUR_DAYS: MTrip['itinerary'] = [
-  { n: 1, title: 'Arrive, lakeside evening', stops: [stop('checkin', 'Check in · Haveli Jheel', 'Stay', { bookable: true, time: '14:00', img: 'haveli' }), stop('boat', 'Sunset boat, Lake Pichola', 'Experience', { bookable: true, pricePerPerson: 900, time: '17:30', img: 'udaipur' }), stop('ambrai', 'Dinner at Ambrai ghat', 'Restaurant', { time: '20:00', img: 'pushkar' })] },
-  { n: 2, title: 'Palaces and the old city', stops: [stop('walk', 'City Palace guided walk', 'Experience', { bookable: true, pricePerPerson: 700, time: '09:30', img: 'palace' }), stop('bagore', 'Bagore ki Haveli', 'Museum', { time: '13:00', img: 'verandah' }), stop('cook', 'Rajasthani cooking class', 'Experience', { bookable: true, pricePerPerson: 1500, time: '16:00', img: 'haveli' })] },
-  { n: 3, title: 'Sunrise, then home', stops: [stop('sajjan', 'Sajjangarh at sunrise', 'Viewpoint', { time: '06:15', img: 'hampi' }), stop('hathi', 'Hathi Pol market', 'Market', { time: '10:00', img: 'jodhpur' })] },
+  { n: 1, title: 'Arrive, lakeside evening', stops: [stop('checkin', 'Check in · Haveli Jheel', 'Stay', { bookable: true, time: '14:00', img: 'haveli' }), stop('boat', 'Sunset boat, Lake Pichola', 'Experience', { lat: 24.5726, lng: 73.6794, bookable: true, pricePerPerson: 900, time: '17:30', img: 'udaipur' }), stop('ambrai', 'Dinner at Ambrai ghat', 'Restaurant', { lat: 24.5788, lng: 73.6812, time: '20:00', img: 'pushkar' })] },
+  { n: 2, title: 'Palaces and the old city', stops: [stop('walk', 'City Palace guided walk', 'Experience', { lat: 24.5764, lng: 73.6835, bookable: true, pricePerPerson: 700, time: '09:30', img: 'palace' }), stop('bagore', 'Bagore ki Haveli', 'Museum', { lat: 24.5799, lng: 73.6809, time: '13:00', img: 'verandah' }), stop('cook', 'Rajasthani cooking class', 'Experience', { bookable: true, pricePerPerson: 1500, time: '16:00', img: 'haveli' })] },
+  { n: 3, title: 'Sunrise, then home', stops: [stop('sajjan', 'Sajjangarh at sunrise', 'Viewpoint', { lat: 24.5896, lng: 73.636, time: '06:15', img: 'hampi' }), stop('hathi', 'Hathi Pol market', 'Market', { lat: 24.5793, lng: 73.6862, time: '10:00', img: 'jodhpur' })] },
 ];
 const UDAIPUR_STAYS: MStay[] = [
-  { id: 'jheel', hotelId: 'haveli-jheel', roomTypeId: 'lake-deluxe', name: 'Haveli Jheel', tier: 'creator_pick', desc: 'Lake-view rooms, rooftop breakfast', nightly: 4200, img: 'haveli', commissionPct: 15, campaignId: 'winter-pichola' },
-  { id: 'pichola', hotelId: 'pichola-courtyard', roomTypeId: 'std', name: 'Pichola Courtyard', tier: 'budget', desc: 'Old-city guesthouse near the ghats', nightly: 2300, img: 'verandah', commissionPct: 12 },
-  { id: 'aravalli', hotelId: 'aravalli-palace', roomTypeId: 'suite', name: 'Aravalli Palace', tier: 'luxury', desc: 'Palace hotel, pool, transfers', nightly: 9800, img: 'palace', commissionPct: 18 },
+  { id: 'jheel', hotelId: 'haveli-jheel', roomTypeId: 'lake-deluxe', name: 'Haveli Jheel', tier: 'creator_pick', desc: 'Lake-view rooms, rooftop breakfast', nightly: 4200, img: 'haveli', commissionPct: 15, campaignId: 'winter-pichola', lat: 24.5737, lng: 73.6796 /* illustrative, near Lal Ghat */ },
+  { id: 'pichola', hotelId: 'pichola-courtyard', roomTypeId: 'std', name: 'Pichola Courtyard', tier: 'budget', desc: 'Old-city guesthouse near the ghats', nightly: 2300, img: 'verandah', commissionPct: 12, lat: 24.5775, lng: 73.6805 /* illustrative, old city ghats */ },
+  { id: 'aravalli', hotelId: 'aravalli-palace', roomTypeId: 'suite', name: 'Aravalli Palace', tier: 'luxury', desc: 'Palace hotel, pool, transfers', nightly: 9800, img: 'palace', commissionPct: 18, lat: 24.5645, lng: 73.6702 /* illustrative */ },
 ];
 /** One signature experience per generic trip, priced so a trip's card price matches the design (Jaipur ₹9,800, Goa ₹18,200 ...). */
 const CARD_PRICE: Record<string, [number, string]> = {
