@@ -16,7 +16,7 @@ body { background: #E3E7EA; }
 .m11 { font-size: 11px; line-height: 15px; color: var(--muted); }
 .ttl { font-size: 28px; line-height: 39px; font-weight: 700; }
 .ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pills { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px; scrollbar-width: none; }
+.pills { flex-shrink: 0; display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px; scrollbar-width: none; }
 .pills::-webkit-scrollbar { display: none; }
 .glass-card { background: var(--glass-card); -webkit-backdrop-filter: blur(var(--blur-chrome)); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-card); }
 .kv { display: flex; justify-content: space-between; gap: 12px; }

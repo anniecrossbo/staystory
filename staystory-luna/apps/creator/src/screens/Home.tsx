@@ -261,7 +261,8 @@ function Earnings({ screen, payout, onWithdraw }: { screen: string; payout: stri
   const s = useMarket();
   const { ledgerFilter, setLedgerFilter } = useUi();
   const bal = creatorBalances(s, CREATOR_ID);
-  const rows = ledgerRows(s, CREATOR_ID, ledgerFilter);
+  const byId = new Map(s.ledger.map((l) => [l.id, l]));
+  const rows = ledgerRows(s, CREATOR_ID, ledgerFilter).filter((r) => !byId.get(r.id)?.summary).map((r) => ({ ...r, ini: byId.get(r.id)?.ini ?? (r.raw === 'processing' ? 'NV' : r.ini) }));
   const w = s.withdrawals.find((x) => x.creatorId === CREATOR_ID);
   const nb = screen === 'earnings' ? latestPendingBooking(s, CREATOR_ID) : undefined;
   const place = nb && (s.trips.find((t) => t.id === nb.booking.tripId)?.place ?? 'Udaipur');

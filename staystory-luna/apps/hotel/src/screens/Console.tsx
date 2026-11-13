@@ -14,8 +14,8 @@ import { Payouts } from './Payouts';
 export const CONSOLE_SCREENS = ['overview', 'bookings', 'bookingDetail', 'bookingsEmpty', 'creators', 'invited', 'gap', 'gapConfirm', 'released', 'payouts'];
 const VIEW_OF: Record<string, string> = { overview: 'overview', bookings: 'bookings', bookingDetail: 'bookings', bookingsEmpty: 'bookings', creators: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
 const HEAD: Record<string, string> = { overview: 'Creator bookings', bookings: 'Bookings', creators: 'Find creators', gap: 'Gap Night', payouts: 'Payouts' };
-/** The date range changes the numbers on these views only. */
-const RANGED = ['overview', 'payouts'];
+/** Creators and the gap night have no dated figures; the choice still carries to the overview. */
+const NO_EFFECT = ['creators', 'gap'];
 
 export function Console({ screen, go }: { screen: string; go: Go }) {
   const s = useMarket();
@@ -30,12 +30,11 @@ export function Console({ screen, go }: { screen: string; go: Go }) {
           <span className="eyebrow">StayStory for hotels · {s.hotel.name}, {s.hotel.city}</span>
           <span className="h1">{HEAD[view]}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {RANGED.includes(view) && (
-            <SegmentedControl size="sm" aria-label="Date range" value={range} onChange={(v) => ui.set({ range: v as Range })}
-              options={RANGES.map(({ value, label }) => ({ value, label }))} />
-          )}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
+          <SegmentedControl size="sm" aria-label="Date range" value={range} onChange={(v) => ui.set({ range: v as Range })}
+            options={RANGES.map(({ value, label }) => ({ value, label }))} />
           <Button variant="primary" icon="add" onClick={() => go('campaign', 'offer')}>Create campaign</Button>
+          {NO_EFFECT.includes(view) && <span className="caption" style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, whiteSpace: 'nowrap' }}>Applies to the overview figures</span>}
         </div>
       </div>
 

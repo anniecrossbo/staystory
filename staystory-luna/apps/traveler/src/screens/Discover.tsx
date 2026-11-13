@@ -18,7 +18,7 @@ const COLLECTIONS: { id: string; name: string; meta: string; img: string; fits: 
 ];
 
 function TripRow({ t, from }: { t: MTrip; from?: string }) {
-  const stayLine = [pickStay(t).name, ...t.experiences.slice(0, 2).map((e) => e.name.split(',')[0]!.toLowerCase())].join(' · ');
+  const stayLine = t.stayLine ?? [pickStay(t).name, ...t.experiences.slice(0, 2).map((e) => e.name.split(',')[0]!.toLowerCase())].join(' · ');
   return (
     <a href={tripHash(t, 'trip', { from })} className="glass-card" style={{ display: 'flex', gap: 12, padding: 12, borderRadius: 'var(--radius-lg)', textDecoration: 'none', color: 'inherit' }} aria-label={`${t.title}, from ${formatINR(tripCardPrice(t))}`}>
       <img src={asset(t.img)} alt="" style={{ width: 88, height: 104, borderRadius: 'var(--radius-md)', objectFit: 'cover', flexShrink: 0 }} />
@@ -64,7 +64,7 @@ export function Discover({ screen }: { screen: string }) {
         <span style={{ flex: 1, display: 'flex', flexDirection: 'column' }}><span className="m11">Good evening, {me.name.split(' ')[0]}</span><span className="ttl">Where to next?</span></span>
         <button className="reset" onClick={avatar} aria-label={signedIn ? 'Profile' : 'Sign in'} style={{ display: 'flex' }}><Avatar initials="MI" size={40} name={me.name} /></button>
       </div>
-      <SearchField placeholder="A place, a vibe or a creator" aria-label="Search trips" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <div style={{ flexShrink: 0 }}><SearchField placeholder="A place, a vibe or a creator" aria-label="Search trips" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
       <div className="pills">{FILTERS.map((f) => <FilterPill key={f} selected={filter === f} onClick={() => pick(f)}>{f}</FilterPill>)}</div>
 
       {loading && (

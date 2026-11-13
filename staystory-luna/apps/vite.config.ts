@@ -50,6 +50,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), serveDesign(), api(loadEnv(mode, resolve(__dirname, '..'), ''))],
   server: { port: 5173, fs: { allow: [resolve(__dirname, '..')] } },
   build: {
-    rollupOptions: { input: Object.fromEntries(['hotel', 'creator', 'traveler', 'viewer', 'demo'].map((n) => [n, resolve(__dirname, n, 'index.html')]).concat([['compare', resolve(__dirname, 'viewer/compare.html')]])) },
+    rollupOptions: { input: Object.fromEntries(['hotel', 'creator', 'traveler', 'viewer', 'demo'].map((n) => [n, resolve(__dirname, n, 'index.html')]).concat([['compare', resolve(__dirname, 'viewer/compare.html')], ['sweep', resolve(__dirname, 'viewer/sweep.html')]])) },
   },
 }));

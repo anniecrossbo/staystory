@@ -5,7 +5,8 @@ export type InviteStatus = 'invited' | 'accepted' | 'countered' | 'declined';
 export interface MCreator {
   id: string; handle: string; name: string; ini: string; followers: string; niche: string; bio: string;
   tripsCount: string; travelers: string; hue: 'moss' | 'sky' | 'plum' | 'ochre' | 'violet' | 'clay'; cover: string;
-  score?: string; conv?: string; bookingsPerMonth?: string; ncr?: string; why?: string; top?: boolean; meta?: string;
+  /** Match on the hotel's Creators page. `campaignScore` is the match for the campaign being built (the design ranks them differently). */
+  score?: string; campaignScore?: string; conv?: string; bookingsPerMonth?: string; ncr?: string; why?: string; top?: boolean; meta?: string;
 }
 
 /** Optional property details captured by the hotel onboarding flow. Additive: other apps can ignore it. */
@@ -49,6 +50,12 @@ export interface MTrip {
   stays: MStay[]; pickStayId: string; experiences: MExperience[];
   creatorSaving: Rupees; saves: number; travelersBooked: number; tags: string[];
   status: 'live' | 'paused'; reelUrl: string; dmKeyword: string; publishedAt: string;
+  /** Title on traveler cards and shops when it differs from the creator's own title. */
+  shopTitle?: string;
+  /** One-line summary of the stay and experiences on a shop card. */
+  stayLine?: string;
+  /** Live status shown on a traveler's Saved list, such as a price drop or low rooms. */
+  savedStatus?: { text: string; tone: 'success' | 'warning' | 'info' | 'neutral' };
 }
 
 export type BookingStatus = 'upcoming' | 'in_house' | 'completed' | 'cancelled';
@@ -69,7 +76,13 @@ export interface MGapNight {
 }
 
 export type LedgerStatus = 'pending_stay' | 'available' | 'paid' | 'cancelled' | 'processing';
-export interface MLedger { id: string; creatorId: string; bookingId?: string; label: string; meta: string; amount: Rupees; status: LedgerStatus; createdAt: string }
+export interface MLedger {
+  id: string; creatorId: string; bookingId?: string; label: string; meta: string; amount: Rupees; status: LedgerStatus; createdAt: string;
+  /** Rolled-up balance rows count toward the totals but are not listed as activity. */
+  summary?: boolean;
+  /** Avatar initials when they should not be taken from the label. */
+  ini?: string;
+}
 export interface MWithdrawal { id: string; creatorId: string; gross: Rupees; tds: Rupees; net: Rupees; upi: string; createdAt: string }
 
 export interface MTraveler { id: string; name: string; whatsapp: string; signedIn: boolean; savedTripIds: string[]; savedShopIds: string[]; followingIds: string[]; prefs: { styles: string[]; budget: 'low' | 'mid' | 'high'; gapAlerts: boolean; /** Price-drop and low-rooms alerts; on unless false. */ priceAlerts?: boolean } }

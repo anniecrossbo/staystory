@@ -20,7 +20,7 @@ export function MapSection({ trip, stay }: { trip: MTrip; stay: MStay }) {
   const showImage = ready === true && !failed;
   const src = `/api/map?${mapQuery(map, { w: 393, h: H }, f)}`;
   return (
-    <Widget title="On the map" subtitle={`${map.markers.length} place${map.markers.length === 1 ? '' : 's'} · stay and stops`}>
+    <Widget className="section-map" title="On the map" subtitle={`${map.markers.length} place${map.markers.length === 1 ? '' : 's'} · stay and stops`}>
       <div style={{ position: 'relative', height: H, borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-card)', background: 'var(--surface-sunken)' }}>
         {showImage ? (
           <img src={src} alt={`Map of ${map.markers.map((m) => m.name).join(', ')}`} onError={() => setFailed(true)} style={{ width: '100%', height: H, objectFit: 'cover', display: 'block' }} />

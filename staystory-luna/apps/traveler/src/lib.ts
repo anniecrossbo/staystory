@@ -48,7 +48,7 @@ export const clock = (d: Date) => d.toLocaleTimeString('en-IN', { hour: '2-digit
 /** 2184 -> `2.1K` (the design truncates). */
 export const compact = (n: number) => (n >= 10000 ? `${Math.floor(n / 1000)}K` : n >= 1000 ? `${(Math.floor(n / 100) / 10).toString()}K` : String(n));
 /** The feed and shop title of a trip. The design shows Udaipur with its price promise. */
-export const cardTitle = (t: { id: string; title: string }) => (t.id === 'anaya-udaipur' ? `${t.title} under ₹15,000` : t.title);
+export const cardTitle = (t: { id: string; title: string; shopTitle?: string }) => (t.id === 'anaya-udaipur' ? `${t.title} under ₹15,000` : t.shopTitle ?? t.title);
 
 export async function copyText(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { /* clipboard blocked: fall back */ }

@@ -3,7 +3,7 @@ import type { Campaign, Creator, Hotel, Trip, Traveler } from './types';
 export const hotel: Hotel = {
   id: 'haveli-jheel', name: 'Haveli Jheel', city: 'Udaipur', defaultCommissionPct: 15, floorRate: 3000,
   rooms: [
-    { id: 'courtyard', name: 'Courtyard Room', count: 8, sleeps: 2, rackRate: 3200, meal: 'Breakfast' },
+    { id: 'courtyard', name: 'Courtyard Room', count: 8, sleeps: 2, rackRate: 3200, meal: 'Room only' },
     { id: 'lake-deluxe', name: 'Lake-view Deluxe', count: 12, sleeps: 2, rackRate: 4800, meal: 'Breakfast' },
     { id: 'jharokha', name: 'Jharokha Suite', count: 4, sleeps: 3, rackRate: 7400, meal: 'Breakfast' },
   ],

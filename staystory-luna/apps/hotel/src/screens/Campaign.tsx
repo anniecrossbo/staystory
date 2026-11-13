@@ -3,7 +3,7 @@ import { formatINR, percentOff, splitCommission } from '@staystory/core';
 import { Badge, Banner, Button, Checkbox, Chip, EmptyState, IconButton, Select, Stepper, StatTile, Tag, TextField, Toggle, Widget } from '@staystory/ui';
 import { market, useMarket, type MCampaign, type MarketState } from '@staystory/market';
 import type { Go } from '../actions';
-import { asset, matchedCreators, scoreNum, SHORT_NICHE } from '../lib';
+import { asset, campaignPool, SHORT_NICHE } from '../lib';
 import { toast, ui, useDraft, useUi } from '../ui';
 import { campaignNameError, campaignPriceError, campaignStepErrors, firstCampaignProblem, STEP_INDEX } from '../rules';
 
@@ -50,7 +50,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
   const maxHundreds = Math.ceil(rack / 100) - 1; // one step below the public rate
   const price = Math.min(maxHundreds, Math.max(minHundreds, d.price)) * 100;
   const perkOn = Object.keys(d.perks).filter((k) => d.perks[k]);
-  const pool = matchedCreators(s).sort((a, b) => scoreNum(b) - scoreNum(a));
+  const pool = campaignPool(s);
   const picks = d.picks.filter((id) => s.creators[id]);
   const input = { name: d.name, creatorPrice: price, rackPrice: rack, commissionPct: d.pct, invitedCount: picks.length };
   const stepErr = campaignStepErrors(input);
@@ -173,7 +173,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
                     <img src={asset(c.cover)} alt="" style={{ width: 48, height: 48, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
                     <span style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>{c.handle}</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)' }}>{c.meta}</span></span>
                     <Tag hue={c.hue}>{SHORT_NICHE[c.niche] ?? c.niche}</Tag>
-                    <span style={{ width: 64, textAlign: 'right', fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--primary)' }}>{c.score}</span>
+                    <span style={{ width: 64, textAlign: 'right', fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--primary)' }}>{c.campaignScore}</span>
                   </div>
                 ))}
               </div>
