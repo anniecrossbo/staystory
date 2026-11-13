@@ -19,7 +19,7 @@ const TAB_OF: Record<string, string> = { insights: 'insights', empty: 'insights'
 const BACK: Record<string, string> = { trip: 'insights', offerDetail: 'offers', counter: 'offerDetail', accepted: 'offers' };
 const SUB = ['trip', 'offerDetail', 'counter', 'accepted'];
 const NOTE: Record<string, string> = { 'winter-pichola': 'My Udaipur audience books for Christmas week. Could we run this through January?' };
-const DOCK_BASE = [{ id: 'insights', icon: 'insights', label: 'Insights' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
+const DOCK_BASE = [{ id: 'insights', icon: 'dashboard', label: 'Dashboard' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
 const shortDate = (iso: string) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
 const words = ['no', 'one', 'two', 'three', 'four', 'five'];
 
@@ -56,7 +56,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const notes = creatorNotifications(s, CREATOR_ID, ui.countered);
   const unread = notes.filter((n) => !ui.read.includes(n.id));
   const HEAD: Record<string, [string, string]> = {
-    insights: [creatorHandle, 'Insights'], empty: ['Welcome, Anaya', 'Insights'], trip: [tripUrl(profile.handle, trip?.slug ?? ''), trip?.title ?? 'Trip'],
+    insights: [creatorHandle, 'Dashboard'], empty: ['Welcome, Anaya', 'Dashboard'], trip: [tripUrl(profile.handle, trip?.slug ?? ''), trip?.title ?? 'Trip'],
     earnings: [creatorHandle, 'Earnings'], withdrawn: [creatorHandle, 'Earnings'], offers: [newCount ? `${newCount} new this week` : 'No new offers', 'Hotel offers'],
     offerDetail: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], counter: [offer?.hotelName ?? '', 'Counter offer'], accepted: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], profile: ['Anaya Rao', 'Profile'],
   };
@@ -206,7 +206,7 @@ function Insights({ go }: { go: Go }) {
 function Empty({ onNew }: { onNew: () => void }) {
   return (<>
     <Widget title="Commission earned" subtitle="Nothing yet">
-      <EmptyState icon="insights" title="Your numbers start with your first trip">Publish a trip link and visits, saves and bookings show up here within the hour.</EmptyState>
+      <EmptyState icon="dashboard" title="Your numbers start with your first trip">Publish a trip link and visits, saves and bookings show up here within the hour.</EmptyState>
     </Widget>
     <div className="tiles"><StatTile label="Link visits" value="0" /><StatTile label="Bookings" value="0" /></div>
     <Button variant="primary" size="lg" block icon="add" onClick={onNew}>Create your first trip</Button>
@@ -382,6 +382,24 @@ function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payo
     ['payout', 'account_balance', 'Payout method', p.payMode === 'upi' ? 'UPI' : 'Bank'], ['tax', 'receipt_long', 'Tax details', /^[A-Z]{5}\d{4}[A-Z]$/i.test(p.pan) ? 'PAN added' : 'Add PAN'],
   ];
   return (<>
+    {myTrips.length > 0 && (
+      <Widget title="Your trip links" count={myTrips.length}>
+        <div className="stack">
+          {myTrips.map((t) => {
+            const st = tripStats(s, t.id);
+            return (
+              <div key={t.id} className="line" style={{ padding: '8px 0' }}>
+                <button className="link-row" onClick={() => go('app', 'trip', { t: t.id })}>
+                  <img src={asset(t.img)} alt="" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
+                  <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{st ? tripVisitsLine(st) : 'No data yet'}{t.status === 'paused' ? ' · paused' : ''}</span></span>
+                </button>
+                <Button variant="secondary" size="sm" icon="content_copy" onClick={() => copy(`https://${tripUrl(p.handle, t.slug)}`)}>Copy</Button>
+              </div>
+            );
+          })}
+        </div>
+      </Widget>
+    )}
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '8px 0 4px' }}>
       <Avatar initials={me?.ini ?? 'AR'} size={48} tone="solid" name={me?.name ?? 'Anaya Rao'} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -404,24 +422,6 @@ function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payo
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {p.regions.map((r) => <Tag key={r} hue="charcoal">{r}</Tag>)}
       </div>
-    )}
-    {myTrips.length > 0 && (
-      <Widget title="Trip links" count={myTrips.length}>
-        <div className="stack">
-          {myTrips.map((t) => {
-            const st = tripStats(s, t.id);
-            return (
-              <div key={t.id} className="line" style={{ padding: '8px 0' }}>
-                <button className="link-row" onClick={() => go('app', 'trip', { t: t.id })}>
-                  <img src={asset(t.img)} alt="" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
-                  <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{st ? tripVisitsLine(st) : 'No data yet'}{t.status === 'paused' ? ' · paused' : ''}</span></span>
-                </button>
-                <Button variant="secondary" size="sm" icon="content_copy" onClick={() => copy(`https://${tripUrl(p.handle, t.slug)}`)}>Copy</Button>
-              </div>
-            );
-          })}
-        </div>
-      </Widget>
     )}
     <Widget title="Storefront" subtitle={`staystory.in/${p.handle}`}>
       <div className="stack">
