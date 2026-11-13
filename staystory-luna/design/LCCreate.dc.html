@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Creator reel to trip</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums">
+  <div style="position: absolute; inset: 0; overflow-y: auto; padding: 54px 16px 120px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+      <x-import component-from-global-scope="Luna.IconButton" icon="{{navIcon}}" label="{{navLabel}}" variant="white" on-click="{{back}}"></x-import>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 11px; line-height: 15px; font-weight: 600; color: var(--muted)">{{stepLabel}}</span>
+        <x-import component-from-global-scope="Luna.ProgressBar" value="{{progress}}" tone="{{progressTone}}" aria-label="Trip builder progress"></x-import>
+      </div>
+    </div>
+
+    <sc-if value="{{isPick}}" hint-placeholder-val="{{ true }}">
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Which reel should become a trip?</span>
+      <x-import component-from-global-scope="Luna.TextField" label="Paste a reel, story or guide link" placeholder="instagram.com/reel/…" icon="link"></x-import>
+      <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">Your recent reels</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{reels}}" as="r" hint-placeholder-count="6">
+          <button onClick="{{r.pick}}" aria-pressed="{{r.on}}" style="position: relative; height: 160px; padding: 0; border: 2px solid {{r.edge}}; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; background: var(--surface)">
+            <img src="{{r.img}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+            <span style="position: absolute; left: 4px; right: 4px; bottom: 4px; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--glass-bar); backdrop-filter: blur(var(--blur-chrome)); display: flex; flex-direction: column; align-items: flex-start; font-family: inherit; color: var(--ink)">
+              <span style="font-size: 11px; line-height: 15px; font-weight: 600">{{r.place}}</span>
+              <span style="font-size: 10px; line-height: 14px; font-weight: 600; color: var(--ink-2)">{{r.views}} views</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isAnalyzing}}" hint-placeholder-val="{{ false }}">
+      <div style="height: 300px; border-radius: var(--radius-lg); overflow: hidden"><img src="assets/udaipur.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></div>
+      <span style="font-size: 20px; line-height: 28px; font-weight: 700">Reading your reel</span>
+      <x-import component-from-global-scope="Luna.Widget" title="Luna is extracting" subtitle="From video, captions and comments">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 24px">
+              <span style="display: flex; color: {{c.color}}"><x-import component-from-global-scope="Luna.Icon" name="{{c.icon}}" size="{{ 20 }}"></x-import></span>
+              <span style="flex: 1; font-size: 13px; line-height: 18px; color: {{c.fg}}">{{c.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+      <div style="padding-top: 48px">
+        <x-import component-from-global-scope="Luna.ErrorState" title="We couldn't read this reel" detail="It may be private or have no places mentioned. Make it public, or add the places yourself."></x-import>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon="refresh" on-click="{{retry}}">Try again</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}" icon="edit_note" on-click="{{toDays}}">Build the trip by hand</x-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isDetected}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Here's what we found</span>
+      <x-import component-from-global-scope="Luna.ProvenanceTag" kind="inferred"></x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Trip details">
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{detected}}" as="d" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--divider)">
+              <span style="width: 96px; font-size: 11px; line-height: 15px; color: var(--muted)">{{d.k}}</span>
+              <span style="flex: 1; font-size: 13px; line-height: 18px; font-weight: 600">{{d.v}}</span>
+              <x-import component-from-global-scope="Luna.IconButton" icon="edit" label="Edit {{d.k}}" variant="ghost" size="sm"></x-import>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.TextField" label="Trip title on your storefront" default-value="Three days in Udaipur under ₹15,000"></x-import>
+    </sc-if>
+
+    <sc-if value="{{isDays}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Day by day</span>
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="3">
+        <x-import component-from-global-scope="Luna.Widget" title="Day {{d.n}}" subtitle="{{d.title}}" count="{{d.count}}">
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{d.items}}" as="it" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--divider)">
+                <x-import component-from-global-scope="Luna.Icon" name="drag_indicator" size="{{ 20 }}" style="color: var(--muted)"></x-import>
+                <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{it.name}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{it.kind}}</span></span>
+                <x-import component-from-global-scope="Luna.Tag" hue="{{it.hue}}">{{it.tag}}</x-import>
+                <x-import component-from-global-scope="Luna.IconButton" icon="close" label="Remove" variant="ghost" size="sm" on-click="{{it.remove}}"></x-import>
+              </div>
+            </sc-for>
+            <div style="padding-top: 8px"><x-import component-from-global-scope="Luna.Button" variant="ghost" size="sm" icon="add" on-click="{{d.add}}">Add a stop</x-import></div>
+          </div>
+        </x-import>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{isStays}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Pick partner stays</span>
+      <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Your pick is the default. Followers can switch; you're credited either way.</span>
+      <sc-for list="{{stays}}" as="h" hint-placeholder-count="4">
+        <div style="display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: var(--radius-lg); background: {{h.bg}}; border: 1px solid {{h.edge}}; box-shadow: var(--shadow-card)">
+          <img src="{{h.img}}" alt="" style="width: 64px; height: 64px; border-radius: var(--radius-md); object-fit: cover">
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="font-size: 13px; line-height: 18px; font-weight: 600">{{h.name}}</span>
+            <span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{h.meta}}</span>
+            <x-import component-from-global-scope="Luna.Tag" hue="moss">{{h.comm}}</x-import>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end">
+            <x-import component-from-global-scope="Luna.Radio" checked="{{h.isPick}}" on-change="{{h.makePick}}" label="Pick"></x-import>
+            <x-import component-from-global-scope="Luna.Checkbox" checked="{{h.on}}" on-change="{{h.toggle}}" disabled="{{h.isPick}}" label="Offer"></x-import>
+          </span>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{isPreview}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Preview and publish</span>
+      <x-import component-from-global-scope="Luna.Widget" title="Three days in Udaipur" subtitle="3 days · {{stopCount}} stops · {{stayCount}} stays">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <img src="assets/udaipur.jpg" alt="" style="width: 100%; height: 180px; border-radius: var(--radius-md); object-fit: cover; display: block">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; line-height: 18px"><span style="color: var(--ink-2)">From, for 2</span><span style="font-weight: 600">₹10,800</span></div>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.TextField" label="Your link" default-value="staystory.in/anaya/udaipur" icon="link" hint="Short and lowercase works best in bios"></x-import>
+      <x-import component-from-global-scope="Luna.Banner" tone="warning" icon="campaign" title="Label it as a paid partnership">Add "Paid partnership" or #ad when you share this link.</x-import>
+    </sc-if>
+
+    <sc-if value="{{isPublished}}" hint-placeholder-val="{{ false }}">
+      <div style="padding-top: 24px"><x-import component-from-global-scope="Luna.EmptyState" icon="rocket_launch" title="Your trip is live">Followers can book it now at staystory.in/anaya/udaipur.</x-import></div>
+      <x-import component-from-global-scope="Luna.Widget" title="Share it">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; gap: 8px">
+            <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="content_copy">Copy link</x-import>
+            <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="photo_camera">Story</x-import>
+            <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="chat">WhatsApp</x-import>
+          </div>
+          <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Auto-reply to “link pls” comments"></x-import>
+        </div>
+      </x-import>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{showCta}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 34px">
+      <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon-right="{{ctaIcon}}" on-click="{{next}}">{{ctaLabel}}</x-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["pick","analyzing","error","detected","days","stays","preview","published"],"default":"pick"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      screen: props.screen || 'pick', reel: 0, pick: 'jheel', inc: { jheel: true, pichola: true, aravalli: true, lakeside: false },
+      days: [
+        { n: 1, title: 'Arrive, lakeside evening', items: [{ name: 'Check in · Haveli Jheel', kind: 'Stay', b: true }, { name: 'Sunset boat, Lake Pichola', kind: 'Experience · ₹900 per person', b: true }, { name: 'Dinner at Ambrai ghat', kind: 'Restaurant', b: false }] },
+        { n: 2, title: 'Palaces and the old city', items: [{ name: 'City Palace guided walk', kind: 'Experience · ₹700 per person', b: true }, { name: 'Bagore ki Haveli', kind: 'Museum', b: false }, { name: 'Rajasthani cooking class', kind: 'Experience · ₹1,500 per person', b: true }] },
+        { n: 3, title: 'Sunrise, then home', items: [{ name: 'Sajjangarh at sunrise', kind: 'Viewpoint', b: false }, { name: 'Hathi Pol market', kind: 'Market', b: false }] }
+      ]
+    };
+  }
+  componentDidUpdate(prev, prevState) {
+    if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen });
+    if (this.state.screen === 'analyzing' && prevState.screen !== 'analyzing' && !this.props.screen) {
+      clearTimeout(this._t);
+      this._t = setTimeout(() => { if (this.state.screen === 'analyzing') this.setState({ screen: 'detected' }); }, 2200);
+    }
+  }
+  componentWillUnmount() { clearTimeout(this._t); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const IMG = { udaipur: 'assets/udaipur.jpg', coorg: 'assets/coorg.jpg', jodhpur: 'assets/jodhpur.jpg', pushkar: 'assets/pushkar.jpg', hampi: 'assets/hampi.jpg', gokarna: 'assets/gokarna.jpg', haveli: 'assets/haveli.jpg', verandah: 'assets/verandah.jpg', palace: 'assets/palace.jpg' };
+    const order = ['pick', 'analyzing', 'detected', 'days', 'stays', 'preview', 'published'];
+    const idx = Math.max(0, order.indexOf(sc === 'error' ? 'analyzing' : sc));
+    const CTA = { pick: ['Build the trip', 'auto_awesome'], detected: ['Looks right', 'arrow_forward'], days: ['Next: stays', 'arrow_forward'], stays: ['Next: preview', 'arrow_forward'], preview: ['Publish link', 'rocket_launch'], published: ['Track performance', 'insights'] };
+    const STAYS = [
+      { id: 'jheel', name: 'Haveli Jheel', meta: 'Your offer: Winter on Lake Pichola · ₹4,200 a night', comm: '15% commission', img: IMG.haveli },
+      { id: 'pichola', name: 'Pichola Courtyard', meta: 'Budget · ₹2,300 a night', comm: '12% commission', img: IMG.verandah },
+      { id: 'aravalli', name: 'Aravalli Palace', meta: 'Luxury · ₹9,800 a night', comm: '18% commission', img: IMG.palace },
+      { id: 'lakeside', name: 'Fateh Sagar Lakeside', meta: 'Mid-range · ₹3,600 a night', comm: '14% commission', img: IMG.pushkar }
+    ];
+    const stopCount = s.days.reduce((t, d) => t + d.items.length, 0);
+    const done = 'var(--success)';
+    const doing = 'var(--primary)';
+    const waiting = 'var(--faint)';
+    return {
+      isPick: sc === 'pick', isAnalyzing: sc === 'analyzing', isError: sc === 'error', isDetected: sc === 'detected', isDays: sc === 'days', isStays: sc === 'stays', isPreview: sc === 'preview', isPublished: sc === 'published',
+      showCta: !!CTA[sc], ctaLabel: (CTA[sc] || [''])[0], ctaIcon: (CTA[sc] || ['', ''])[1],
+      navIcon: idx <= 1 || sc === 'published' ? 'close' : 'arrow_back', navLabel: idx <= 1 ? 'Close' : 'Back',
+      stepLabel: sc === 'published' ? 'Published' : sc === 'error' ? 'Step 1 of 5 · needs attention' : 'Step ' + Math.max(1, idx) + ' of 5',
+      progress: Math.round((idx / 6) * 100), progressTone: sc === 'error' ? 'danger' : sc === 'published' ? 'success' : undefined,
+      next: () => this.setState({ screen: order[Math.min(6, idx + 1)] }),
+      back: () => this.setState({ screen: idx <= 2 ? 'pick' : order[idx - 1] }),
+      retry: () => this.setState({ screen: 'analyzing' }), toDays: () => this.setState({ screen: 'days' }),
+      reels: [
+        { place: 'Udaipur', views: '1.2M', img: IMG.udaipur }, { place: 'Coorg', views: '640K', img: IMG.coorg }, { place: 'Jodhpur', views: '310K', img: IMG.jodhpur },
+        { place: 'Pushkar', views: '220K', img: IMG.pushkar }, { place: 'Hampi', views: '180K', img: IMG.hampi }, { place: 'Gokarna', views: '96K', img: IMG.gokarna }
+      ].map((r, i) => ({ ...r, on: s.reel === i, edge: s.reel === i ? 'var(--primary)' : 'transparent', pick: () => this.setState({ reel: i }) })),
+      checks: [
+        { label: 'Destination: Udaipur', icon: 'check_circle', color: done, fg: 'var(--ink)' },
+        { label: '9 places across 3 days', icon: 'check_circle', color: done, fg: 'var(--ink)' },
+        { label: 'Matching partner stays nearby', icon: 'progress_activity', color: doing, fg: 'var(--ink)' },
+        { label: 'Pricing bookable experiences', icon: 'radio_button_unchecked', color: waiting, fg: 'var(--muted)' }
+      ],
+      detected: [{ k: 'Destination', v: 'Udaipur, Rajasthan' }, { k: 'Length', v: '3 days, 2 nights' }, { k: 'Budget', v: 'Under ₹15,000 for 2' }, { k: 'Vibe', v: 'Lakes, palaces, food' }, { k: 'Best for', v: 'Couples and friends' }],
+      days: s.days.map((d, di) => ({
+        ...d, count: d.items.length,
+        items: d.items.map((it, ii) => ({ ...it, tag: it.b ? 'Bookable' : 'Tip', hue: it.b ? 'moss' : 'charcoal', remove: () => this.setState({ days: s.days.map((x, xi) => xi === di ? { ...x, items: x.items.filter((_, k) => k !== ii) } : x) }) })),
+        add: () => this.setState({ days: s.days.map((x, xi) => xi === di ? { ...x, items: [...x.items, { name: 'Saheliyon ki Bari', kind: 'Garden', b: false }] } : x) })
+      })),
+      stays: STAYS.map((h) => {
+        const isPick = s.pick === h.id;
+        const on = !!s.inc[h.id] || isPick;
+        return { ...h, isPick, on, bg: isPick ? 'var(--surface-tint)' : 'var(--surface)', edge: isPick ? 'var(--primary-edge)' : 'var(--glass-edge)', makePick: () => this.setState({ pick: h.id, inc: { ...s.inc, [h.id]: true } }), toggle: () => { if (!isPick) this.setState({ inc: { ...s.inc, [h.id]: !s.inc[h.id] } }); } };
+      }),
+      stopCount, stayCount: STAYS.filter((h) => s.inc[h.id] || s.pick === h.id).length
+    };
+  }
+}
+</script>
+</body>
+</html>

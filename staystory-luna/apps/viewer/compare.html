@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><title>Design vs app</title>
+<style>body{margin:0;font:12px system-ui;background:#ddd}.bar{padding:8px 12px;background:#fff;display:flex;gap:12px;align-items:center}.pair{overflow-x:auto;display:flex;gap:16px;padding:12px;align-items:flex-start}iframe{flex:none;border:0;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.2)}pre{margin:0;padding:12px;background:#111;color:#cfc;max-height:300px;overflow:auto}</style></head>
+<body>
+<div class="bar"><b>Design</b><span id="d"></span><b>App</b><span id="a"></span><button id="run">Diff</button><label><input type="checkbox" id="ov"> overlay</label></div>
+<div class="pair"><iframe id="fd"></iframe><iframe id="fa"></iframe></div><pre id="out"></pre>
+<script>
+/*
+ * /viewer/compare.html?file=LunaHotel&screen=gap&app=/hotel/%23/console/gap&w=1470&h=956
+ * window.__compare() -> { summary, mismatches[] } comparing text and image geometry of design (left) and app (right).
+ */
+const q = new URLSearchParams(location.search);
+const w = +q.get('w') || 393, h = +q.get('h') || 852;
+const design = `/viewer/?file=${q.get('file')}&screen=${q.get('screen')}${q.get('extra') ? '&' + q.get('extra') : ''}`;
+const app = q.get('app');
+fd.src = design; fa.src = app; for (const f of [fd, fa]) { f.style.width = w + 'px'; f.style.height = h + 'px'; }
+d.textContent = design; a.textContent = app;
+const load = (f) => new Promise((r) => f.addEventListener('load', () => setTimeout(r, 1200)));
+const ready = Promise.all([load(fd), load(fa)]).then(() => import('/geom.js').catch(() => null));
+const tol = +q.get('tol') || 1.5;
+window.__compare = async () => {
+  await ready;
+  for (const f of [fd, fa]) if (!f.contentWindow.__geom) { const s = f.contentDocument.createElement('script'); s.src = '/geom.js'; f.contentDocument.head.appendChild(s); await new Promise((r) => (s.onload = r)); }
+  const A = fd.contentWindow.__geom(fd.contentDocument, '#design-root');
+  const B = fa.contentWindow.__geom(fa.contentDocument, q.get('root') || '.phone, #root');
+  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9₹]/g, '');
+  const used = new Set(); const out = []; let matched = 0;
+  const offA = { x: A.text.length ? 0 : 0, y: 0 };
+  for (const a of A.text) {
+    let best = -1, bd = 1e9;
+    B.text.forEach((b, i) => { if (used.has(i) || norm(b.t) !== norm(a.t)) return; const d = Math.abs(b.y - a.y) + Math.abs(b.x - a.x); if (d < bd) { bd = d; best = i; } });
+    if (best < 0) { out.push({ kind: 'missing-in-app', t: a.t, at: [Math.round(a.x), Math.round(a.y)] }); continue; }
+    used.add(best); matched++; const b = B.text[best];
+    const diffs = {};
+    if (Math.abs(b.x - a.x) > tol) diffs.dx = +(b.x - a.x).toFixed(1);
+    if (Math.abs(b.y - a.y) > tol) diffs.dy = +(b.y - a.y).toFixed(1);
+    if (Math.abs(b.w - a.w) > tol * 2) diffs.dw = +(b.w - a.w).toFixed(1);
+    if (Math.abs(b.fs - a.fs) > 0.1) diffs.fs = [a.fs, b.fs];
+    if (b.fw !== a.fw) diffs.fw = [a.fw, b.fw];
+    if (b.c !== a.c) diffs.color = [a.c, b.c];
+    if (Object.keys(diffs).length) out.push({ kind: 'text', t: a.t.slice(0, 40), ...diffs });
+  }
+  B.text.forEach((b, i) => { if (!used.has(i)) out.push({ kind: 'extra-in-app', t: b.t.slice(0, 40), at: [Math.round(b.x), Math.round(b.y)] }); });
+  const usedI = new Set();
+  for (const a of A.imgs) {
+    const i = B.imgs.findIndex((b, k) => !usedI.has(k) && b.s === a.s && Math.abs(b.y - a.y) < 400);
+    if (i < 0) { out.push({ kind: 'img-missing-in-app', s: a.s, at: [Math.round(a.x), Math.round(a.y)] }); continue; }
+    usedI.add(i); const b = B.imgs[i]; const dd = {};
+    for (const k of ['x', 'y', 'w', 'h']) if (Math.abs(b[k] - a[k]) > tol) dd['d' + k] = +(b[k] - a[k]).toFixed(1);
+    if (Object.keys(dd).length) out.push({ kind: 'img', s: a.s, ...dd });
+  }
+  const res = { summary: { designText: A.text.length, appText: B.text.length, matched, issues: out.length }, mismatches: out };
+  document.getElementById('out').textContent = JSON.stringify(res, null, 1); return res;
+};
+document.getElementById('run').onclick = () => window.__compare();
+document.getElementById('ov').onchange = (e) => { fa.style.cssText += e.target.checked ? ';position:absolute;left:12px;top:56px;opacity:.5;mix-blend-mode:multiply' : ';position:static;opacity:1'; };
+</script></body></html>

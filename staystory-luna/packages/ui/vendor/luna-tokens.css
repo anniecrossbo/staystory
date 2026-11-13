@@ -1,0 +1,44 @@
+/* Luna OS V2 role tokens, resolved from the design system's tokens.json for this canvas. */
+:root{
+  --pine-50:#F0F5F6;--pine-100:#E7F0F1;--pine-200:#D3E4E6;--pine-300:#A9C7CC;--pine-400:#5F9298;--pine-500:#23707C;--pine-600:#0F5563;--pine-700:#0C4552;--pine-800:#0A3742;--pine-900:#07222A;
+  --slate-0:#FFFFFF;--slate-50:#F8F9FA;--slate-100:#F4F5F6;--slate-150:#F1F2F4;--slate-200:#EDEFF1;--slate-300:#D7DBDF;--slate-400:#B4BAC1;--slate-500:#9AA1A9;--slate-600:#6B7280;--slate-700:#3F4448;--slate-800:#16181A;
+  --green-100:#E7F6F0;--green-500:#0FA37F;--green-600:#0C8468;--green-700:#0A6650;
+  --amber-100:#FBEEDB;--amber-500:#E08A00;--amber-600:#B56F00;--amber-700:#8A5500;
+  --red-100:#FBEAEA;--red-500:#E5484D;--red-600:#C5343A;--red-700:#9C282D;
+  --teal-blue-500:#4C8FA6;--gold-500:#C9A86A;--gold-100:#F6EEDD;--gold-700:#7F6226;
+
+  --canvas:#F5F7F9;--surface:#FFFFFF;--surface-sunken:#F1F2F4;--surface-tint:#E7F0F1;
+  --glass-card:rgba(255,255,255,0.8);--glass-panel:rgba(255,255,255,0.6);--glass-bar:rgba(255,255,255,0.75);--glass-dock:rgba(255,255,255,0.5);--glass-edge:#FFFFFF;
+  --luna-glass-a:rgba(15,85,99,0.10);--luna-glass-b:rgba(157,142,30,0.10);--luna-glass-c:rgba(41,188,211,0.10);--luna-glass-edge:rgba(0,0,0,0.2);
+  --ink:#16181A;--ink-2:#3F4448;--muted:#6B7280;--faint:#9AA1A9;--on-primary:#FFFFFF;
+  --border:#D7DBDF;--border-strong:#868E98;--divider:#EDEFF1;--outline-ink:rgba(22,24,26,0.5);
+  --primary:#0F5563;--primary-hover:#0C4552;--primary-tint:#E7F0F1;--primary-tint-strong:#D3E4E6;--primary-ring:rgba(15,85,99,0.15);--primary-edge:rgba(15,85,99,0.45);
+  --success:#0FA37F;--success-tint:#E7F6F0;--success-ink:#0A6650;
+  --warning:#E08A00;--warning-tint:#FBEEDB;--warning-ink:#8A5500;
+  --danger:#E5484D;--danger-tint:#FBEAEA;--danger-strong:#C5343A;
+  --scrim:rgba(15,20,26,0.28);
+  --bubble-guest:#386641;--bubble-guest-frost:rgba(56,102,65,0.9);--bubble-sent:#0F5563;--bubble-sent-frost:rgba(15,85,99,0.9);--bubble-genie:#F4F4F3;--bubble-genie-frost:rgba(244,244,243,0.9);--bubble-meta:#D5D4D4;
+  --cat-sky-tint:#E2EEFA;--cat-sky:#0786B5;--cat-sky-ink:#1B6A99;
+  --cat-violet-tint:#EBE5F4;--cat-violet:#8A55E0;--cat-violet-ink:#6A45B0;
+  --cat-navy-tint:#EDF1FA;--cat-navy:#3D548C;--cat-navy-ink:#3D548C;
+  --cat-charcoal-tint:#E6E8EB;--cat-charcoal:#2C3543;--cat-charcoal-ink:#2C3543;
+  --cat-ochre-tint:#FFF4DD;--cat-ochre:#B07F2E;--cat-ochre-ink:#8A5E10;
+  --cat-moss-tint:#EAF4EC;--cat-moss:#3D7151;--cat-moss-ink:#2F5A40;
+  --cat-plum-tint:#F5F0F8;--cat-plum:#734A85;--cat-plum-ink:#734A85;
+  --cat-clay-tint:#F3ECE8;--cat-clay:#8C6133;--cat-clay-ink:#7A4E2B;
+  --chart-1:#0F5563;--chart-2:#0FA37F;--chart-3:#E08A00;--chart-4:#E5484D;--chart-5:#4C8FA6;--chart-6:#9AA1A9;--chart-grid:#EDEFF1;
+
+  --font-sans:"SF Pro",-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,sans-serif;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;
+  --radius-xs:6px;--radius-sm:8px;--radius-md:12px;--radius-lg:20px;--radius-xl:24px;--radius-luna:30px;--radius-pill:999px;
+  --shadow-card:0 1.2px 3.6px 0 rgba(0,0,0,0.03),0 9.7px 31px 0 rgba(0,0,0,0.08),0 12px 30px 0 rgba(0,0,0,0.02);
+  --shadow-dock:0 10px 30px 0 rgba(0,0,0,0.12);--shadow-popover:0 18px 48px 0 rgba(0,0,0,0.14);--shadow-modal:0 12px 30px 0 rgba(0,0,0,0.14);
+  --shadow-sheet:-8px 0 32px 0 rgba(0,0,0,0.12);--shadow-thumb:0 1px 2px 0 rgba(0,0,0,0.06);--shadow-lift:0 12px 34px 0 rgba(0,0,0,0.12);--shadow-orb:0 5px 47px 0 rgba(0,0,0,0.1);
+  --blur-chrome:18px;--blur-luna:24px;
+  --duration-fast:220ms;--duration-base:320ms;--duration-slow:500ms;
+  --ease-standard:cubic-bezier(0.4,0,0.2,1);--ease-spring:cubic-bezier(0.2,0.9,0.3,1.15);
+  --opacity-disabled:0.5;--opacity-dim:0.4;
+  --layout-gap:20px;--layout-margin:51px;--layout-widget-pad:20px;--layout-dock-offset:24px;
+  --control-sm:32px;--control-md:40px;--control-lg:44px;
+  --z-base:0;--z-sticky:10;--z-dock:40;--z-sheet:60;--z-modal:80;--z-popover:90;--z-toast:100;
+}

@@ -1,0 +1,55 @@
+/* Layout primitives copied from the design's inline styles. */
+.page { box-sizing: border-box; min-height: 100vh; position: relative; padding: 20px clamp(16px, 3.4vw, 48px) 0; display: flex; flex-direction: column; gap: 20px; background: var(--canvas); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.stat-grid.w220 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.split { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+/* The design pins the dock 24px above the page end. Sticky keeps that at the page end and holds it above the fold on tall pages. */
+.dock-wrap { position: sticky; bottom: 0; height: 128px; margin-top: -20px; box-sizing: border-box; padding-bottom: 24px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 40; flex: none; }
+.dock-wrap > div { pointer-events: auto; }
+.toaster { position: fixed; left: 0; right: 0; bottom: 104px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 120; pointer-events: none; }
+.toaster > * { pointer-events: auto; }
+
+/* Overlays */
+.overlay { position: fixed; inset: 0; background: var(--scrim); display: flex; z-index: 60; }
+.overlay.right { justify-content: flex-end; }
+.overlay.center { align-items: center; justify-content: center; z-index: 80; }
+.overlay-box { outline: none; }
+.overlay-box.right { width: 440px; max-width: 100%; height: 100%; }
+.overlay-box.center { width: 480px; max-width: calc(100% - 32px); max-height: calc(100% - 32px); overflow: auto; }
+.overlay-box.center.wide, .print-area .overlay-box.center { width: 560px; }
+
+/* Interaction affordances for rendered Luna elements and rows */
+.table-row { display: grid; grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr; gap: 12px; align-items: center; min-height: 52px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--divider); background: transparent; text-align: left; cursor: pointer; font: inherit; color: inherit; border-radius: var(--radius-sm); }
+.table-row:hover, .table-row.on { background: var(--surface-tint); }
+.table-row:focus-visible, .activatable:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.activatable { cursor: pointer; }
+tr.activatable:hover { background: var(--surface-tint); }
+.lu-ai-body.activatable:hover { text-decoration: underline; text-underline-offset: 3px; }
+.lu-topbar-pill.activatable:hover { filter: brightness(.97); }
+.chrome-menu { position: absolute; top: calc(100% + 8px); width: 240px; z-index: 90; }
+.hl { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: var(--radius-xl); transition: outline-color .4s; }
+.err { font-size: 11px; line-height: 15px; color: var(--danger-strong); }
+
+/* Photos */
+.ph { position: relative; width: 96px; height: 72px; }
+.ph img { width: 96px; height: 72px; border-radius: var(--radius-md); object-fit: cover; display: block; }
+.ph .rm { position: absolute; top: 4px; right: 4px; opacity: 0; transition: opacity .12s; }
+.ph:hover .rm, .ph:focus-within .rm { opacity: 1; }
+
+/* Voucher */
+.voucher { background: #fff; color: #14212b; border-radius: var(--radius-xl); padding: 32px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow-modal); }
+.voucher .kvv { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; line-height: 20px; border-bottom: 1px solid var(--divider); padding: 8px 0; }
+.voucher .kvv > span:first-child { color: var(--ink-2); } .voucher .kvv > span:last-child { font-weight: 600; text-align: right; }
+
+.kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 18px; }
+.kv > span:first-child { color: var(--ink-2); } .kv > span:last-child { font-weight: 600; }
+
+@media print {
+  .page > :not(.print-area) { display: none !important; }
+  .page { padding: 0; min-height: 0; background: #fff; }
+  .overlay.print-area { position: static; background: none; display: block; }
+  .overlay-box.center { width: auto; max-width: none; max-height: none; overflow: visible; }
+  .voucher { box-shadow: none; border: 1px solid #ccc; }
+  .no-print, .toaster { display: none !important; }
+}

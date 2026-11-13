@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Creator onboarding</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums">
+  <div style="position: absolute; inset: 0; overflow-y: auto; padding: 54px 16px 120px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+    <sc-if value="{{inSteps}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 12px; height: 44px">
+        <x-import component-from-global-scope="Luna.IconButton" icon="arrow_back" label="Back" variant="white" on-click="{{back}}"></x-import>
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.ProgressBar" value="{{progress}}" aria-label="Setup progress"></x-import></div>
+        <span style="font-size: 11px; line-height: 15px; font-weight: 600; color: var(--muted)">{{stepLabel}}</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isWelcome}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 8px; height: 44px">
+        <x-import component-from-global-scope="Luna.Icon" name="home_work" size="{{ 24 }}" style="color: var(--primary)"></x-import>
+        <span style="font-size: 16px; line-height: 22px; font-weight: 600">StayStory for creators</span>
+      </div>
+      <div style="height: 260px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card)"><img src="assets/jaipur.jpg" alt="Illustrated fort above Jaipur" style="width: 100%; height: 100%; object-fit: cover; display: block"></div>
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">Your reels already sell trips. Get paid for them.</span>
+      <x-import component-from-global-scope="Luna.Widget" title="How it works">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{how}}" as="h" hint-placeholder-count="3">
+            <div style="display: flex; gap: 12px; align-items: center">
+              <x-import component-from-global-scope="Luna.Avatar" initials="{{h.n}}" size="{{ 34 }}"></x-import>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{h.t}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{h.d}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isConnect}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 28px; line-height: 39px; font-weight: 700">Connect your channels</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">We read public posts and audience stats to match you with hotels. We never post for you.</span>
+      </div>
+      <x-import component-from-global-scope="Luna.Widget" title="Channels" count="{{connectedCount}}">
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{channels}}" as="c" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-bottom: 1px solid var(--divider)">
+              <x-import component-from-global-scope="Luna.Icon" name="{{c.icon}}" size="{{ 24 }}" style="color: var(--ink-2)"></x-import>
+              <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{c.name}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{c.sub}}</span></span>
+              <x-import component-from-global-scope="Luna.Button" variant="{{c.variant}}" size="sm" icon="{{c.btnIcon}}" on-click="{{c.toggle}}">{{c.btn}}</x-import>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isAudience}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 28px; line-height: 39px; font-weight: 700">Your audience</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">From Instagram. Hotels see this when matching.</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <x-import component-from-global-scope="Luna.StatTile" label="Followers" value="412K"></x-import>
+        <x-import component-from-global-scope="Luna.StatTile" label="Average save rate" value="6.8%"></x-import>
+      </div>
+      <x-import component-from-global-scope="Luna.Widget" title="Top follower cities">
+        <x-import component-from-global-scope="Luna.BarChart" data="{{cities}}" height="{{ 120 }}" aria-label="Followers by city"></x-import>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Regions you cover">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{regions}}" as="r" hint-placeholder-count="6">
+            <x-import component-from-global-scope="Luna.Chip" selected="{{r.on}}" on-click="{{r.toggle}}">{{r.label}}</x-import>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isPayout}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 28px; line-height: 39px; font-weight: 700">Where should we pay you?</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Monthly, for stays that are completed.</span>
+      </div>
+      <x-import component-from-global-scope="Luna.SegmentedControl" options="{{payModes}}" value="{{pay}}" on-change="{{setPay}}" size="lg" aria-label="Payout method"></x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="{{payTitle}}">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <sc-if value="{{isUpi}}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="Luna.TextField" label="UPI ID" default-value="anaya@okaxis" icon="qr_code"></x-import>
+          </sc-if>
+          <sc-if value="{{isBank}}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="Luna.TextField" label="Account number" placeholder="0000 0000 0000"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="IFSC" placeholder="HDFC0000000"></x-import>
+          </sc-if>
+          <x-import component-from-global-scope="Luna.TextField" label="PAN" default-value="ABCDE1234F" hint="Needed for TDS"></x-import>
+          <x-import component-from-global-scope="Luna.TextField" label="GSTIN (optional)" placeholder="If registered"></x-import>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isTerms}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 28px; line-height: 39px; font-weight: 700">How you earn</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Illustrative ₹20,000 booking. Rates vary by hotel.</span>
+      </div>
+      <x-import component-from-global-scope="Luna.Widget" title="Booking value ₹20,000">
+        <x-import component-from-global-scope="Luna.DonutChart" segments="{{split}}" center="₹1,600" sub="your share" size="{{ 180 }}" aria-label="Booking split"></x-import>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Disclosure">
+        <x-import component-from-global-scope="Luna.Checkbox" checked="{{agree}}" on-change="{{setAgree}}" label="I'll label StayStory links as paid partnerships and accept the creator terms"></x-import>
+      </x-import>
+    </sc-if>
+
+    <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+      <div style="padding-top: 120px">
+        <x-import component-from-global-scope="Luna.EmptyState" icon="verified" title="You're set, Anaya">Send us your first reel and we'll turn it into a bookable trip.</x-import>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="position: absolute; left: 16px; right: 16px; bottom: 34px; display: flex; flex-direction: column; gap: 8px">
+    <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon-right="{{ctaIcon}}" disabled="{{ctaDisabled}}" on-click="{{next}}">{{ctaLabel}}</x-import>
+    <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}" on-click="{{restart}}">Go to dashboard</x-import>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["welcome","connect","audience","payout","terms","done"],"default":"welcome"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'welcome', ig: true, yt: false, blog: false, regions: { Rajasthan: true, Karnataka: true }, pay: 'upi', agree: true };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const order = ['welcome', 'connect', 'audience', 'payout', 'terms', 'done'];
+    const i = order.indexOf(sc);
+    const ch = (key, name, icon, sub) => {
+      const on = s[key];
+      return { name, icon, sub: on ? sub : 'Not connected', btn: on ? 'Connected' : 'Connect', btnIcon: on ? 'check' : 'link', variant: on ? 'secondary' : 'primary', toggle: () => this.setState({ [key]: !on }) };
+    };
+    const CTA = { welcome: 'Get started', connect: 'Continue', audience: 'Continue', payout: 'Save payout details', terms: 'Finish setup', done: 'Create my first trip' };
+    return {
+      isWelcome: sc === 'welcome', isConnect: sc === 'connect', isAudience: sc === 'audience', isPayout: sc === 'payout', isTerms: sc === 'terms', isDone: sc === 'done',
+      inSteps: i >= 1 && i <= 4, progress: i * 25, stepLabel: i + ' of 4',
+      ctaLabel: CTA[sc], ctaIcon: sc === 'done' ? 'add' : 'arrow_forward', ctaDisabled: sc === 'terms' && !s.agree,
+      next: () => this.setState({ screen: order[Math.min(5, i + 1)] }),
+      back: () => this.setState({ screen: order[Math.max(0, i - 1)] }),
+      restart: () => this.setState({ screen: 'welcome' }),
+      how: [
+        { n: '01', t: 'Post normally', d: 'Keep making the reels you already make' },
+        { n: '02', t: 'Publish one trackable link', d: 'We turn a reel into a day-by-day trip' },
+        { n: '03', t: 'Earn on completed stays', d: 'See visits, saves and bookings; paid monthly' }
+      ],
+      channels: [ch('ig', 'Instagram', 'photo_camera', '@anaya.explores · 412K'), ch('yt', 'YouTube', 'smart_display', 'Anaya Explores · 88K'), ch('blog', 'Blog or website', 'language', 'anayaexplores.in')],
+      connectedCount: [s.ig, s.yt, s.blog].filter(Boolean).length,
+      cities: [{ label: 'Mumbai', value: 24 }, { label: 'Bengaluru', value: 18 }, { label: 'Delhi', value: 15 }, { label: 'Pune', value: 9 }, { label: 'Other', value: 34 }],
+      regions: ['Rajasthan', 'Goa', 'Kerala', 'Himachal', 'Karnataka', 'Northeast', 'Ladakh', 'Abroad'].map((label) => ({ label, on: !!s.regions[label], toggle: () => this.setState({ regions: { ...s.regions, [label]: !s.regions[label] } }) })),
+      payModes: [{ value: 'upi', label: 'UPI' }, { value: 'bank', label: 'Bank account' }],
+      pay: s.pay, setPay: (v) => this.setState({ pay: v }), isUpi: s.pay === 'upi', isBank: s.pay === 'bank', payTitle: s.pay === 'upi' ? 'UPI and tax' : 'Bank and tax',
+      split: [{ label: 'Hotel keeps', value: 17000, color: 'var(--chart-6)' }, { label: 'You earn', value: 1600, color: 'var(--chart-1)' }, { label: 'StayStory', value: 1400, color: 'var(--chart-5)' }],
+      agree: s.agree, setAgree: (v) => this.setState({ agree: typeof v === 'boolean' ? v : !s.agree })
+    };
+  }
+}
+</script>
+</body>
+</html>

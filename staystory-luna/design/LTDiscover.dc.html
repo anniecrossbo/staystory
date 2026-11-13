@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traveler discover</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums">
+  <div style="position: absolute; inset: 0; overflow-y: auto; padding: 54px 16px 128px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+    <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 11px; line-height: 15px; color: var(--muted)">Good evening, Meera</span><span style="font-size: 28px; line-height: 39px; font-weight: 700">Where to next?</span></span>
+        <x-import component-from-global-scope="Luna.Avatar" initials="MI" size="{{ 40 }}" name="Meera Iyer"></x-import>
+      </div>
+      <x-import component-from-global-scope="Luna.SearchField" placeholder="A place, a vibe or a creator" default-value="{{query}}"></x-import>
+      <div style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+          <x-import component-from-global-scope="Luna.FilterPill" selected="{{f.on}}" on-click="{{f.pick}}">{{f.label}}</x-import>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <x-import component-from-global-scope="Luna.Skeleton" variant="rect" height="{{ 220 }}" style="border-radius: 20px"></x-import>
+          <x-import component-from-global-scope="Luna.Skeleton" variant="title" width="60%"></x-import>
+          <x-import component-from-global-scope="Luna.Skeleton" variant="text" width="80%"></x-import>
+          <x-import component-from-global-scope="Luna.Skeleton" variant="rect" height="{{ 220 }}" style="border-radius: 20px"></x-import>
+          <x-import component-from-global-scope="Luna.Skeleton" variant="title" width="50%"></x-import>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+        <div style="padding-top: 48px">
+          <x-import component-from-global-scope="Luna.EmptyState" icon="travel_explore" title="No trips match “Ladakh under ₹5k”">Try a wider budget, or follow creators who cover Ladakh to hear about new trips.</x-import>
+        </div>
+        <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}" icon="close" on-click="{{clear}}">Clear search</x-import>
+      </sc-if>
+
+      <sc-if value="{{showTrips}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <span style="font-size: 16px; line-height: 22px; font-weight: 600">{{sectionTitle}}</span>
+          <span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{countLabel}}</span>
+        </div>
+        <sc-for list="{{trips}}" as="t" hint-placeholder-count="3">
+          <div style="background: var(--glass-card); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); overflow: hidden">
+            <div style="position: relative; height: 176px">
+              <img src="{{t.img}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block">
+              <div style="position: absolute; top: 12px; right: 12px"><x-import component-from-global-scope="Luna.Badge" tone="neutral" icon="bookmark">{{t.saves}} saves</x-import></div>
+            </div>
+            <div style="padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">{{t.place}} · {{t.days}}</span>
+                <span style="font-size: 16px; line-height: 22px; font-weight: 600">{{t.title}}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <button onClick="{{t.openCreator}}" style="display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 0; min-height: 44px; cursor: pointer; font-family: inherit; color: inherit">
+                  <x-import component-from-global-scope="Luna.Avatar" initials="{{t.ini}}" size="{{ 24 }}"></x-import>
+                  <span style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--primary)">{{t.handle}}</span>
+                </button>
+                <span style="flex: 1"></span>
+                <span style="font-size: 16px; line-height: 22px; font-weight: 600">{{t.price}}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{isCreator}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+        <x-import component-from-global-scope="Luna.IconButton" icon="arrow_back" label="Back" variant="white" on-click="{{backFeed}}"></x-import>
+        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 16px; line-height: 22px; font-weight: 600">{{c.name}}’s trip shop</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">staystory.in/{{c.slug}}</span></span>
+        <x-import component-from-global-scope="Luna.IconButton" icon="ios_share" label="Share shop" variant="white"></x-import>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <x-import component-from-global-scope="Luna.Avatar" initials="{{c.ini}}" size="{{ 64 }}" tone="solid"></x-import>
+        <div style="flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center">
+          <span style="display: flex; flex-direction: column"><span style="font-size: 16px; line-height: 22px; font-weight: 700">{{c.trips}}</span><span style="font-size: 11px; line-height: 15px; color: var(--ink-2)">Trips</span></span>
+          <span style="display: flex; flex-direction: column"><span style="font-size: 16px; line-height: 22px; font-weight: 700">{{c.booked}}</span><span style="font-size: 11px; line-height: 15px; color: var(--ink-2)">Travelers</span></span>
+          <span style="display: flex; flex-direction: column"><span style="font-size: 16px; line-height: 22px; font-weight: 700">{{c.followers}}</span><span style="font-size: 11px; line-height: 15px; color: var(--ink-2)">Followers</span></span>
+        </div>
+      </div>
+      <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">{{c.bio}}. Every trip here is one I took, with the stays and experiences from the reel.</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+        <x-import component-from-global-scope="Luna.Button" variant="{{followVariant}}" size="lg" icon="{{followIcon}}" on-click="{{toggleFollow}}">{{followLabel}}</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" icon="chat">Save shop to WhatsApp</x-import>
+      </div>
+      <x-import component-from-global-scope="Luna.SegmentedControl" options="{{shopTabs}}" value="{{shopTab}}" on-change="{{setShopTab}}" aria-label="Shop sections"></x-import>
+      <sc-if value="{{isShopTrips}}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{creatorTrips}}" as="t" hint-placeholder-count="3">
+          <a href="LunaTraveler.dc.html" style="display: flex; gap: 12px; padding: 12px; border-radius: var(--radius-lg); background: var(--glass-card); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-card); text-decoration: none; color: inherit">
+            <img src="{{t.img}}" alt="" style="width: 88px; height: 104px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0">
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+              <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">{{t.place}} · {{t.days}}</span>
+              <span style="font-size: 13px; line-height: 18px; font-weight: 600">{{t.title}}</span>
+              <span style="font-size: 11px; line-height: 15px; color: var(--ink-2)">{{t.stay}}</span>
+              <span style="flex: 1"></span>
+              <span style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 13px; line-height: 18px; font-weight: 600">from {{t.price}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{t.saves}} saves</span></span>
+            </span>
+          </a>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{isShopReels}}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+          <sc-for list="{{reels}}" as="r" hint-placeholder-count="6">
+            <div style="position: relative; aspect-ratio: 9 / 16; border-radius: var(--radius-sm); overflow: hidden">
+              <img src="{{r.img}}" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block">
+              <span style="position: absolute; left: 6px; bottom: 6px; display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6)"><x-import component-from-global-scope="Luna.Icon" name="play_arrow" size="{{ 16 }}"></x-import>{{r.views}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{isShopCollections}}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{collections}}" as="k" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid var(--divider)">
+            <img src="{{k.img}}" alt="" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover">
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{k.name}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{k.meta}}</span></span>
+            <x-import component-from-global-scope="Luna.Icon" name="chevron_right" size="{{ 20 }}"></x-import>
+          </div>
+        </sc-for>
+      </sc-if>
+    </sc-if>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center">
+    <x-import component-from-global-scope="Luna.Dock" items="{{dockItems}}" active="discover" orb="{{ false }}" aria-label="Traveler navigation"></x-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["feed","filtered","loading","empty","creator"],"default":"feed"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fromScreen(props.screen || 'feed');
+  }
+  fromScreen(sc) {
+    return { screen: sc, filter: sc === 'filtered' ? 'Beaches' : 'All', creator: 'anaya', following: false, tab: 'trips' };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState(this.fromScreen(this.props.screen)); }
+  renderVals() {
+    const s = this.state;
+    const IMG = {
+      udaipur: 'assets/udaipur.jpg', jaipur: 'assets/jaipur.jpg', goa: 'assets/goa.jpg',
+      rishikesh: 'assets/rishikesh.jpg', coorg: 'assets/coorg.jpg', gokarna: 'assets/gokarna.jpg', jodhpur: 'assets/jodhpur.jpg'
+    };
+    const CREATORS = {
+      anaya: { handle: '@anaya.explores', slug: 'anaya', name: 'Anaya Rao', ini: 'AR', bio: 'Slow travel, Rajasthan and the South', followers: '412K', trips: '3', booked: '1.2K', cover: IMG.udaipur },
+      riya: { handle: '@roamwithriya', slug: 'riya', name: 'Riya Malhotra', ini: 'RM', bio: 'Weekends from Delhi under ₹10k', followers: '238K', trips: '1', booked: '860', cover: IMG.jaipur },
+      kabir: { handle: '@kabir.coast', slug: 'kabir', name: 'Kabir Fernandes', ini: 'KF', bio: 'Konkan coast, surf and seafood', followers: '156K', trips: '2', booked: '410', cover: IMG.goa },
+      hari: { handle: '@himalayan.hari', slug: 'hari', name: 'Hari Negi', ini: 'HN', bio: 'Treks, cafés and hill towns', followers: '97K', trips: '1', booked: '330', cover: IMG.rishikesh }
+    };
+    const TRIPS = [
+      { c: 'anaya', place: 'Udaipur', days: '3 days', title: 'Three days in Udaipur under ₹15,000', price: '₹14,000', amt: 14000, saves: '2.1K', img: IMG.udaipur, tags: ['Heritage'], stay: 'Haveli Jheel · boat ride · cooking class' },
+      { c: 'riya', place: 'Jaipur', days: '2 days', title: 'Pink City weekend with friends', price: '₹9,800', amt: 9800, saves: '1.4K', img: IMG.jaipur, tags: ['Heritage'] },
+      { c: 'kabir', place: 'Goa', days: '4 days', title: 'Monsoon Goa, the quiet south', price: '₹18,200', amt: 18200, saves: '972', img: IMG.goa, tags: ['Beaches'] },
+      { c: 'hari', place: 'Rishikesh', days: '3 days', title: 'River, yoga and a café trail', price: '₹8,400', amt: 8400, saves: '1.1K', img: IMG.rishikesh, tags: ['Mountains'] },
+      { c: 'anaya', place: 'Coorg', days: '3 days', title: 'Coffee estates and misty mornings', price: '₹12,900', amt: 12900, saves: '804', img: IMG.coorg, tags: ['Mountains'], stay: 'Misty Estate · plantation walk' },
+      { c: 'kabir', place: 'Gokarna', days: '3 days', title: 'Cliffs, coves and slow sunsets', price: '₹9,200', amt: 9200, saves: '640', img: IMG.gokarna, tags: ['Beaches'] },
+      { c: 'anaya', place: 'Jodhpur', days: '2 days', title: 'The blue city on foot', price: '₹8,900', amt: 8900, saves: '590', img: IMG.jodhpur, tags: ['Heritage'], stay: 'Blue House stay · old city walk' }
+    ];
+    const keep = (t) => s.filter === 'All' ? true : s.filter === 'Under ₹10k' ? t.amt < 10000 : t.tags.includes(s.filter);
+    const shown = TRIPS.filter(keep).map((t) => ({ ...t, handle: CREATORS[t.c].handle, ini: CREATORS[t.c].ini, openCreator: () => this.setState({ screen: 'creator', creator: t.c }) }));
+    const sc = s.screen;
+    const c = CREATORS[s.creator];
+    return {
+      isList: sc !== 'creator', isCreator: sc === 'creator', isLoading: sc === 'loading', isEmpty: sc === 'empty',
+      showTrips: sc === 'feed' || sc === 'filtered',
+      query: sc === 'empty' ? 'Ladakh under ₹5k' : '',
+      filters: ['All', 'Heritage', 'Beaches', 'Mountains', 'Under ₹10k'].map((label) => ({ label, on: s.filter === label, pick: () => this.setState({ filter: label, screen: label === 'All' ? 'feed' : 'filtered' }) })),
+      sectionTitle: s.filter === 'All' ? 'Trending creator trips' : s.filter + ' trips',
+      countLabel: shown.length + ' trips · prices for 2',
+      trips: shown,
+      clear: () => this.setState({ screen: 'feed', filter: 'All' }),
+      c, creatorTrips: TRIPS.filter((t) => t.c === s.creator), creatorTripCount: TRIPS.filter((t) => t.c === s.creator).length,
+      shopTabs: [{ value: 'trips', label: 'Trips' }, { value: 'reels', label: 'Reels' }, { value: 'collections', label: 'Collections' }],
+      shopTab: s.tab, setShopTab: (v) => this.setState({ tab: v }),
+      isShopTrips: s.tab === 'trips', isShopReels: s.tab === 'reels', isShopCollections: s.tab === 'collections',
+      reels: [['udaipur', '1.2M'], ['coorg', '640K'], ['jodhpur', '410K'], ['udaipur', '388K'], ['coorg', '210K'], ['jodhpur', '96K']].map(([k, views]) => ({ img: IMG[k], views })),
+      collections: [{ name: 'Rajasthan in winter', meta: '2 trips · 14 stays', img: IMG.udaipur }, { name: 'Long weekends from Mumbai', meta: '3 trips · 9 stays', img: IMG.coorg }, { name: 'Stays under ₹4,000 a night', meta: '11 stays', img: IMG.jodhpur }],
+      backFeed: () => this.setState({ screen: 'feed', filter: 'All' }),
+      toggleFollow: () => this.setState({ following: !s.following }),
+      followLabel: s.following ? 'Following' : 'Follow', followVariant: s.following ? 'secondary' : 'primary', followIcon: s.following ? 'check' : 'person_add',
+      dockItems: [{ id: 'discover', icon: 'explore', label: 'Discover' }, { id: 'trips', icon: 'luggage', label: 'Trips' }, { id: 'saved', icon: 'bookmark', label: 'Saved' }, { id: 'me', icon: 'person', label: 'Profile' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

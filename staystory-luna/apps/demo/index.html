@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>StayStory demo</title>
+<style>body{font:14px/1.5 system-ui;margin:0;padding:32px;max-width:720px;background:#F5F7F9;color:#16181A}a{color:#0F5563}button{font:inherit;padding:8px 16px;border-radius:8px;border:0;background:#0F5563;color:#fff;cursor:pointer}h1{margin:0 0 4px}h2{margin:24px 0 8px;font-size:16px}ul{margin:0;padding-left:20px}code{background:#E7F0F1;padding:1px 6px;border-radius:4px}</style></head>
+<body>
+<h1>StayStory demo</h1>
+<p>Hotel, creator and traveler share one mock marketplace stored in this browser. Add <code>?ns=name</code> to any URL for an isolated copy.</p>
+<p><button id="reset">Reset marketplace to the seed data</button> <span id="msg"></span></p>
+<h2>The three apps</h2>
+<ul><li><a href="/hotel/">Hotel console</a> (desktop)</li><li><a href="/creator/">Creator app</a> (phone)</li><li><a href="/traveler/">Traveler app</a> (phone)</li></ul>
+<h2>Start the story</h2>
+<ul><li><a href="/hotel/#/campaign/offer">1. Hotel builds a creator campaign</a></li><li><a href="/creator/#/app/offers">2. Creator reviews the offer</a></li><li><a href="/creator/#/create/pick">3. Creator turns a reel into a trip</a></li><li><a href="/traveler/#/social/reel">4. Traveler comments on the reel</a></li><li><a href="/hotel/#/console/gap">5. Hotel releases a Gap Night</a></li><li><a href="/hotel/#/console/bookings">6. Hotel confirms the stay</a></li><li><a href="/creator/#/app/earnings">7. Creator withdraws</a></li></ul>
+<h2>Tools</h2>
+<ul><li><a href="/viewer/">Original design files</a></li></ul>
+<script type="module">
+  import { market } from '@staystory/market';
+  document.getElementById('reset').onclick = () => { market.reset(); document.getElementById('msg').textContent = 'Reset.'; };
+</script>
+</body></html>

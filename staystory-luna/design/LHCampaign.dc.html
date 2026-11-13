@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hotel campaign builder</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 956px; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; padding: 20px clamp(16px, 3.4vw, 48px) 40px; display: flex; flex-direction: column; gap: 20px">
+
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+    <x-import component-from-global-scope="Luna.IconButton" icon="arrow_back" label="Back to console" variant="white"></x-import>
+    <div style="display: flex; flex-direction: column; flex: 1; min-width: 200px">
+      <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">Haveli Jheel, Udaipur · new campaign</span>
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">{{heading}}</span>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <sc-for list="{{steps}}" as="st" hint-placeholder-count="4">
+        <x-import component-from-global-scope="Luna.Chip" selected="{{st.on}}" icon="{{st.icon}}" on-click="{{st.go}}">{{st.label}}</x-import>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+      <sc-if value="{{isOffer}}" hint-placeholder-val="{{ true }}">
+        <x-import component-from-global-scope="Luna.Widget" title="The offer">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Campaign name" default-value="Winter on Lake Pichola"></x-import>
+            <x-import component-from-global-scope="Luna.Select" label="Room type" options="{{roomOpts}}" default-value="deluxe"></x-import>
+            <x-import component-from-global-scope="Luna.Select" label="Stay window" options="{{windowOpts}}" default-value="winter"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="Nights" default-value="2" inputmode="numeric"></x-import>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Package includes" count="{{perkCount}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{perks}}" as="p" hint-placeholder-count="6">
+              <x-import component-from-global-scope="Luna.Chip" selected="{{p.on}}" on-click="{{p.toggle}}" icon="{{p.icon}}">{{p.label}}</x-import>
+            </sc-for>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Creator-exclusive price" subtitle="Rack rate ₹9,600 for 2 nights">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+            <span style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">{{priceLabel}}</span><x-import component-from-global-scope="Luna.Badge" tone="success">{{discount}} off rack</x-import></span>
+            <x-import component-from-global-scope="Luna.Stepper" value="{{price}}" min="{{ 60 }}" max="{{ 96 }}" on-change="{{setPrice}}" aria-label="Price in hundreds of rupees"></x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isCommission}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.Widget" title="Commission on completed stays" subtitle="Your default is 15%">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+            <span style="font-size: 28px; line-height: 39px; font-weight: 700">{{comm}}%</span>
+            <x-import component-from-global-scope="Luna.Stepper" value="{{comm}}" min="{{ 8 }}" max="{{ 25 }}" on-change="{{setComm}}" aria-label="Commission percent"></x-import>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Incentives">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Bonus tier: 2% extra after 20 bookings"></x-import>
+            <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Content stay: 2 nights after 5 bookings"></x-import>
+            <x-import component-from-global-scope="Luna.Toggle" label="First look: creator sees the offer 7 days early"></x-import>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Target">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Booking target" default-value="60" hint="Campaign pauses when reached"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="Commission cap" default-value="₹80,000" hint="Optional"></x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isCreators}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.Widget" title="Choose creators" subtitle="Ranked by match" count="{{selCount}}">
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{pool}}" as="c" hint-placeholder-count="6">
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid var(--divider)">
+                <x-import component-from-global-scope="Luna.Checkbox" checked="{{c.on}}" on-change="{{c.toggle}}" label=""></x-import>
+                <img src="{{c.cover}}" alt="" style="width: 48px; height: 48px; border-radius: var(--radius-sm); object-fit: cover">
+                <span style="flex: 1; display: flex; flex-direction: column; min-width: 0"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{c.handle}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{c.meta}}</span></span>
+                <x-import component-from-global-scope="Luna.Tag" hue="{{c.hue}}">{{c.niche}}</x-import>
+                <span style="width: 64px; text-align: right; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--primary)">{{c.score}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
+          <sc-for list="{{review}}" as="r" hint-placeholder-count="4">
+            <x-import component-from-global-scope="Luna.Widget" title="{{r.k}}">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                <span style="font-size: 16px; line-height: 22px; font-weight: 600">{{r.v}}</span>
+                <x-import component-from-global-scope="Luna.Button" variant="ghost" size="sm" icon="edit" on-click="{{r.edit}}">Edit</x-import>
+              </div>
+            </x-import>
+          </sc-for>
+        </div>
+        <x-import component-from-global-scope="Luna.Banner" tone="warning" icon="info" title="Billed only after check-out">Cancellations and no-shows cost nothing.</x-import>
+      </sc-if>
+
+      <sc-if value="{{isLaunched}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.Widget" title="Campaign launched">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <img src="assets/haveli.jpg" alt="" style="width: 100%; height: 220px; border-radius: var(--radius-md); object-fit: cover; display: block">
+            <x-import component-from-global-scope="Luna.EmptyState" icon="campaign" title="Private offers sent to {{selCount}} creators">Accepts and counters appear in Needs your decision on your console.</x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <div style="display: flex; justify-content: space-between; gap: 12px">
+        <x-import component-from-global-scope="Luna.Button" variant="tertiary" size="lg" icon="arrow_back" disabled="{{backDisabled}}" on-click="{{back}}">Back</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" icon-right="{{nextIcon}}" on-click="{{next}}">{{nextLabel}}</x-import>
+      </div>
+    </main>
+
+    <aside style="flex: 1 1 340px; max-width: 420px; display: flex; flex-direction: column; gap: 20px">
+      <x-import component-from-global-scope="Luna.Widget" title="What creators see" subtitle="Private offer in their StayStory app">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <img src="assets/haveli.jpg" alt="" style="width: 100%; height: 160px; border-radius: var(--radius-md); object-fit: cover; display: block">
+          <span style="font-size: 16px; line-height: 22px; font-weight: 600">Haveli Jheel, Udaipur</span>
+          <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">{{perkLine}}</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <x-import component-from-global-scope="Luna.Tag" hue="moss">{{comm}}% commission</x-import>
+            <x-import component-from-global-scope="Luna.Tag" hue="ochre">Content stay after 5</x-import>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; line-height: 18px"><span style="color: var(--ink-2)">Follower price</span><span style="font-weight: 600">{{priceLabel}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; line-height: 18px"><span style="color: var(--ink-2)">Creator earns about</span><span style="font-weight: 600; color: var(--success-ink)">{{creatorEarn}} a booking</span></div>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="At 60 bookings" subtitle="Illustrative, not a forecast">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <x-import component-from-global-scope="Luna.StatTile" label="Revenue" value="{{projRev}}"></x-import>
+          <x-import component-from-global-scope="Luna.StatTile" label="Commission" value="{{projComm}}"></x-import>
+        </div>
+      </x-import>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["offer","commission","creators","review","launched"],"default":"offer"},"$preview":{"width":1470,"height":956}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'offer', price: 84, comm: 15, perks: { Breakfast: true, 'Late checkout': true, 'Sunset boat ride': true, 'Welcome drink': false, 'Room upgrade': false, 'Airport pickup': false }, pick: { riya: false, anaya: true, food: false, couples: false, mia: false, desi: false } };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const order = ['offer', 'commission', 'creators', 'review', 'launched'];
+    const i = order.indexOf(sc);
+    const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+    const price = s.price * 100;
+    const comm = price * s.comm / 100;
+    const ICONS = { Breakfast: 'free_breakfast', 'Late checkout': 'schedule', 'Sunset boat ride': 'sailing', 'Welcome drink': 'local_bar', 'Room upgrade': 'upgrade', 'Airport pickup': 'local_taxi' };
+    const perkOn = Object.keys(s.perks).filter((k) => s.perks[k]);
+    const POOL = [
+      { id: 'anaya', handle: '@anaya.explores', cover: 'assets/udaipur.jpg', meta: '412K · 9 Udaipur trips · 0.37% conversion', niche: 'Slow travel', hue: 'moss', score: '96%' },
+      { id: 'riya', handle: '@roamwithriya', cover: 'assets/jaipur.jpg', meta: '238K · 0.52% conversion', niche: 'Weekends', hue: 'sky', score: '84%' },
+      { id: 'food', handle: '@thefoodtrail', cover: 'assets/pushkar.jpg', meta: '520K · 0.29% conversion', niche: 'Food', hue: 'ochre', score: '83%' },
+      { id: 'couples', handle: '@couplesgoplaces', cover: 'assets/palace.jpg', meta: '96K · 0.44% conversion', niche: 'Couples', hue: 'plum', score: '80%' },
+      { id: 'mia', handle: '@wander.mia', cover: 'assets/jodhpur.jpg', meta: '64K · 0.33% conversion', niche: 'Solo', hue: 'violet', score: '77%' },
+      { id: 'desi', handle: '@desi.nomad', cover: 'assets/hampi.jpg', meta: '180K · 0.21% conversion', niche: 'Budget', hue: 'clay', score: '72%' }
+    ];
+    const selCount = Object.values(s.pick).filter(Boolean).length;
+    const HEAD = { offer: 'Build the offer', commission: 'Commission and incentives', creators: 'Choose creators', review: 'Review and launch', launched: 'Launched' };
+    const goto = (k) => () => this.setState({ screen: order[k] });
+    return {
+      heading: HEAD[sc],
+      isOffer: sc === 'offer', isCommission: sc === 'commission', isCreators: sc === 'creators', isReview: sc === 'review', isLaunched: sc === 'launched',
+      steps: ['Offer', 'Commission', 'Creators', 'Review'].map((label, k) => ({ label, on: k === i, icon: k < i ? 'check_circle' : 'radio_button_unchecked', go: goto(k) })),
+      next: () => this.setState({ screen: order[Math.min(4, i + 1)] }),
+      back: () => this.setState({ screen: order[Math.max(0, i - 1)] }),
+      backDisabled: i === 0,
+      nextLabel: sc === 'review' ? 'Launch campaign' : sc === 'launched' ? 'Back to console' : 'Continue', nextIcon: sc === 'review' ? 'rocket_launch' : 'arrow_forward',
+      roomOpts: [{ value: 'deluxe', label: 'Lake-view Deluxe' }, { value: 'suite', label: 'Jharokha Suite' }, { value: 'garden', label: 'Courtyard Room' }],
+      windowOpts: [{ value: 'winter', label: 'Nov 15 to Jan 31' }, { value: 'dec', label: 'December only' }],
+      perks: Object.keys(s.perks).map((label) => ({ label, icon: ICONS[label], on: s.perks[label], toggle: () => this.setState({ perks: { ...s.perks, [label]: !s.perks[label] } }) })),
+      perkCount: perkOn.length,
+      price: s.price, setPrice: (v) => this.setState({ price: v }), priceLabel: fmt(price), discount: Math.round((1 - price / 9600) * 100) + '%',
+      comm: s.comm, setComm: (v) => this.setState({ comm: v }),
+      pool: POOL.map((c) => ({ ...c, on: !!s.pick[c.id], toggle: () => this.setState({ pick: { ...s.pick, [c.id]: !s.pick[c.id] } }) })),
+      selCount,
+      perkLine: '2 nights' + (perkOn.length ? ' with ' + perkOn.join(', ').toLowerCase() : '') + '.',
+      creatorEarn: fmt(comm * 0.53), projRev: fmt(price * 60), projComm: fmt(comm * 60),
+      review: [
+        { k: 'Offer', v: fmt(price) + ' for 2 nights', edit: goto(0) },
+        { k: 'Includes', v: perkOn.join(', ') || 'Room only', edit: goto(0) },
+        { k: 'Commission', v: s.comm + '% plus bonus tier', edit: goto(1) },
+        { k: 'Creators', v: selCount + ' invited', edit: goto(2) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

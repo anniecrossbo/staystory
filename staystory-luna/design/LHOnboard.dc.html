@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hotel property onboarding</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 956px; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 20px; padding: 20px">
+
+  <aside style="flex: 1 1 360px; max-width: 480px; min-height: 320px; position: relative; border-radius: var(--radius-lg); overflow: hidden; display: flex">
+    <img src="{{panelImg}}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+    <div style="position: relative; margin-top: auto; margin: auto 16px 16px; padding: 20px; border-radius: var(--radius-lg); background: var(--glass-card); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); display: flex; flex-direction: column; gap: 8px; width: calc(100% - 32px); box-sizing: border-box">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <x-import component-from-global-scope="Luna.Icon" name="home_work" size="{{ 20 }}"></x-import>
+        <span style="font-size: 13px; line-height: 18px; font-weight: 600">StayStory for hotels</span>
+      </div>
+      <span style="font-size: 20px; line-height: 28px; font-weight: 700">{{panelTitle}}</span>
+      <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">{{panelBody}}</span>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 20px 32px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1">
+        <sc-for list="{{steps}}" as="st" hint-placeholder-count="5">
+          <x-import component-from-global-scope="Luna.Chip" selected="{{st.on}}" icon="{{st.icon}}" on-click="{{st.go}}">{{st.label}}</x-import>
+        </sc-for>
+      </div>
+      <x-import component-from-global-scope="Luna.Button" variant="tertiary" icon="save">Save and exit</x-import>
+    </div>
+
+    <div style="max-width: 760px; width: 100%; display: flex; flex-direction: column; gap: 20px">
+      <sc-if value="{{isProperty}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">Tell us about your property</span><span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Creators and travelers see this on every trip that features you.</span></div>
+        <x-import component-from-global-scope="Luna.Widget" title="Basics">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Property name" default-value="Haveli Jheel"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="City" default-value="Udaipur, Rajasthan" icon="location_on"></x-import>
+            <x-import component-from-global-scope="Luna.Select" label="Category" options="{{categories}}" default-value="heritage"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="Total rooms" default-value="24" inputmode="numeric"></x-import>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Description and photos" subtitle="3 of 8 photos added">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Short description" multiline="{{ true }}" default-value="A restored 18th-century haveli on the banks of Lake Pichola, with lake-view rooms, a jharokha suite and a rooftop that faces the City Palace."></x-import>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+              <img src="assets/verandah.jpg" alt="" style="width: 96px; height: 72px; border-radius: var(--radius-md); object-fit: cover">
+              <img src="assets/haveli.jpg" alt="" style="width: 96px; height: 72px; border-radius: var(--radius-md); object-fit: cover">
+              <img src="assets/haveli.jpg" alt="" style="width: 96px; height: 72px; border-radius: var(--radius-md); object-fit: cover">
+              <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="add_photo_alternate">Add photos</x-import>
+            </div>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isRooms}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">Rooms and inventory</span><span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">How should StayStory see your availability?</span></div>
+        <x-import component-from-global-scope="Luna.SegmentedControl" options="{{syncOpts}}" value="{{sync}}" on-change="{{setSync}}" size="lg" aria-label="Inventory source"></x-import>
+        <sc-if value="{{isApi}}" hint-placeholder-val="{{ true }}">
+          <x-import component-from-global-scope="Luna.Banner" tone="success" icon="sync" title="Channel manager connected">Rates and availability sync every 5 minutes. 4 room types found.</x-import>
+        </sc-if>
+        <x-import component-from-global-scope="Luna.Widget" title="Room types" count="{{roomCount}}">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="overflow-x: auto"><x-import component-from-global-scope="Luna.DataTable" columns="{{roomCols}}" rows="{{rooms}}"></x-import></div>
+            <div><x-import component-from-global-scope="Luna.Button" variant="ghost" icon="add" on-click="{{addRoom}}">Add room type</x-import></div>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isCommission}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">Commission terms</span><span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Only on completed stays. Higher rates make creators more likely to feature you.</span></div>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap">
+          <x-import component-from-global-scope="Luna.Widget" title="Acquisition commission" subtitle="Split between the creator and StayStory" style="flex: 1 1 280px">
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 28px; line-height: 39px; font-weight: 700">{{pct}}%</span><x-import component-from-global-scope="Luna.Stepper" value="{{pct}}" min="{{ 8 }}" max="{{ 25 }}" on-change="{{setPct}}" aria-label="Commission percent"></x-import></div>
+              <x-import component-from-global-scope="Luna.Badge" tone="{{interestTone}}" icon="groups">Creator interest: {{interest}}</x-import>
+            </div>
+          </x-import>
+          <x-import component-from-global-scope="Luna.Widget" title="On a ₹20,000 booking" style="flex: 1 1 280px">
+            <x-import component-from-global-scope="Luna.DonutChart" segments="{{split}}" center="{{hotelAmt}}" sub="you receive" size="{{ 160 }}" aria-label="Booking split"></x-import>
+          </x-import>
+        </div>
+        <x-import component-from-global-scope="Luna.Widget" title="Policies">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Pay only on completed stays"></x-import>
+            <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Allow creator-exclusive rates"></x-import>
+            <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" label="Release unsold rooms as Gap Night above a floor price"></x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isPayouts}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">Payouts and tax</span><span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Guests pay StayStory. We settle weekly, minus commission, with a GST invoice.</span></div>
+        <x-import component-from-global-scope="Luna.Widget" title="Legal entity">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Registered name" default-value="Jheel Heritage Hotels Pvt. Ltd."></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="GSTIN" default-value="08ABCDE1234F1Z5"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="PAN" default-value="ABCDE1234F"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="Billing email" default-value="accounts@haveli-jheel.in" icon="mail"></x-import>
+          </div>
+        </x-import>
+        <x-import component-from-global-scope="Luna.Widget" title="Bank account">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.TextField" label="Account number" placeholder="0000 0000 0000"></x-import>
+            <x-import component-from-global-scope="Luna.TextField" label="IFSC" default-value="HDFC00012" error="Enter the full 11-character IFSC"></x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 28px; line-height: 39px; font-weight: 700">Review and submit</span><span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">We verify new properties within 24 to 48 hours.</span></div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px">
+          <sc-for list="{{summary}}" as="x" hint-placeholder-count="4">
+            <x-import component-from-global-scope="Luna.Widget" title="{{x.k}}" subtitle="{{x.d}}">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+                <span style="font-size: 16px; line-height: 22px; font-weight: 600">{{x.v}}</span>
+                <x-import component-from-global-scope="Luna.Button" variant="ghost" size="sm" icon="edit" on-click="{{x.edit}}">Edit</x-import>
+              </div>
+            </x-import>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isSubmitted}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 64px 0">
+          <x-import component-from-global-scope="Luna.EmptyState" icon="verified_user" title="Submitted for review">We'll email accounts@haveli-jheel.in within 48 hours. Meanwhile, explore the console with sample data.</x-import>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; justify-content: space-between; gap: 12px; padding-top: 8px">
+        <x-import component-from-global-scope="Luna.Button" variant="tertiary" size="lg" icon="arrow_back" disabled="{{backDisabled}}" on-click="{{back}}">Back</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" icon-right="{{nextIcon}}" on-click="{{next}}">{{nextLabel}}</x-import>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["property","rooms","commission","payouts","review","submitted"],"default":"property"},"$preview":{"width":1470,"height":956}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'property', sync: 'api', pct: 15, extra: false };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const IMG = { verandah: 'assets/verandah.jpg', haveli: 'assets/haveli.jpg', jaipur: 'assets/jaipur.jpg', palace: 'assets/palace.jpg' };
+    const order = ['property', 'rooms', 'commission', 'payouts', 'review', 'submitted'];
+    const i = order.indexOf(sc);
+    const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
+    const PANELS = [
+      [IMG.haveli, 'Get booked by the creators your guests follow', 'List once. You pay only when a guest completes their stay.'],
+      [IMG.haveli, 'Your rooms, in their reels', 'Connect your channel manager so every creator trip shows live rates.'],
+      [IMG.palace, 'Pay for guests, not reach', 'Commission is split between the creator who inspired the trip and StayStory.'],
+      [IMG.palace, 'Weekly payouts, clean invoices', 'Settlements arrive every Monday with a GST invoice.'],
+      [IMG.haveli, 'Almost there', 'Our partner team reviews every property to keep trips trustworthy.'],
+      [IMG.haveli, 'Welcome to StayStory', 'Your console is ready with sample data while we verify.']
+    ];
+    const LABELS = ['Property', 'Rooms', 'Commission', 'Payouts', 'Review'];
+    const comm = 20000 * s.pct / 100;
+    const interest = s.pct >= 16 ? 'high' : s.pct >= 12 ? 'average' : 'low';
+    const ROOMS = [
+      { name: 'Courtyard Room', count: '8', sleeps: '2', rate: '₹3,200', meal: 'Room only' },
+      { name: 'Lake-view Deluxe', count: '12', sleeps: '2', rate: '₹4,800', meal: 'Breakfast' },
+      { name: 'Jharokha Suite', count: '4', sleeps: '3', rate: '₹7,400', meal: 'Breakfast' }
+    ];
+    if (s.extra) ROOMS.push({ name: 'Family Courtyard', count: '4', sleeps: '4', rate: '₹8,900', meal: 'Breakfast' });
+    const goto = (k) => () => this.setState({ screen: order[k] });
+    return {
+      panelImg: PANELS[i][0], panelTitle: PANELS[i][1], panelBody: PANELS[i][2],
+      isProperty: sc === 'property', isRooms: sc === 'rooms', isCommission: sc === 'commission', isPayouts: sc === 'payouts', isReview: sc === 'review', isSubmitted: sc === 'submitted',
+      steps: LABELS.map((label, k) => ({ label, on: k === i, icon: k < i || sc === 'submitted' ? 'check_circle' : 'radio_button_unchecked', go: goto(k) })),
+      next: () => this.setState({ screen: order[Math.min(5, i + 1)] }),
+      back: () => this.setState({ screen: order[Math.max(0, i - 1)] }),
+      backDisabled: i === 0,
+      nextLabel: sc === 'review' ? 'Submit for review' : sc === 'submitted' ? 'Open hotel console' : 'Continue', nextIcon: sc === 'review' ? 'send' : 'arrow_forward',
+      categories: [{ value: 'heritage', label: 'Heritage boutique' }, { value: 'palace', label: 'Palace hotel' }, { value: 'resort', label: 'Resort' }, { value: 'homestay', label: 'Homestay' }],
+      syncOpts: [{ value: 'api', label: 'Channel manager', icon: 'sync' }, { value: 'manual', label: 'Manage manually', icon: 'edit_calendar' }],
+      sync: s.sync, setSync: (v) => this.setState({ sync: v }), isApi: s.sync === 'api',
+      roomCols: [{ key: 'name', label: 'Room type' }, { key: 'count', label: 'Rooms', align: 'right' }, { key: 'sleeps', label: 'Sleeps', align: 'right' }, { key: 'rate', label: 'Rack rate', align: 'right' }, { key: 'meal', label: 'Meal plan' }],
+      rooms: ROOMS, roomCount: ROOMS.length, addRoom: () => this.setState({ extra: true }),
+      pct: s.pct, setPct: (v) => this.setState({ pct: v }),
+      interest, interestTone: interest === 'high' ? 'success' : interest === 'average' ? 'warning' : 'danger',
+      hotelAmt: fmt(20000 - comm),
+      split: [{ label: 'You receive', value: 20000 - comm, color: 'var(--chart-1)' }, { label: 'Creator', value: comm * 0.53, color: 'var(--chart-2)' }, { label: 'StayStory', value: comm * 0.47, color: 'var(--chart-5)' }],
+      summary: [
+        { k: 'Property', v: 'Haveli Jheel, Udaipur', d: 'Heritage haveli · 24 rooms', edit: goto(0) },
+        { k: 'Inventory', v: s.sync === 'api' ? 'Channel manager' : 'Manual allotment', d: ROOMS.length + ' room types', edit: goto(1) },
+        { k: 'Commission', v: s.pct + '% on completed stays', d: 'Gap Night and exclusives on', edit: goto(2) },
+        { k: 'Payouts', v: 'Weekly to bank', d: 'GSTIN 08ABCDE1234F1Z5', edit: goto(3) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

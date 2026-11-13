@@ -1,0 +1,449 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Creator.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "C2 · Dashboard, earnings, profile",
+      "w": 390,
+      "x": 470,
+      "y": 2344
+    },
+    "CreatorCreate.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "C3 · Reel → bookable itinerary",
+      "w": 390,
+      "x": 940,
+      "y": 2344
+    },
+    "CreatorOffers.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "C4 · Hotel offers inbox",
+      "w": 390,
+      "x": 1410,
+      "y": 2344
+    },
+    "CreatorOnboard.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "C1 · Creator onboarding",
+      "w": 390,
+      "x": 0,
+      "y": 2344
+    },
+    "Hotel.dc.html": {
+      "expand": "fill",
+      "h": 980,
+      "is_interactive": true,
+      "page": "heroui",
+      "title": "H2 · Hotel console",
+      "w": 1440,
+      "x": 1520,
+      "y": 3588
+    },
+    "HotelCampaign.dc.html": {
+      "expand": "fill",
+      "h": 980,
+      "is_interactive": true,
+      "page": "heroui",
+      "title": "H3 · Creator campaign builder",
+      "w": 1440,
+      "x": 3040,
+      "y": 3588
+    },
+    "HotelOnboard.dc.html": {
+      "expand": "fill",
+      "h": 980,
+      "is_interactive": true,
+      "page": "heroui",
+      "title": "H1 · Property onboarding",
+      "w": 1440,
+      "x": 0,
+      "y": 3588
+    },
+    "LCCreate.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "C3 · Reel → trip · iPhone 16",
+      "w": 393,
+      "x": 946,
+      "y": 7152
+    },
+    "LCCreateStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "C3 states · Reel → trip",
+      "w": 3576,
+      "x": 0,
+      "y": 10460
+    },
+    "LCOnboard.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "C1 · Creator onboarding · iPhone 16",
+      "w": 393,
+      "x": 0,
+      "y": 7152
+    },
+    "LCOnboardStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "C1 states · Onboarding",
+      "w": 2694,
+      "x": 0,
+      "y": 8244
+    },
+    "LHCampaign.dc.html": {
+      "expand": "fill",
+      "h": 956,
+      "is_interactive": true,
+      "page": "luna",
+      "title": "H3 · Campaign builder · MacBook Air",
+      "w": 1470,
+      "x": 3100,
+      "y": 11828
+    },
+    "LHCampaignStates.dc.html": {
+      "h": 2136,
+      "page": "luna",
+      "title": "H3 states · Campaign builder",
+      "w": 4602,
+      "x": 0,
+      "y": 19624
+    },
+    "LHOnboard.dc.html": {
+      "expand": "fill",
+      "h": 956,
+      "is_interactive": true,
+      "page": "luna",
+      "title": "H1 · Property onboarding · MacBook Air",
+      "w": 1470,
+      "x": 0,
+      "y": 11828
+    },
+    "LHOnboardStates.dc.html": {
+      "h": 2136,
+      "page": "luna",
+      "title": "H1 states · Property onboarding",
+      "w": 4602,
+      "x": 0,
+      "y": 13024
+    },
+    "LTAuth.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "T1 · Sign in · iPhone 16",
+      "w": 393,
+      "x": 473,
+      "y": 260
+    },
+    "LTAuthStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "T1 states · Sign in",
+      "w": 2694,
+      "x": 0,
+      "y": 2460
+    },
+    "LTDiscover.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "T2 · Discover · iPhone 16",
+      "w": 393,
+      "x": 946,
+      "y": 260
+    },
+    "LTDiscoverStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "T2 states · Discover",
+      "w": 2253,
+      "x": 0,
+      "y": 3568
+    },
+    "LTSocial.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "T0 · Reel, comment, DM · iPhone 16",
+      "w": 393,
+      "x": 0,
+      "y": 260
+    },
+    "LTTrips.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "T4 · My trips · iPhone 16",
+      "w": 393,
+      "x": 1892,
+      "y": 260
+    },
+    "LTTripsStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "T4 states · My trips",
+      "w": 4017,
+      "x": 0,
+      "y": 5784
+    },
+    "LunaCreator.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "C2 · Insights, earnings, offers · iPhone 16",
+      "w": 393,
+      "x": 473,
+      "y": 7152
+    },
+    "LunaCreatorStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "C2 states · Insights, earnings, offers",
+      "w": 4458,
+      "x": 0,
+      "y": 9352
+    },
+    "LunaHotel.dc.html": {
+      "expand": "fill",
+      "h": 956,
+      "is_interactive": true,
+      "page": "luna",
+      "title": "H2 · Hotel console · MacBook Air",
+      "w": 1470,
+      "x": 1550,
+      "y": 11828
+    },
+    "LunaHotelStates.dc.html": {
+      "h": 4224,
+      "page": "luna",
+      "title": "H2 states · Hotel console",
+      "w": 4602,
+      "x": 0,
+      "y": 15280
+    },
+    "LunaTraveler.dc.html": {
+      "h": 852,
+      "is_interactive": true,
+      "page": "luna",
+      "radius": 48,
+      "title": "T3 · Storefront → book · iPhone 16",
+      "w": 393,
+      "x": 1419,
+      "y": 260
+    },
+    "LunaTravelerStates.dc.html": {
+      "h": 988,
+      "page": "luna",
+      "title": "T3 states · Storefront → book",
+      "w": 4017,
+      "x": 0,
+      "y": 4676
+    },
+    "Main.dc.html": {
+      "h": 760,
+      "page": "heroui",
+      "title": "Overview",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Traveler.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "T3 · Storefront → book · Gap Night",
+      "w": 390,
+      "x": 940,
+      "y": 1100
+    },
+    "TravelerAuth.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "T1 · Sign in & preferences",
+      "w": 390,
+      "x": 0,
+      "y": 1100
+    },
+    "TravelerDiscover.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "T2 · Discover & creator profile",
+      "w": 390,
+      "x": 470,
+      "y": 1100
+    },
+    "TravelerTrips.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "heroui",
+      "radius": 28,
+      "title": "T4 · My trips & manage booking",
+      "w": 390,
+      "x": 1410,
+      "y": 1100
+    },
+    "LTSocialStates.dc.html": {
+      "x": 0,
+      "y": 1352,
+      "w": 1371,
+      "h": 988,
+      "title": "T0 states · Reel to DM",
+      "page": "luna"
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-12T12:10:00Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/code/artifact/acc47303-775b-4445-ac6c-7fed3ff6462c",
+      "copiedAt": "2026-11-13T04:00:00Z",
+      "namespace": "luna",
+      "title": "Luna OS Design System V2",
+      "version": "1792518383-e011"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "tRow",
+    "cRow",
+    "hRow",
+    "lunaT",
+    "lunaC",
+    "lunaH"
+  ],
+  "notes": {
+    "cRow": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "heroui",
+      "text": "Creator · mobile app",
+      "w": 240,
+      "x": 0,
+      "y": 2084
+    },
+    "hRow": {
+      "kind": "title1",
+      "maxW": 4480,
+      "page": "heroui",
+      "text": "Hotel · web console",
+      "w": 240,
+      "x": 0,
+      "y": 3328
+    },
+    "lunaC": {
+      "kind": "title1",
+      "maxW": 4458,
+      "page": "luna",
+      "text": "Creator · iPhone 16 (393 × 852)",
+      "w": 240,
+      "x": 0,
+      "y": 6892
+    },
+    "lunaH": {
+      "kind": "title1",
+      "maxW": 4602,
+      "page": "luna",
+      "text": "Hotel · MacBook Air 13\" (1470 × 956)",
+      "w": 240,
+      "x": 0,
+      "y": 11568
+    },
+    "lunaT": {
+      "kind": "title1",
+      "maxW": 4017,
+      "page": "luna",
+      "text": "Traveler · iPhone 16 (393 × 852)",
+      "w": 240,
+      "x": 0,
+      "y": 0
+    },
+    "tRow": {
+      "kind": "title1",
+      "maxW": 1800,
+      "page": "heroui",
+      "text": "Traveler · mobile web",
+      "w": 240,
+      "x": 0,
+      "y": 840
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "TravelerAuth.dc.html",
+    "TravelerDiscover.dc.html",
+    "Traveler.dc.html",
+    "TravelerTrips.dc.html",
+    "CreatorOnboard.dc.html",
+    "Creator.dc.html",
+    "CreatorCreate.dc.html",
+    "CreatorOffers.dc.html",
+    "HotelOnboard.dc.html",
+    "Hotel.dc.html",
+    "HotelCampaign.dc.html",
+    "LTSocial.dc.html",
+    "LTAuth.dc.html",
+    "LTDiscover.dc.html",
+    "LunaTraveler.dc.html",
+    "LTTrips.dc.html",
+    "LTSocialStates.dc.html",
+    "LTAuthStates.dc.html",
+    "LTDiscoverStates.dc.html",
+    "LunaTravelerStates.dc.html",
+    "LTTripsStates.dc.html",
+    "LCOnboard.dc.html",
+    "LunaCreator.dc.html",
+    "LCCreate.dc.html",
+    "LCOnboardStates.dc.html",
+    "LunaCreatorStates.dc.html",
+    "LCCreateStates.dc.html",
+    "LHOnboard.dc.html",
+    "LunaHotel.dc.html",
+    "LHCampaign.dc.html",
+    "LHOnboardStates.dc.html",
+    "LunaHotelStates.dc.html",
+    "LHCampaignStates.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "heroui",
+      "name": "HeroUI"
+    },
+    {
+      "id": "luna",
+      "name": "Luna OS"
+    }
+  ],
+  "title": "StayStory Prototype"
+}

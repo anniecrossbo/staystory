@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traveler sign-in states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 2694px; height: 988px; box-sizing: border-box; padding: 48px; background: #E6E9ED; font-family: var(--font-sans); color: var(--ink); display: flex; gap: 48px; align-items: flex-start">
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">01 · Sign in only when saving</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="welcome" hint-size="393px,852px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">02 · WhatsApp number</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="phone" hint-size="393px,852px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">03 · Code on WhatsApp</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="otp" hint-size="393px,852px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">04 · Wrong code</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="otpError" hint-size="393px,852px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">05 · Travel style (optional)</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="prefs" hint-size="393px,852px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">06 · Saved, alerts on</span>
+    <div style="width: 393px; height: 852px; border-radius: 48px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LTAuth" screen="done" hint-size="393px,852px"></dc-import></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2694,"height":988}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

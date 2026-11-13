@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traveler sign in</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums">
+
+  <sc-if value="{{isWelcome}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 54px 16px 34px; box-sizing: border-box; gap: 20px">
+      <div style="display: flex; align-items: center; gap: 8px; height: 44px">
+        <x-import component-from-global-scope="Luna.Icon" name="home_work" size="{{ 24 }}" style="color: var(--primary)"></x-import>
+        <span style="font-size: 16px; line-height: 22px; font-weight: 600">StayStory</span>
+      </div>
+      <div style="position: relative; flex: 1; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-card)">
+        <img src="assets/udaipur.jpg" alt="Illustrated lake palace in Udaipur at dusk" style="width: 100%; height: 100%; object-fit: cover; display: block">
+        <div style="position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-md); background: var(--glass-bar); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge)">
+          <x-import component-from-global-scope="Luna.Avatar" initials="AR" size="{{ 34 }}"></x-import>
+          <span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">@anaya.explores shared a trip</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">Three days in Udaipur</span></span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 28px; line-height: 39px; font-weight: 700">Save Anaya’s trip and come back to it</span>
+        <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Sign in with WhatsApp in 20 seconds. We’ll message you if the price drops or rooms run low, and Anaya still gets the credit when you book.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon="chat" on-click="{{toPhone}}">Continue with WhatsApp</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}">Not now, keep browsing</x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{inSteps}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 54px 16px 34px; box-sizing: border-box; gap: 24px">
+      <div style="display: flex; align-items: center; gap: 12px; height: 44px">
+        <x-import component-from-global-scope="Luna.IconButton" icon="arrow_back" label="Back" variant="white" on-click="{{back}}"></x-import>
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.ProgressBar" value="{{progress}}" aria-label="Sign-in progress"></x-import></div>
+        <span style="font-size: 11px; line-height: 15px; font-weight: 600; color: var(--muted)">{{stepLabel}}</span>
+      </div>
+
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 28px; line-height: 39px; font-weight: 700">Your WhatsApp number</span>
+          <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">We’ll send a code on WhatsApp. Price alerts, vouchers and trip updates arrive there too.</span>
+        </div>
+        <x-import component-from-global-scope="Luna.TextField" label="WhatsApp number" default-value="+91 98200 00000" icon="call" hint="Creators never see your number" inputmode="tel"></x-import>
+        <span style="font-size: 11px; line-height: 15px; color: var(--muted)">By continuing you agree to the Terms and Privacy Policy.</span>
+        <div style="margin-top: auto"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{toOtp}}">Send code</x-import></div>
+      </sc-if>
+
+      <sc-if value="{{isOtpAny}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 28px; line-height: 39px; font-weight: 700">Enter the 6-digit code</span>
+          <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Sent on WhatsApp to +91 98200 00000</span>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <sc-for list="{{otp}}" as="o" hint-placeholder-count="6">
+            <span style="flex: 1; height: 52px; border-radius: var(--radius-md); background: var(--surface); border: 1.5px solid {{o.edge}}; box-shadow: {{o.ring}}; display: flex; align-items: center; justify-content: center; font-size: 20px; line-height: 28px; font-weight: 700">{{o.v}}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{isOtpError}}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="Luna.Banner" tone="danger" icon="error" title="That code doesn't match">Check the latest WhatsApp message, or resend a new code.</x-import>
+        </sc-if>
+        <x-import component-from-global-scope="Luna.Button" variant="ghost" icon="refresh">Resend code in 0:24</x-import>
+        <div style="margin-top: auto"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{toPrefs}}">Verify</x-import></div>
+      </sc-if>
+
+      <sc-if value="{{isPrefs}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 28px; line-height: 39px; font-weight: 700">How do you like to travel?</span>
+          <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Used to match trips and Gap Night deals.</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">Travel style</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{styles}}" as="c" hint-placeholder-count="6">
+              <x-import component-from-global-scope="Luna.Chip" selected="{{c.on}}" on-click="{{c.toggle}}" icon="{{c.icon}}">{{c.label}}</x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">Budget per night</span>
+          <x-import component-from-global-scope="Luna.SegmentedControl" options="{{budgets}}" value="{{budget}}" on-change="{{setBudget}}" size="sm" aria-label="Budget"></x-import>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface)">
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">Gap Night alerts</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">Last-minute rooms on trips you saved</span></span>
+          <x-import component-from-global-scope="Luna.Toggle" default-checked="{{ true }}" aria-label="Gap Night alerts"></x-import>
+        </div>
+        <div style="margin-top: auto"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{toDone}}">Save preferences</x-import></div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; padding: 54px 16px 34px; box-sizing: border-box; gap: 20px; justify-content: flex-end">
+      <x-import component-from-global-scope="Luna.EmptyState" icon="check_circle" title="You're in, Meera">Anaya’s Udaipur trip is saved. We’ll WhatsApp you if the price drops on your dates.</x-import>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon-right="arrow_forward">Open the Udaipur trip</x-import>
+        <x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}" on-click="{{restart}}">Explore more trips</x-import>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["welcome","phone","otp","otpError","prefs","done"],"default":"welcome"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'welcome', styles: { Heritage: true, Lakes: true, Food: true }, budget: 'mid' };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const go = (x) => () => this.setState({ screen: x });
+    const order = ['welcome', 'phone', 'otp', 'prefs', 'done'];
+    const idx = Math.max(1, order.indexOf(sc === 'otpError' ? 'otp' : sc));
+    const STY = [['Heritage', 'account_balance'], ['Lakes', 'water'], ['Beaches', 'beach_access'], ['Mountains', 'landscape'], ['Food', 'restaurant'], ['Slow towns', 'local_cafe']];
+    const err = sc === 'otpError';
+    return {
+      isWelcome: sc === 'welcome', isPhone: sc === 'phone', isOtpAny: sc === 'otp' || err, isOtpError: err, isPrefs: sc === 'prefs', isDone: sc === 'done',
+      inSteps: ['phone', 'otp', 'otpError', 'prefs'].includes(sc),
+      progress: idx * 25, stepLabel: idx + ' of 3',
+      toPhone: go('phone'), toOtp: go('otp'), toPrefs: go('prefs'), toDone: go('done'), restart: go('welcome'),
+      back: () => this.setState({ screen: order[idx - 1] || 'welcome' }),
+      otp: (err ? ['4', '8', '2', '1', '9', '0'] : ['4', '8', '2', '1', '9', '']).map((v, i) => ({ v, edge: err ? 'var(--danger-strong)' : i === 5 ? 'var(--primary)' : 'var(--border)', ring: !err && i === 5 ? '0 0 0 3px var(--primary-ring)' : 'none' })),
+      styles: STY.map(([label, icon]) => ({ label, icon, on: !!s.styles[label], toggle: () => this.setState({ styles: { ...s.styles, [label]: !s.styles[label] } }) })),
+      budgets: [{ value: 'low', label: 'Under ₹2k' }, { value: 'mid', label: '₹2k to ₹5k' }, { value: 'high', label: '₹5k plus' }],
+      budget: s.budget, setBudget: (v) => this.setState({ budget: v })
+    };
+  }
+}
+</script>
+</body>
+</html>
