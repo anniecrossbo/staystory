@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatINR, percentOff, splitCommission } from '@staystory/core';
 import { Badge, Banner, Button, Checkbox, Chip, EmptyState, IconButton, Select, Stepper, StatTile, Tag, TextField, Toggle, Widget } from '@staystory/ui';
 import { market, useMarket, type MCampaign, type MarketState } from '@staystory/market';
+import { Overlay } from '../components';
 import type { Go } from '../actions';
 import { asset, campaignPool, SHORT_NICHE } from '../lib';
 import { toast, ui, useDraft, useUi } from '../ui';
@@ -34,20 +35,22 @@ const errors = (d: Draft, strict: boolean) => {
   return e;
 };
 
-export function Campaign({ screen, go }: { screen: string; go: Go }) {
+export function Campaign({ go, onClose }: { go: Go; onClose: () => void }) {
   const s = useMarket();
   const { launched } = useUi();
   const [d, patch, clear] = useDraft<Draft>('campaign', initial);
   const [tried, setTried] = useState(false);
-  const i = CAMPAIGN_STEPS.indexOf(screen);
-  const to = (k: number) => go('campaign', CAMPAIGN_STEPS[k]);
+  const [step, setStep] = useState(0);
+  const screen = CAMPAIGN_STEPS[step]!;
+
+  const to = (k: number) => setStep(k);
 
   const rooms = [...s.hotel.rooms].sort((a, b) => (ROOM_ORDER.indexOf(a.id) + 99) % 99 - (ROOM_ORDER.indexOf(b.id) + 99) % 99);
   const room = rooms.find((r) => r.id === d.roomId) ?? rooms[0]!;
   const nights = Number.isFinite(nightsNum(d)) && nightsNum(d) >= 1 ? nightsNum(d) : 2;
   const rack = room.rackRate * nights;
   const minHundreds = Math.ceil((rack * 0.625) / 100);
-  const maxHundreds = Math.ceil(rack / 100) - 1; // one step below the public rate
+  const maxHundreds = Math.ceil(rack / 100) - 1;
   const price = Math.min(maxHundreds, Math.max(minHundreds, d.price)) * 100;
   const perkOn = Object.keys(d.perks).filter((k) => d.perks[k]);
   const pool = campaignPool(s);
@@ -61,18 +64,18 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
   const sp = splitCommission(price, d.pct);
   const resetPrice = (r: typeof room, n: number) => Math.round((r.rackRate * n * 0.875) / 100);
 
-  const valid = (step: string) => {
+  const valid = (s: string) => {
     const e = errors(d, true);
-    if (step === 'offer') return !stepErr.offer && !e.nights;
-    if (step === 'commission') return !stepErr.commission && !e.target && !e.cap;
-    if (step === 'creators') return !stepErr.creators;
+    if (s === 'offer') return !stepErr.offer && !e.nights;
+    if (s === 'commission') return !stepErr.commission && !e.target && !e.cap;
+    if (s === 'creators') return !stepErr.creators;
     return true;
   };
   const next = () => {
-    if (screen === 'launched') return go('console', 'overview');
+    if (screen === 'launched') { onClose(); go('console', 'campaigns'); return; }
     if (screen === 'review') return launch();
-    if (!valid(screen)) { setTried(true); requestAnimationFrame(() => document.querySelector<HTMLElement>('main [aria-invalid="true"], main .lu-field.has-error input')?.focus()); return; }
-    setTried(false); to(i + 1);
+    if (!valid(screen)) { setTried(true); requestAnimationFrame(() => document.querySelector<HTMLElement>('.campaign-builder [aria-invalid="true"], .campaign-builder .lu-field.has-error input')?.focus()); return; }
+    setTried(false); to(step + 1);
   };
   const launch = () => {
     const bad = ['offer', 'commission', 'creators'].find((st) => !valid(st)) ?? (problem ? problem.step : undefined);
@@ -101,143 +104,149 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
   ];
 
   return (
-    <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--canvas)', fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums', padding: '20px clamp(16px, 3.4vw, 48px) 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div className="page-head">
-        <IconButton icon="arrow_back" label="Back to console" variant="white" onClick={() => go('console', 'overview')} />
-        <div className="ph-title">
-          <span className="eyebrow">{s.hotel.name}, {s.hotel.city} · new campaign</span>
-          <span className="h1">{HEAD[screen]}</span>
+    <Overlay side="center" label="Create campaign" onClose={onClose}>
+      <div className="campaign-builder" style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: 24 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span className="eyebrow">{s.hotel.name}, {s.hotel.city} · new campaign</span>
+            <span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{HEAD[screen]}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {['Offer', 'Commission', 'Creators', 'Review'].map((label, k) => (
+              <Chip key={label} selected={k === step} icon={k < step ? 'check_circle' : 'radio_button_unchecked'} onClick={() => to(k)}>{label}</Chip>
+            ))}
+            <IconButton icon="close" label="Close" variant="ghost" onClick={onClose} />
+          </div>
         </div>
-        <div className="ph-trail">
-          {['Offer', 'Commission', 'Creators', 'Review'].map((label, k) => (
-            <Chip key={label} selected={k === i} icon={k < i ? 'check_circle' : 'radio_button_unchecked'} onClick={() => to(k)}>{label}</Chip>
-          ))}
-        </div>
-      </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
-        <main style={{ flex: '999 1 600px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {screen === 'offer' && (<>
-            <Widget title="The offer">
-              <div className="form-grid">
-                <TextField label="Campaign name" value={d.name} onChange={(e) => patch({ name: e.target.value })} error={tried ? err.name : undefined} />
-                <Select label="Room type" value={room.id} onChange={(v) => { const r = rooms.find((x) => x.id === v)!; patch({ roomId: v, price: resetPrice(r, nights) }); }} options={rooms.map((r) => ({ value: r.id, label: r.name }))} />
-                <Select label="Stay window" value={d.window} onChange={(v) => patch({ window: v })} options={[{ value: 'winter', label: WINDOWS.winter! }, { value: 'dec', label: WINDOWS.dec! }]} />
-                <TextField label="Nights" inputMode="numeric" value={d.nights} onChange={(e) => { const v = e.target.value; patch({ nights: v, ...(/^\d+$/.test(v) && +v >= 1 && +v <= 14 ? { price: resetPrice(room, +v) } : {}) }); }} error={d.nights.trim() || tried ? err.nights : undefined} />
-              </div>
-            </Widget>
-            <Widget title="Package includes" count={perkOn.length}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {Object.keys(d.perks).map((p) => <Chip key={p} selected={d.perks[p]} icon={ICONS[p]} onClick={() => patch({ perks: { ...d.perks, [p]: !d.perks[p] } })}>{p}</Chip>)}
-              </div>
-            </Widget>
-            <Widget title="Creator-exclusive price" subtitle={`Rack rate ${formatINR(rack)} for ${nights} night${nights === 1 ? '' : 's'}`}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{formatINR(price)}</span><Badge tone="success">{percentOff(rack, price)}% off rack</Badge></span>
-                <Stepper value={price / 100} min={minHundreds} max={maxHundreds} onChange={(v) => patch({ price: v })} aria-label="Price in hundreds of rupees" />
-              </div>
-              {priceErr && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{priceErr}</span>}
-            </Widget>
-          </>)}
+        {/* Two-column body: settings left, preview right */}
+        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', minHeight: 0, flex: 1 }}>
+          <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20, overflow: 'auto' }}>
+            {screen === 'offer' && (<>
+              <Widget title="The offer">
+                <div className="form-grid">
+                  <TextField label="Campaign name" value={d.name} onChange={(e) => patch({ name: e.target.value })} error={tried ? err.name : undefined} />
+                  <Select label="Room type" value={room.id} onChange={(v) => { const r = rooms.find((x) => x.id === v)!; patch({ roomId: v, price: resetPrice(r, nights) }); }} options={rooms.map((r) => ({ value: r.id, label: r.name }))} />
+                  <Select label="Stay window" value={d.window} onChange={(v) => patch({ window: v })} options={[{ value: 'winter', label: WINDOWS.winter! }, { value: 'dec', label: WINDOWS.dec! }]} />
+                  <TextField label="Nights" inputMode="numeric" value={d.nights} onChange={(e) => { const v = e.target.value; patch({ nights: v, ...(/^\d+$/.test(v) && +v >= 1 && +v <= 14 ? { price: resetPrice(room, +v) } : {}) }); }} error={d.nights.trim() || tried ? err.nights : undefined} />
+                </div>
+              </Widget>
+              <Widget title="Package includes" count={perkOn.length}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {Object.keys(d.perks).map((p) => <Chip key={p} selected={d.perks[p]} icon={ICONS[p]} onClick={() => patch({ perks: { ...d.perks, [p]: !d.perks[p] } })}>{p}</Chip>)}
+                </div>
+              </Widget>
+              <Widget title="Creator-exclusive price" subtitle={`Rack rate ${formatINR(rack)} for ${nights} night${nights === 1 ? '' : 's'}`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{formatINR(price)}</span><Badge tone="success">{percentOff(rack, price)}% off rack</Badge></span>
+                  <Stepper value={price / 100} min={minHundreds} max={maxHundreds} onChange={(v) => patch({ price: v })} aria-label="Price in hundreds of rupees" />
+                </div>
+                {priceErr && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{priceErr}</span>}
+              </Widget>
+            </>)}
 
-          {screen === 'commission' && (<>
-            <Widget title="Commission on completed stays" subtitle={`Your default is ${s.hotel.commissionPct}%`}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{d.pct}%</span>
-                <Stepper value={d.pct} min={8} max={25} onChange={(v) => patch({ pct: v })} aria-label="Commission percent" />
-              </div>
-              {stepErr.commission && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.commission}</span>}
-            </Widget>
-            <Widget title="Incentives">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <Toggle checked={d.bonus} onChange={(v) => patch({ bonus: v })} label="Bonus tier: 2% extra after 20 bookings" />
-                <Toggle checked={d.contentStay} onChange={(v) => patch({ contentStay: v })} label="Content stay: 2 nights after 5 bookings" />
-                <Toggle checked={d.firstLook} onChange={(v) => patch({ firstLook: v })} label="First look: creator sees the offer 7 days early" />
-              </div>
-            </Widget>
-            <Widget title="Target">
-              <div className="form-grid">
-                <TextField label="Booking target" inputMode="numeric" value={d.target} onChange={(e) => patch({ target: e.target.value })} hint="Campaign pauses when reached" error={err.target} />
-                <TextField label="Commission cap" value={d.cap} onChange={(e) => patch({ cap: e.target.value })} hint="Optional" error={err.cap} />
-              </div>
-            </Widget>
-          </>)}
+            {screen === 'commission' && (<>
+              <Widget title="Commission on completed stays" subtitle={`Your default is ${s.hotel.commissionPct}%`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  <span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{d.pct}%</span>
+                  <Stepper value={d.pct} min={8} max={25} onChange={(v) => patch({ pct: v })} aria-label="Commission percent" />
+                </div>
+                {stepErr.commission && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.commission}</span>}
+              </Widget>
+              <Widget title="Incentives">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <Toggle checked={d.bonus} onChange={(v) => patch({ bonus: v })} label="Bonus tier: 2% extra after 20 bookings" />
+                  <Toggle checked={d.contentStay} onChange={(v) => patch({ contentStay: v })} label="Content stay: 2 nights after 5 bookings" />
+                  <Toggle checked={d.firstLook} onChange={(v) => patch({ firstLook: v })} label="First look: creator sees the offer 7 days early" />
+                </div>
+              </Widget>
+              <Widget title="Target">
+                <div className="form-grid">
+                  <TextField label="Booking target" inputMode="numeric" value={d.target} onChange={(e) => patch({ target: e.target.value })} hint="Campaign pauses when reached" error={err.target} />
+                  <TextField label="Commission cap" value={d.cap} onChange={(e) => patch({ cap: e.target.value })} hint="Optional" error={err.cap} />
+                </div>
+              </Widget>
+            </>)}
 
-          {screen === 'creators' && (
-            <Widget title="Choose creators" subtitle="Ranked by match" count={picks.length}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {pool.map((c) => (
-                  <div key={c.id} className="pick-row" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, borderBottom: '1px solid var(--divider)', cursor: 'pointer' }}
-                    onClick={(e) => { if (!(e.target as HTMLElement).closest('label,input')) toggle(c.id); }}>
-                    <Checkbox checked={picks.includes(c.id)} onChange={() => toggle(c.id)} label="" />
-                    <img src={asset(c.cover)} alt="" style={{ width: 48, height: 48, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
-                    <span style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>{c.handle}</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)' }}>{c.meta}</span></span>
-                    <Tag hue={c.hue}>{SHORT_NICHE[c.niche] ?? c.niche}</Tag>
-                    <span style={{ width: 64, textAlign: 'right', fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--primary)' }}>{c.campaignScore}</span>
-                  </div>
+            {screen === 'creators' && (
+              <Widget title="Choose creators" subtitle="Ranked by match" count={picks.length}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {pool.map((c) => (
+                    <div key={c.id} className="pick-row" style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, borderBottom: '1px solid var(--divider)', cursor: 'pointer' }}
+                      onClick={(e) => { if (!(e.target as HTMLElement).closest('label,input')) toggle(c.id); }}>
+                      <Checkbox checked={picks.includes(c.id)} onChange={() => toggle(c.id)} label="" />
+                      <img src={asset(c.cover)} alt="" style={{ width: 48, height: 48, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
+                      <span style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>{c.handle}</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)' }}>{c.meta}</span></span>
+                      <Tag hue={c.hue}>{SHORT_NICHE[c.niche] ?? c.niche}</Tag>
+                      <span style={{ width: 64, textAlign: 'right', fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--primary)' }}>{c.campaignScore}</span>
+                    </div>
+                  ))}
+                </div>
+                {stepErr.creators && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.creators}</span>}
+              </Widget>
+            )}
+
+            {screen === 'review' && (<>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                {review.map((r) => (
+                  <Widget key={r.k} title={r.k}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{r.v}</span>
+                      <Button variant="ghost" size="sm" icon="edit" onClick={() => to(r.step)}>Edit</Button>
+                    </div>
+                  </Widget>
                 ))}
               </div>
-              {stepErr.creators && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.creators}</span>}
-            </Widget>
-          )}
+              {problem && <Banner tone="danger" icon="error" title="Fix this before launching" action={<Button variant="secondary" size="sm" onClick={() => to(STEP_INDEX[problem.step])}>Go to {problem.step}</Button>}>{problem.message}</Banner>}
+              <Banner tone="warning" icon="info" title="Billed only after check-out">Cancellations and no-shows cost nothing.</Banner>
+            </>)}
 
-          {screen === 'review' && (<>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-              {review.map((r) => (
-                <Widget key={r.k} title={r.k}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                    <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{r.v}</span>
-                    <Button variant="ghost" size="sm" icon="edit" onClick={() => to(r.step)}>Edit</Button>
-                  </div>
-                </Widget>
-              ))}
+            {screen === 'launched' && (
+              <Widget title="Campaign launched">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <img src={asset('haveli')} alt="" style={{ width: '100%', height: 180, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
+                  {launchedCamp ? (() => {
+                    const n = Object.keys(launchedCamp.invites).length;
+                    return <EmptyState icon="campaign" title={`Private offers sent to ${n} creator${n === 1 ? '' : 's'}`}>Accepts and counters appear in Needs your decision on your console.</EmptyState>;
+                  })() : <EmptyState icon="campaign" title="Campaign launched">Accepts and counters appear in Needs your decision on your console.</EmptyState>}
+                </div>
+              </Widget>
+            )}
+
+            {/* Footer: back / next */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+              {screen === 'launched'
+                ? <Button variant="tertiary" size="lg" icon="add" onClick={() => { clear(); ui.set({ launched: '' }); setStep(0); }}>Create another</Button>
+                : <Button variant="tertiary" size="lg" icon="arrow_back" disabled={step === 0} onClick={() => to(Math.max(0, step - 1))}>Back</Button>}
+              <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={(screen === 'creators' && picks.length === 0) || (screen === 'review' && !!problem)} onClick={next}>
+                {screen === 'review' ? 'Launch campaign' : screen === 'launched' ? 'View campaigns' : 'Continue'}
+              </Button>
             </div>
-            {problem && <Banner tone="danger" icon="error" title="Fix this before launching" action={<Button variant="secondary" size="sm" onClick={() => to(STEP_INDEX[problem.step])}>Go to {problem.step}</Button>}>{problem.message}</Banner>}
-            <Banner tone="warning" icon="info" title="Billed only after check-out">Cancellations and no-shows cost nothing.</Banner>
-          </>)}
+          </div>
 
-          {screen === 'launched' && (
-            <Widget title="Campaign launched">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <img src={asset('haveli')} alt="" style={{ width: '100%', height: 220, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
-                {launchedCamp ? (() => {
-                  const n = Object.keys(launchedCamp.invites).length;
-                  return <EmptyState icon="campaign" title={`Private offers sent to ${n} creator${n === 1 ? '' : 's'}`}>Accepts and counters appear in Needs your decision on your console.</EmptyState>;
-                })() : <EmptyState icon="campaign" title="Campaign launched">Accepts and counters appear in Needs your decision on your console.</EmptyState>}
+          {/* Right: what creators see */}
+          <aside style={{ flex: '0 0 340px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <Widget title="What creators see" subtitle="Private offer in their StayStory app">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <img src={asset('haveli')} alt="" style={{ width: '100%', height: 140, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
+                <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{s.hotel.name}, {s.hotel.city}</span>
+                <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{`${nights} night${nights === 1 ? '' : 's'}${perkOn.length ? ' with ' + perkOn.join(', ').toLowerCase() : ''}.`}</span>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue="moss">{d.pct}% commission</Tag>{d.contentStay && <Tag hue="ochre">Content stay after 5</Tag>}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, lineHeight: '18px' }}><span style={{ color: 'var(--ink-2)' }}>Follower price</span><span style={{ fontWeight: 600 }}>{formatINR(price)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, lineHeight: '18px' }}><span style={{ color: 'var(--ink-2)' }}>Creator earns about</span><span style={{ fontWeight: 600, color: 'var(--success-ink)' }}>{formatINR(sp.creator)} a booking</span></div>
               </div>
             </Widget>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-            {screen === 'launched'
-              ? <Button variant="tertiary" size="lg" icon="add" onClick={() => { clear(); ui.set({ launched: '' }); go('campaign', 'offer'); }}>Create another</Button>
-              : <Button variant="tertiary" size="lg" icon="arrow_back" disabled={i === 0} onClick={() => to(Math.max(0, i - 1))}>Back</Button>}
-            <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={(screen === 'creators' && picks.length === 0) || (screen === 'review' && !!problem)} onClick={next}>
-              {screen === 'review' ? 'Launch campaign' : screen === 'launched' ? 'View in console' : 'Continue'}
-            </Button>
-          </div>
-        </main>
-
-        <aside style={{ flex: '1 1 340px', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <Widget title="What creators see" subtitle="Private offer in their StayStory app">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <img src={asset('haveli')} alt="" style={{ width: '100%', height: 160, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
-              <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{s.hotel.name}, {s.hotel.city}</span>
-              <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{`${nights} night${nights === 1 ? '' : 's'}${perkOn.length ? ' with ' + perkOn.join(', ').toLowerCase() : ''}.`}</span>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue="moss">{d.pct}% commission</Tag>{d.contentStay && <Tag hue="ochre">Content stay after 5</Tag>}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, lineHeight: '18px' }}><span style={{ color: 'var(--ink-2)' }}>Follower price</span><span style={{ fontWeight: 600 }}>{formatINR(price)}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, lineHeight: '18px' }}><span style={{ color: 'var(--ink-2)' }}>Creator earns about</span><span style={{ fontWeight: 600, color: 'var(--success-ink)' }}>{formatINR(sp.creator)} a booking</span></div>
-            </div>
-          </Widget>
-          <Widget title={`At ${target} bookings`} subtitle="Illustrative, not a forecast">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-              <StatTile label="Revenue" value={formatINR(price * target)} />
-              <StatTile label="Commission" value={formatINR(sp.commission * target)} />
-            </div>
-          </Widget>
-        </aside>
+            <Widget title={`At ${target} bookings`} subtitle="Illustrative, not a forecast">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                <StatTile label="Revenue" value={formatINR(price * target)} />
+                <StatTile label="Commission" value={formatINR(sp.commission * target)} />
+              </div>
+            </Widget>
+          </aside>
+        </div>
       </div>
-    </div>
+    </Overlay>
   );
 }
 export type { MarketState };
