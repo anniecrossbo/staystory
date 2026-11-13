@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatINR, withdrawal } from '@staystory/core';
 import {
-  availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripStats, tripVisitsLine,
+  availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
   market, useMarket, type LedgerFilter, type OfferView, type RangeKey,
 } from '@staystory/market';
 import {
@@ -222,6 +222,7 @@ function TripScreen({ go }: { go: Go }) {
   if (!trip) return <EmptyState icon="route" title="No trips yet" action={<Button variant="primary" onClick={() => { ui.startNewTrip(); go('create', 'pick'); }}>Create your first trip</Button>}>Publish a trip and its numbers show up here.</EmptyState>;
   const st = tripStats(s, trip.id)!;
   const paused = trip.status === 'paused';
+  const dmCount = tripDmCount(s, trip.id);
   return (<>
     <div style={{ height: 180, borderRadius: 'var(--radius-lg)', overflow: 'hidden', flex: 'none' }}><img src={asset(trip.img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
     {paused && <Banner tone="warning" icon="pause_circle" title="Link paused">Followers who open it see the trip as unavailable.</Banner>}
@@ -235,6 +236,7 @@ function TripScreen({ go }: { go: Go }) {
         ))}
         {!st.visits && <div className="t-cap">No visits yet. Share your link.</div>}
         <div className="t-cap">{countLabel(st.saves)} followers have saved this trip.</div>
+        <div className="t-cap">{dmCount ? `${dmCount} ${dmCount === 1 ? 'comment' : 'comments'} answered with a DM` : 'No DMs sent yet. Followers who comment your keyword get your trip in their DMs.'}</div>
       </div>
     </Widget>
     <Widget title="Where followers booked">

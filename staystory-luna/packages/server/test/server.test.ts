@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SAMPLES as CREATOR_SAMPLES } from '../../../apps/creator/src/samples';
 import { SAMPLE_REELS, extract, extractWithRules, handleApi, isUsable, staticMapUrl } from '../src';
 
 const call = (method: string, path: string, body?: unknown, env = {}) => handleApi(method, new URL(`http://x${path}`), body, env);
@@ -64,4 +65,10 @@ describe('api', () => {
     expect(staticMapUrl({ center: { lat: 1, lng: 2 }, zoom: 13, width: 300, height: 200, markers: [{ lat: 1, lng: 2, label: 'A' }] }, { GOOGLE_MAPS_KEY: 'k' })).toContain('key=k');
   });
   it('ignores unknown routes', async () => { expect(await call('GET', '/api/nope')).toBeNull(); });
+});
+
+describe('sample reels', () => {
+  it('the creator app offers exactly the cached samples the server knows, so they always read from cache', () => {
+    expect(CREATOR_SAMPLES.map((c) => ({ id: c.id, reelUrl: c.reelUrl, caption: c.caption }))).toEqual(SAMPLE_REELS.map((r) => ({ id: r.id, reelUrl: r.reelUrl, caption: r.caption })));
+  });
 });

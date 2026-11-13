@@ -1,12 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '@staystory/ui';
-import { asset, go, tripHash } from '../lib';
+import { buildDm } from '@staystory/core';
+import { dmSentTo, reelComments } from '@staystory/market';
+import { ME, asset, go, tripHash } from '../lib';
 import { tripFor, useSession } from '../session';
 import { useEscape } from '../ui';
 
 export const SOCIAL_SCREENS = ['reel', 'comments', 'dm'];
 const COMMENTS = [
-  { ini: 'MI', bg: '#5F9298', name: 'meera.iyer', when: 'now', text: 'link pls', reply: true },
   { ini: 'RK', bg: '#8A55E0', name: 'rohan.k', when: '2 min', text: 'link pls! which haveli is this', reply: true },
   { ini: 'SP', bg: '#B07F2E', name: 'sneha.p', when: '6 min', text: 'link pls', reply: true },
   { ini: 'DK', bg: '#3D7151', name: 'divya.k', when: '11 min', text: 'how much for 3 days with flights?', reply: false },
@@ -16,18 +17,58 @@ const circle = (size: number, bg: string, extra: React.CSSProperties = {}): Reac
 const stat: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 };
 const btnReset: React.CSSProperties = { border: 0, background: 'transparent', color: '#fff', font: 'inherit', cursor: 'pointer', padding: 0 };
 
+/** Lift the sheet above the on-screen keyboard (visual viewport shrinks); 0 on desktop. */
+function useKeyboardInset() {
+  const [inset, setInset] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport; if (!vv) return;
+    const f = () => setInset(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)));
+    f(); vv.addEventListener('resize', f); vv.addEventListener('scroll', f);
+    return () => { vv.removeEventListener('resize', f); vv.removeEventListener('scroll', f); };
+  }, []);
+  return inset;
+}
+
 /** T0 is shown for context only. StayStory builds the comment-to-DM automation, not these screens. The link card opens the trip and starts the credit. */
 export function Social({ screen }: { screen: string }) {
-  const { s, route } = useSession();
+  const { s, route, dispatch } = useSession();
+  const [draft, setDraft] = useState('');
+  const kb = useKeyboardInset();
   const trip = tripFor(s, route) ?? s.trips[0]!;
   const creator = s.creators[trip.creatorId]!;
   const handle = creator.handle.slice(1);
   const isDefault = trip.id === 'anaya-udaipur';
-  const keyword = isDefault ? 'link pls' : `${trip.dmKeyword || 'link'} pls`;
+  const kw = trip.dmKeyword;
+  const keyword = kw === 'link' ? 'link pls' : kw || 'link pls';
+  const autoOn = !!kw;
+  const mine = reelComments(s, trip.id).filter((c) => c.travelerId === ME);
+  const dmd = dmSentTo(s, trip.id, ME);
+  const dmComment = [...mine].reverse().find((c) => c.dmSent);
+  const dm = buildDm({ creatorHandle: creator.handle, tripTitle: trip.title, url: `staystory.in/${trip.creatorId}/${trip.slug}`, firstName: 'Meera' });
+  const post = () => {
+    const text = draft.trim().slice(0, 300); if (!text) return;
+    dispatch({ type: 'reel/comment', id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, tripId: trip.id, travelerId: ME, name: 'meera.iyer', text, at: new Date().toISOString() });
+    setDraft('');
+  };
   const q = { c: trip.creatorId, s: trip.slug };
   const to = (sc: string) => go('social', sc, q);
   useEscape(screen === 'reel' ? undefined : () => to('reel'));
   useEffect(() => { document.title = 'StayStory traveler'; }, []);
+
+  if (screen === 'dm' && !dmd) return (
+    <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', flexDirection: 'column', paddingTop: 54, color: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px 12px', borderBottom: '1px solid #1C1C1E' }}>
+        <button aria-label="Back to comments" onClick={() => to('comments')} style={{ ...btnReset, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center' }}><Icon name="arrow_back_ios" size={24} /></button>
+        <span style={{ fontSize: 15, fontWeight: 700 }}>Messages</span>
+      </div>
+      <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <Icon name="chat" size={40} />
+        <span style={{ fontSize: 17, fontWeight: 700 }}>No messages yet</span>
+        <span style={{ fontSize: 14, lineHeight: '19px', color: '#AEAEB2' }}>{autoOn ? <>Comment “{keyword}” on the reel and {creator.name.split(' ')[0]}'s trip arrives here.</> : `${creator.name.split(' ')[0]} is not sending trips by DM on this reel right now.`}</span>
+        <button onClick={() => to('comments')} style={{ ...btnReset, marginTop: 12, minHeight: 44, padding: '0 24px', borderRadius: 999, background: '#3797F0', fontSize: 14, fontWeight: 700 }}>Back to comments</button>
+      </div>
+    </div>
+  );
 
   if (screen === 'dm') return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', flexDirection: 'column', paddingTop: 54, color: '#fff' }}>
@@ -38,16 +79,16 @@ export function Social({ screen }: { screen: string }) {
       </div>
       <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
         <span style={{ alignSelf: 'center', fontSize: 11, color: '#8E8E93' }}>Today 21:14</span>
-        <span style={{ alignSelf: 'flex-end', maxWidth: '70%', background: '#3797F0', padding: '10px 14px', borderRadius: 20, fontSize: 14, lineHeight: '19px' }}>{keyword}</span>
-        <span style={{ alignSelf: 'flex-start', maxWidth: '80%', background: '#262626', padding: '10px 14px', borderRadius: 20, fontSize: 14, lineHeight: '19px' }}>Hi Meera! Here's my full {trip.place} trip. You can change dates, stays and experiences, and book it all in one go.</span>
+        <span style={{ alignSelf: 'flex-end', maxWidth: '70%', background: '#3797F0', padding: '10px 14px', borderRadius: 20, fontSize: 14, lineHeight: '19px' }}>{dmComment?.text ?? keyword}</span>
+        <span style={{ alignSelf: 'flex-start', maxWidth: '80%', background: '#262626', padding: '10px 14px', borderRadius: 20, fontSize: 14, lineHeight: '19px' }}>{dm.text}</span>
         <a href={tripHash(trip, 'trip', { from: 'dm' })} style={{ alignSelf: 'flex-start', width: 260, background: '#262626', borderRadius: 20, overflow: 'hidden', textDecoration: 'none', color: '#fff' }}>
           <img src={asset(trip.img)} alt="" style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }} />
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '12px 14px' }}>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>{trip.title}</span>
-            <span style={{ fontSize: 12, color: '#AEAEB2' }}>staystory.in/{trip.creatorId}/{trip.slug}</span>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>{dm.cardTitle}</span>
+            <span style={{ fontSize: 12, color: '#AEAEB2' }}>{dm.cardUrl}</span>
           </span>
         </a>
-        <span style={{ alignSelf: 'flex-start', fontSize: 11, color: '#8E8E93', paddingLeft: 8 }}>Sent automatically by StayStory for {creator.handle}</span>
+        <span style={{ alignSelf: 'flex-start', fontSize: 11, color: '#8E8E93', paddingLeft: 8 }}>{dm.footer}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px 34px' }}>
         <span style={{ flex: 1, height: 44, borderRadius: 999, background: '#1C1C1E', display: 'flex', alignItems: 'center', padding: '0 16px', fontSize: 14, color: '#8E8E93' }}>Message</span>
@@ -76,7 +117,7 @@ export function Social({ screen }: { screen: string }) {
           <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 8px', border: '1px solid rgba(255,255,255,.6)', borderRadius: 8 }}>Follow</span>
         </div>
         <span style={{ fontSize: 13, lineHeight: '18px' }}>
-          {isDefault ? 'Three days in Udaipur under ₹15,000, lake-view stay included.' : `${trip.title}, stays and experiences included.`} Comment <b>{keyword}</b> and I'll DM you the full bookable trip.
+          {isDefault ? 'Three days in Udaipur under ₹15,000, lake-view stay included.' : `${trip.title}, stays and experiences included.`} {autoOn && <>Comment <b>{keyword}</b> and I'll DM you the full bookable trip.</>}
         </span>
         <span style={{ fontSize: 11, lineHeight: '15px', color: 'rgba(255,255,255,.75)' }}>Paid partnership · StayStory</span>
       </div>
@@ -86,10 +127,20 @@ export function Social({ screen }: { screen: string }) {
 
       {screen === 'comments' && (<>
         <button aria-label="Close comments" onClick={() => to('reel')} style={{ ...btnReset, position: 'absolute', left: 0, right: 0, top: 0, bottom: 560 }} />
-        <div role="dialog" aria-label="Comments" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 560, background: '#1C1C1E', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column' }}>
+        <div role="dialog" aria-label="Comments" style={{ position: 'absolute', left: 0, right: 0, bottom: kb, height: 560, maxHeight: `calc(100% - ${kb}px - 60px)`, background: '#1C1C1E', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}><span style={{ width: 36, height: 4, borderRadius: 999, background: '#48484A' }} /></div>
           <span style={{ textAlign: 'center', fontSize: 13, fontWeight: 700, paddingBottom: 12, borderBottom: '1px solid #2C2C2E' }}>Comments</span>
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+            {mine.map((c) => (
+              <div key={c.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <span style={circle(32, '#5F9298', { fontSize: 12 })}>MI</span>
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 12, color: '#AEAEB2' }}><b style={{ color: '#fff' }}>{c.name}</b> · now</span>
+                  <span style={{ fontSize: 13, lineHeight: '18px', overflowWrap: 'anywhere' }}>{c.text}</span>
+                  {c.dmSent && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9CC8FF' }}><Icon name="mark_chat_read" size={16} />{handle} sent you the trip in DMs</span>}
+                </span>
+              </div>
+            ))}
             {COMMENTS.map((c) => (
               <div key={c.name} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <span style={circle(32, c.bg, { fontSize: 12 })}>{c.ini}</span>
@@ -103,8 +154,11 @@ export function Social({ screen }: { screen: string }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px 34px', borderTop: '1px solid #2C2C2E' }}>
             <span style={circle(32, '#5F9298', { fontSize: 12 })}>MI</span>
-            <span style={{ flex: 1, height: 40, borderRadius: 999, border: '1px solid #3A3A3C', display: 'flex', alignItems: 'center', padding: '0 16px', fontSize: 13, color: '#8E8E93' }}>Add a comment</span>
-            <button onClick={() => to('dm')} aria-label="Open messages" style={{ ...btnReset, padding: '1px 6px', color: '#9CC8FF', fontSize: 13, fontWeight: 700, minHeight: 44 }}>Inbox 1</button>
+            <input className="ss-comment" value={draft} maxLength={300} placeholder="Add a comment" aria-label="Add a comment" enterKeyHint="send"
+              onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); post(); } }}
+              style={{ flex: 1, minWidth: 0, height: 40, borderRadius: 999, border: '1px solid #3A3A3C', background: 'transparent', color: '#fff', font: 'inherit', fontSize: 13, padding: '0 16px', boxSizing: 'border-box' }} />
+            {draft.trim() && <button onClick={post} aria-label="Post comment" style={{ ...btnReset, color: '#9CC8FF', fontSize: 13, fontWeight: 700, minHeight: 44, padding: '1px 6px' }}>Post</button>}
+            <button onClick={() => to('dm')} aria-label="Open messages" style={{ ...btnReset, padding: '1px 6px', color: '#9CC8FF', fontSize: 13, fontWeight: 700, minHeight: 44 }}>{dmd ? 'Inbox 1' : 'Inbox'}</button>
           </div>
         </div>
       </>)}

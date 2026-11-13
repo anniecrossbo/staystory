@@ -5,3 +5,4 @@ export * from './attribution';
 export * from './ledger';
 export * from './sample';
 export * from './validate';
+export * from './dm';
