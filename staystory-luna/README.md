@@ -27,6 +27,10 @@ Add `?ns=name` to any URL for an isolated copy of the marketplace. The traveler 
 - `apps/*`: the three apps, the design viewer and the demo page
 - `specs/`: product specs and `journeys.md` (the end-to-end chain and the quality bar)
 
+## Photos
+
+The apps show real photographs from `apps/public/assets/photos/` (Unsplash, credits in `CREDITS.md`, focal points in `manifest.json`). If a photo is missing the matching illustration in `apps/public/assets/` shows instead. To swap a photo, replace the file and adjust its `focal` point; hotels and creators will upload their own photos in the real product.
+
 ## Tests
 
 ```bash

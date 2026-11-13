@@ -78,3 +78,7 @@ button { -webkit-user-select: none; user-select: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ----- Photographs fade in as they arrive (see photos.ts) ----- */
+img[src^='/assets/'] { transition: opacity 420ms var(--ease-out); }
+img.lu-img-loading { opacity: 0; }

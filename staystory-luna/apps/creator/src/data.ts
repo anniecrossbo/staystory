@@ -1,8 +1,9 @@
 import { formatINR } from '@staystory/core';
+import { photo } from '@staystory/ui/src/photos';
 import type { MStay, MarketState } from '@staystory/market';
 import { acceptedOffers } from '@staystory/market';
 
-export const asset = (n: string) => `/assets/${n}.jpg`;
+export const asset = (n: string) => photo(n);
 export const CREATOR_ID = 'anaya';
 
 export interface DayItem { id: string; name: string; kind: string; bookable: boolean; price?: number; time?: string; img?: string; dur?: string; lat?: number; lng?: number }

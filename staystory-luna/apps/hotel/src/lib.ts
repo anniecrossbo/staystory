@@ -1,4 +1,5 @@
 import { formatINR, pctOf } from '@staystory/core';
+import { photo } from '@staystory/ui/src/photos';
 import { bookingCommission, seedState, type MBooking, type MCampaign, type MCreator, type MarketState, type MSettlement } from '@staystory/market';
 
 /* ---------- Gap Night demand ---------- */
@@ -78,7 +79,7 @@ const FACTOR: Record<Range, { vol: number; cpa: number }> = { '7': { vol: 0.24, 
 export const scaleVol = (n: number, r: Range) => Math.round(n * FACTOR[r].vol);
 export const scaleCpa = (n: number, r: Range) => Math.round((n * FACTOR[r].cpa) / 10) * 10;
 export const fmtLakh = (n: number) => (n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : formatINR(n));
-export const asset = (name: string) => `/assets/${name}.jpg`;
+export const asset = (name: string) => photo(name);
 export const fmtCount = (n: number) => n.toLocaleString('en-IN');
 
 /* ---------- Overview figures: history plus what the live store adds ---------- */

@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from 'react';
 import { withViewTransition } from '@staystory/ui';
+import { photo } from '@staystory/ui/src/photos';
 import type { MTrip } from '@staystory/market';
 
-export const asset = (n: string) => `/assets/${n}.jpg`;
+export const asset = (n: string) => photo(n);
 export const ME = 'meera';
 export const DEFAULT_TRIP = { c: 'anaya', s: 'udaipur' };
 export const SITE = 'https://staystory.in';
