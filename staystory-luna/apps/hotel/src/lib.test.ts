@@ -91,3 +91,24 @@ describe('GST invoice', () => {
     expect(html).toContain('₹11,777');
   });
 });
+
+import { campaignNameError, campaignStepErrors, firstCampaignProblem, gapRateMax } from './rules';
+describe('campaign and Gap Night rules by step', () => {
+  const ok = { name: 'Winter on Lake Pichola', creatorPrice: 8400, rackPrice: 9600, commissionPct: 15, invitedCount: 1 };
+  it('a valid campaign has no problem', () => expect(firstCampaignProblem(ok)).toBeNull());
+  it('each error belongs to its step', () => {
+    expect(firstCampaignProblem({ ...ok, name: ' ' })?.step).toBe('offer');
+    expect(firstCampaignProblem({ ...ok, creatorPrice: 9600 })?.step).toBe('offer');
+    expect(firstCampaignProblem({ ...ok, commissionPct: 31 })?.step).toBe('commission');
+    expect(firstCampaignProblem({ ...ok, invitedCount: 0 })?.step).toBe('creators');
+  });
+  it('the earliest step wins when several fail', () => {
+    expect(firstCampaignProblem({ ...ok, commissionPct: 2, invitedCount: 0 })?.step).toBe('commission');
+    expect(campaignStepErrors({ ...ok, name: '', invitedCount: 0 })).toMatchObject({ commission: null });
+  });
+  it('name error is separate from price errors', () => {
+    expect(campaignNameError({ ...ok, name: '' })).toMatch(/name/);
+    expect(campaignNameError({ ...ok, creatorPrice: 0 })).toBeNull();
+  });
+  it('gap rate cannot reach the public rate', () => expect(gapRateMax(4800)).toBe(4700));
+});

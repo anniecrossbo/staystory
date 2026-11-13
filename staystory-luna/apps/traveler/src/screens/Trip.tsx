@@ -63,7 +63,15 @@ function TripScreens({ trip, screen, booking }: { trip: MTrip; screen: string; b
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   // Arriving on a trip (from a DM, a shop, the feed or a link) starts the 60-day credit for its creator.
-  useEffect(() => { if (screen !== 'booked') dispatch({ type: 'traveler/openLink', travelerId: me.id, creatorId: trip.creatorId, tripId: trip.id, now: new Date().toISOString() }); }, [trip.id]);
+  useEffect(() => {
+    if (screen === 'booked') return;
+    const now = new Date().toISOString();
+    dispatch({ type: 'traveler/openLink', travelerId: me.id, creatorId: trip.creatorId, tripId: trip.id, now });
+    // One visit per browser session per trip; the store ignores repeats.
+    let sessionId = '';
+    try { sessionId = sessionStorage.getItem('staystory.session') ?? ''; if (!sessionId) { sessionId = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`; sessionStorage.setItem('staystory.session', sessionId); } } catch { sessionId = 'anonymous'; }
+    dispatch({ type: 'trip/visit', tripId: trip.id, sessionId, at: now });
+  }, [trip.id]);
   // Starting checkout holds the rooms for 30 minutes.
   const holding = ui.hold?.tripId === trip.id && new Date(ui.hold.until).getTime() > Date.now();
   useEffect(() => { if ((screen === 'checkout' || screen === 'payfail' || screen === 'held') && !holding) startHold(trip.id); }, [screen, trip.id]);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { formatINR } from '@staystory/core';
-import { useMarket, market, builderFromPrice, daysTitle, extractionDetails, makeCreatorTrip, planItinerary, slugify, stayFromHotel, tripIdFor, type MStay } from '@staystory/market';
+import { useMarket, market, builderFromPrice, daysTitle, extractionDetails, makeCreatorTrip, matchNamedStay, planItinerary, slugify, stayFromHotel, tripIdFor, type MStay } from '@staystory/market';
 import { Banner, Button, Checkbox, Chip, EmptyState, ErrorState, Icon, IconButton, ProgressBar, ProvenanceTag, Radio, Skeleton, Tag, TextField, Toggle, Widget } from '@staystory/ui';
 import { asset, CREATOR_ID, DESTS, DETAIL_KEYS, destFor, regionFor, stayCatalog, stayCard, type DetailKey } from '../data';
 import { SAMPLES } from '../samples';
@@ -90,9 +90,14 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
     const keep = place === cur.place && !cur.editId;
     const pool = s.trips.filter((t) => t.creatorId === CREATOR_ID).flatMap((t) => t.experiences);
     const days = planItinerary(e, r.coords ?? {}, pool).map((day) => ({ n: day.n, title: day.title, items: day.stops.map((p) => ({ id: p.id, name: p.name, kind: p.kind, bookable: p.bookable, price: p.pricePerPerson, time: p.time, img: p.img, dur: p.dur, lat: p.lat, lng: p.lng })) }));
+    const named = matchNamedStay(e.namedStay, place, stayCatalog(s, place));
+    const namedPick = named.status === 'matched' ? named.id : undefined;
+    const unmatched = named.status === 'unmatched';
+    const pick = unmatched ? '' : (namedPick ?? (keep ? cur.pick : base.pick));
     setDraft({
+      unmatchedStay: unmatched ? named.name : undefined,
       reel: base.reel, analyzed: base.reel, place, details: extractionDetails(e, regionFor(place)), title: e.title?.trim() || daysTitle(days.length, place), days,
-      pick: keep ? cur.pick : base.pick, inc: keep ? cur.inc : base.inc, slug: keep ? cur.slug : base.slug, liveStays: keep ? cur.liveStays : [],
+      pick, inc: { ...(keep ? cur.inc : base.inc), ...(namedPick ? { [namedPick]: true } : {}) }, slug: keep ? cur.slug : base.slug, liveStays: keep ? cur.liveStays : [],
       source: r.source, provider: r.provider, extractError: undefined, manual: false,
     });
   }
@@ -107,6 +112,15 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
     return () => ctrl.abort();
   }, [screen, d.place]);
 
+  // A named stay that matches none of our own stays may still be one of the live hotels, once those load.
+  useEffect(() => {
+    if (screen !== 'stays' || live.status !== 'ready' || !d.unmatchedStay || d.pick) return;
+    const m = matchNamedStay(d.unmatchedStay, d.place, live.hotels.map((h) => ({ id: `liteapi-${h.id}`, name: h.name })));
+    if (m.status !== 'matched') return;
+    const h = live.hotels.find((x) => `liteapi-${x.id}` === m.id); const st = h && stayFromHotel(h, dest.img);
+    if (st) setDraft((x) => ({ pick: m.id, unmatchedStay: undefined, inc: { ...x.inc, [m.id]: true }, liveStays: x.liveStays.some((y) => y.id === m.id) ? x.liveStays : [...x.liveStays, st] }));
+  }, [screen, live, d.unmatchedStay, d.pick]);
+
   const makeTrip = () => {
     const place = (d.details.Destination.split(',')[0] || d.place).trim() || d.place;
     const stays: MStay[] = included.map((x) => stayCard(s, x).stay);
@@ -118,7 +132,7 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
     return d.autoReply ? trip : { ...trip, dmKeyword: '' };
   };
   const publish = () => {
-    if (slugError || !included.length) return;
+    if (slugError || !included.length || (d.unmatchedStay && !d.pick)) return;
     const trip = makeTrip();
     market.dispatch({ type: 'trip/publish', trip });
     setDraft({ published: trip.id });
@@ -135,7 +149,7 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
   };
   const manual = () => {
     const f = draftFor(s, d.reel);
-    setDraft({ ...f, link: d.link, caption: d.caption, analyzed: d.reel, manual: true, days: f.days.map((x) => ({ ...x, items: [] })) });
+    setDraft({ ...f, unmatchedStay: undefined, link: d.link, caption: d.caption, analyzed: d.reel, manual: true, days: f.days.map((x) => ({ ...x, items: [] })) });
     to('days');
   };
   const onCta = () => {
@@ -195,8 +209,10 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
     { label: 'Waiting for the reader to answer', done: false, doing: tick >= 2 },
     { label: 'Building your itinerary', done: false, doing: false },
   ];
+  const needsPick = !!d.unmatchedStay && !d.pick;
+  const unmatchedNote = d.unmatchedStay ? `Your caption mentions "${d.unmatchedStay}". We couldn't match it to a stay we can book. Pick one on the next step.` : '';
   const cta = CTA[screen];
-  const ctaDisabled = (screen === 'pick' && (!captionReady(d.caption) || !validReelLink(d.link))) || (screen === 'preview' && !!slugError) || (screen === 'days' && stops === 0) || (screen === 'stays' && !included.length);
+  const ctaDisabled = (screen === 'pick' && (!captionReady(d.caption) || !validReelLink(d.link))) || (screen === 'preview' && !!slugError) || (screen === 'days' && stops === 0) || (screen === 'stays' && (!included.length || needsPick));
   const link = tripUrl(profile.handle, d.slug);
 
   return (<>
@@ -261,6 +277,7 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
 
       {screen === 'detected' && (<>
         <span style={h1}>Here's what we found</span>
+        {d.unmatchedStay && <Banner tone="warning" icon="hotel">{unmatchedNote}</Banner>}
         {d.source ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             {d.source === 'ai' ? <ProvenanceTag kind="inferred" /> : <Tag hue="charcoal">{d.source === 'cache' ? 'Cached sample' : 'Rule-based reading'}</Tag>}
@@ -312,6 +329,7 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
 
       {screen === 'stays' && (<>
         <span style={h1}>Pick partner stays</span>
+        {d.unmatchedStay && <Banner tone="warning" icon="hotel">{unmatchedNote}</Banner>}
         <span className="t-b2">Your pick is the default. Followers can switch; you're credited either way.</span>
         {catalog.map((h) => { const c = stayCard(s, h); const pick = d.pick === h.id; const on = !!d.inc[h.id] || pick; return (
           <div key={h.id} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: 12, borderRadius: 'var(--radius-lg)', background: pick ? 'var(--surface-tint)' : 'var(--surface)', border: `1px solid ${pick ? 'var(--primary-edge)' : 'var(--glass-edge)'}`, boxShadow: 'var(--shadow-card)' }}>
@@ -388,7 +406,7 @@ export function Create({ screen, go }: { screen: string; go: Go }) {
       </>)}
     </div>
 
-    {cta && <div className="cta"><Button variant="primary" size="lg" block iconRight={cta[1]} disabled={ctaDisabled} onClick={onCta}>{cta[0]}</Button></div>}
+    {cta && <div className="cta">{screen === 'stays' && needsPick && <span className="t-cap" role="status" style={{ alignSelf: 'center', padding: '4px 12px', borderRadius: 'var(--radius-pill, 999px)', background: 'var(--surface)', boxShadow: 'var(--shadow-card)' }}>Pick a stay to continue.</span>}<Button variant="primary" size="lg" block iconRight={cta[1]} disabled={ctaDisabled} onClick={onCta}>{cta[0]}</Button></div>}
 
     {share && (
       <Sheet title="Share to your story" subtitle="Instagram does not take stories from the web, so copy the caption and paste it on your story." onClose={() => setShare(null)}

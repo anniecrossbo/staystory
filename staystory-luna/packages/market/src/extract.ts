@@ -73,3 +73,36 @@ export function stayFromHotel(h: HotelLike, fallbackImg: string): MStay | null {
     desc: `${h.starRating ? `${h.starRating}-star · ` : ''}${h.address}`.trim().replace(/ ·\s*$/, ''), nightly: Math.round(h.ratePerNight), img: fallbackImg, commissionPct: 0,
   };
 }
+
+/* ---------- Named stay matching ---------- */
+
+const STAY_STOP = new Set(['the', 'a', 'an', 'by', 'in', 'of', 'near', 'at', 'on', 'with', 'and', 'for', 'to']);
+/** Words that describe a kind of place rather than name one. A caption that only uses these names no stay. */
+const STAY_GENERIC = new Set(['hotel', 'hotels', 'resort', 'resorts', 'stay', 'stays', 'homestay', 'hostel', 'villa', 'inn', 'lodge', 'haveli', 'palace', 'heritage', 'boutique', 'beach', 'hill', 'hills', 'mountain', 'river', 'lake', 'fort', 'camp', 'farm', 'farmstay', 'cottage', 'estate', 'view', 'place', 'property', 'room', 'rooms']);
+
+const stayTokens = (name: string, city = '') => {
+  const cityWords = new Set(city.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  return name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w && !STAY_STOP.has(w) && !cityWords.has(w));
+};
+/** Lowercase, no punctuation, no "the", no city name. */
+export const normaliseStayName = (name: string, city = ''): string => stayTokens(name, city).join(' ');
+const coreOf = (name: string, city = ''): string => stayTokens(name, city).filter((w) => !STAY_GENERIC.has(w)).join(' ');
+
+export type NamedStayMatch = { status: 'none' } | { status: 'matched'; id: string } | { status: 'unmatched'; name: string };
+
+/**
+ * Match the stay a caption names against the stays the creator can offer. 'none' when nothing usable is named
+ * (empty, under 4 characters, or only generic words like "a haveli by the lake"); 'unmatched' means the caption
+ * names a stay we cannot book, so the creator must choose one.
+ */
+export function matchNamedStay(named: string | null | undefined, city: string, stays: { id: string; name: string }[]): NamedStayMatch {
+  const raw = (named ?? '').trim();
+  const n = normaliseStayName(raw, city); const core = coreOf(raw, city);
+  if (n.length < 4 || !core) return { status: 'none' };
+  for (const st of stays) {
+    const sn = normaliseStayName(st.name, city); const sc = coreOf(st.name, city);
+    if (sn.length < 4) continue;
+    if (n.includes(sn) || sn.includes(n) || (sc.length >= 4 && (core === sc || core.includes(sc) || sc.includes(core)))) return { status: 'matched', id: st.id };
+  }
+  return { status: 'unmatched', name: raw };
+}
