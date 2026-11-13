@@ -58,9 +58,30 @@ body { font-optical-sizing: auto; font-feature-settings: 'kern', 'liga', 'calt';
  * Top-level phone screens get a 34px large title; screens with a back button get a 17px semibold nav title.
  * !important because some apps set the size inline.
  */
-.head .h2, .head [style*='font-size: 20px'] { font-size: 34px !important; line-height: 41px !important; font-weight: 700 !important; letter-spacing: -0.026em; }
-.head:has(> .lu-iconbtn:first-child) .h2, .head:has(> .lu-iconbtn:first-child) [style*='font-size: 20px'] { font-size: 17px !important; line-height: 22px !important; font-weight: 600 !important; letter-spacing: -0.01em; }
-.head .eyebrow, .head .m11 { letter-spacing: 0.02em; }
+.head .h2, .head .h-title, .head [style*='font-size: 20px'] { font-size: 34px !important; line-height: 41px !important; font-weight: 700 !important; letter-spacing: -0.026em; }
+.head:has(> .lu-iconbtn:first-child) .h2, .head:has(> .lu-iconbtn:first-child) .h-title, .head:has(> .lu-iconbtn:first-child) [style*='font-size: 20px'] { font-size: 17px !important; line-height: 22px !important; font-weight: 600 !important; letter-spacing: -0.01em; }
+.head .eyebrow, .head .m11, .head .meta { letter-spacing: 0.02em; }
+
+/*
+ * Headers with a large title. The controls beside the title (back button, avatar, bell, step chips) are centred on the TITLE
+ * line, whatever their size, not on the eyebrow-plus-title block. A two-row grid does it: the eyebrow sits in row 1, and the
+ * title and every control share row 2, centred on each other. The text wrapper is recognised by holding the title (.h1, .h2 or
+ * the inline 20px title), so it works whatever each app calls it. Back-button screens with the 17px nav title keep their flex row.
+ */
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 0; align-items: center;
+}
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px'])) { display: contents; }
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px'])) > :first-child { grid-column: 2; grid-row: 1; min-width: 0; }
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px'])) > :nth-child(2) { grid-column: 2; grid-row: 2; min-width: 0; }
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px'])) > :only-child { grid-column: 2; grid-row: 2; }
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :first-child:not(:has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px']))) { grid-column: 1; grid-row: 2; margin-right: 12px; }
+:is(.head:not(:has(> .lu-iconbtn:first-child)), .page-head) > :last-child:not(:first-child):not(:has(> :is(.h1, .h2, .h-title, [style*='font-size: 20px']))) { grid-column: 3; grid-row: 2; margin-left: 12px; justify-self: end; }
+.page-head > .ph-trail { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Dialog and sheet close buttons sit on the title line, not the top of the header */
+.lu-modal-head, .lu-sheet-head { align-items: flex-start; }
+.lu-modal-head > .lu-iconbtn, .lu-sheet-head > .lu-iconbtn { margin-top: -4px; }
 
 /* ---------- Materials: frosted bars, sheets and cards ---------- */
 .lu-widget, .lu-modal, .lu-dock-track, .footer-bar, .cta-bar, .trip-hero .by {

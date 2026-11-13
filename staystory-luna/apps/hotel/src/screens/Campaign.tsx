@@ -102,13 +102,13 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
 
   return (
     <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--canvas)', fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums', padding: '20px clamp(16px, 3.4vw, 48px) 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <div className="page-head">
         <IconButton icon="arrow_back" label="Back to console" variant="white" onClick={() => go('console', 'overview')} />
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
+        <div className="ph-title">
           <span className="eyebrow">{s.hotel.name}, {s.hotel.city} · new campaign</span>
           <span className="h1">{HEAD[screen]}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="ph-trail">
           {['Offer', 'Commission', 'Creators', 'Review'].map((label, k) => (
             <Chip key={label} selected={k === i} icon={k < i ? 'check_circle' : 'radio_button_unchecked'} onClick={() => to(k)}>{label}</Chip>
           ))}

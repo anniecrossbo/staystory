@@ -65,3 +65,11 @@ The rule for changing it: nothing may change the size or position of anything at
 This changes type and spacing slightly, so the design sweeps are no longer the visual bar: use them to check content, states and structure (missing or extra text), not pixel offsets. Scrolling screens also no longer squash their content (the designs' flex layout shrank fixed-height blocks, which read as a bug with real photography).
 
 Rules for changing it: keep layouts free of horizontal scroll at 375 (phones) and 1024 (hotel); keep error states visible (they have their own classes); text set inline is overridden by attribute selectors, and sizes need `!important`.
+
+## The layout audit
+
+`/viewer/audit.html?set=hotel|creator|traveler` loads every screen state of one product in a fresh marketplace (hotel at 1470 and 1024, phones at 393 and 375) and reports, per route, any control that is not centred on its title and any horizontal overflow. `await` until `window.__audit.done`, then expect `window.__audit.rows` to be empty. The check itself lives in `apps/public/align.js`.
+
+- A big title (24px and up) is judged on its own line; a block of several smaller lines (a name and a caption) is judged as a block; dialog and sheet close buttons are judged on the title line.
+- Headers with a large title use a grid in `apple.css` that centres the back button, avatar, bell or step chips on the title line. A header's text wrapper is recognised by holding the title (`.h1`, `.h2`, `.h-title` or an inline 20px title), so a new header needs one of those, or its name added to the selector list.
+- Run all three after any change to `packages/ui/src/apple.css`, `polish.css` or a screen header. The audit was checked with a negative control: switching the fix off reproduces the 7px offset it exists to catch.
