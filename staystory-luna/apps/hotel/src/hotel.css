@@ -1,6 +1,18 @@
 /* Layout primitives copied from the design's inline styles. */
 /* Page chrome. Side margin, widget gap and the grid itself come from packages/ui/src/grid.css (.lu-page, .lu-grid). */
-.page { box-sizing: border-box; min-height: 100vh; position: relative; padding-top: 20px; padding-bottom: 0; background: var(--canvas); }
+.page { box-sizing: border-box; height: 100vh; height: 100dvh; overflow: hidden; position: relative; padding-top: 20px; padding-bottom: 128px; background: var(--canvas); }
+/* One fold: the page never scrolls. The content region takes what the header and dock leave; widgets scroll inside themselves. */
+.page > * { flex: none; }
+.fold { flex: 1 1 0 !important; min-height: 0; display: flex; flex-direction: column; gap: var(--layout-gap); }
+.fold > * { flex: none; }
+.fold > .lu-grid.fill { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.fold > .lu-grid.fill.scrollgrid { grid-template-rows: none; grid-auto-rows: min-content; align-content: start; overflow-y: auto; }
+.fold .lu-widget { display: flex; flex-direction: column; min-height: 0; }
+.fold .lu-widget-head { flex: none; }
+.fold .lu-widget-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.fold .col-stack { min-height: 0; overflow-y: auto; }
+.fold .col-stack > * { flex: none; }
+@media (max-height: 620px) { .page { overflow-y: auto; } }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .col-stack { display: flex; flex-direction: column; gap: var(--layout-gap); min-width: 0; }
 .page-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -12,8 +24,8 @@
 .campaign-page { box-sizing: border-box; min-height: 100vh; background: var(--canvas); padding-top: 20px; padding-bottom: 40px; }
 .review-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--layout-gap); }
 @media (max-width: 1199px) { .review-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* The design pins the dock 24px above the page end. Sticky keeps that at the page end and holds it above the fold on tall pages. */
-.dock-wrap { position: sticky; bottom: 0; height: 128px; margin-top: -20px; box-sizing: border-box; padding-bottom: 24px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 40; flex: none; }
+/* The dock is fixed to the window, 24px above the bottom edge, on every console view. */
+.dock-wrap { position: fixed; left: 0; right: 0; bottom: 0; box-sizing: border-box; padding-bottom: 24px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 40; }
 .dock-wrap > div { pointer-events: auto; }
 .toaster { position: fixed; left: 0; right: 0; bottom: 104px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 120; pointer-events: none; }
 .toaster > * { pointer-events: auto; }

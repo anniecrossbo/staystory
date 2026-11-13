@@ -58,7 +58,7 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
         Sent to {g.sentTo} travelers who saved Anaya’s trip. {g.booked > 0 ? `${g.booked} room${g.booked > 1 ? 's' : ''} booked so far.` : 'No rooms booked yet.'}
       </Banner>
     )}
-    <div className="lu-grid">
+    <div className="lu-grid fill">
       <Widget className="span-3" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>

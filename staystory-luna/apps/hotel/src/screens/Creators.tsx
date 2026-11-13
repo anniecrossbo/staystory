@@ -33,7 +33,7 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
   return (<>
     {screen === 'invited' && banner && <Banner tone="success" icon="send" title={`Invite sent to ${banner.handle}`}>They usually reply within a day. You'll see it in Needs your decision.</Banner>}
     <span className="body">Matched on destination, audience cities, budget and booking performance.</span>
-    <div className="lu-grid">
+    <div className="lu-grid fill scrollgrid">
       {creators.map((m) => {
         const st = status(m.id);
         const btn = !st

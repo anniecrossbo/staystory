@@ -38,11 +38,13 @@ export function Console({ screen, go }: { screen: string; go: Go }) {
         </div>
       </div>
 
+      <div className="fold">
       {view === 'overview' && <Overview go={go} />}
       {view === 'bookings' && <Bookings screen={screen} go={go} />}
       {view === 'creators' && <Creators screen={screen} go={go} />}
       {view === 'gap' && <GapNight screen={screen} go={go} />}
       {view === 'payouts' && <Payouts />}
+      </div>
 
       <div className="dock-wrap"><div>
         <Dock aria-label="Hotel console navigation" active={view} orb={false} onSelect={toScreen}

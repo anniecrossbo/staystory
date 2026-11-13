@@ -22,7 +22,7 @@ export function Payouts() {
       <div className="span-1"><StatTile label={`Commission this ${rangeInfo(range).label.toLowerCase()}`} value={formatINR(f.commission)} /></div>
       <div className="span-1"><StatTile label="Waived on cancellations" value={formatINR(f.waived)} /></div>
     </div>
-    <div className="lu-grid"><Widget className="span-full" title="Weekly statements" subtitle="Each comes with a GST invoice">
+    <div className="lu-grid fill"><Widget className="span-full" title="Weekly statements" subtitle="Each comes with a GST invoice">
       <div style={{ overflowX: 'auto' }}>
         <Activatable selector="tbody tr" onActivate={download} label={(i) => `Download GST invoice for ${rows[i]?.period ?? 'statement'}`}>
           <DataTable columns={[{ key: 'period', label: 'Period' }, { key: 'stays', label: 'Stays', align: 'right' }, { key: 'gross', label: 'Gross', align: 'right' }, { key: 'comm', label: 'Commission', align: 'right' }, { key: 'net', label: 'Settled', align: 'right' }]}

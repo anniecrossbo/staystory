@@ -43,7 +43,7 @@ export function Bookings({ screen, go }: { screen: string; go: Go }) {
         <SearchField placeholder="Search guest or booking" aria-label="Search guest or booking" value={search} onChange={(e) => { setSearch(e.target.value); if (screen === 'bookingsEmpty') go('console', 'bookings'); }} />
       </div>
     </div>
-    <div className="lu-grid">
+    <div className="lu-grid fill">
     {rows.length > 0 ? (
       <Widget className="span-full" title="Attributed bookings" count={rows.length}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>

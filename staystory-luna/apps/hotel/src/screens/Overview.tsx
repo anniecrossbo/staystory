@@ -35,7 +35,7 @@ export function Overview({ go }: { go: Go }) {
   };
 
   return (<>
-    <div className="lu-grid">
+    <div className="lu-grid fill">
       <Widget className="span-3" title="Needs your decision" count={decs.length}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {decs.length === 0 && <EmptyState icon="task_alt" title="Nothing needs your decision">Creator replies and unsold rooms for saved demand show up here.</EmptyState>}
@@ -47,7 +47,7 @@ export function Overview({ go }: { go: Go }) {
           const p = campaignProgress(s, camp);
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <img src={asset('verandah')} alt="" style={{ width: '100%', height: 112, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
+              <img src={asset('verandah')} alt="" style={{ width: '100%', height: 64, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{p.done} of {p.target}</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)' }}>bookings · {paceLabel(p.done, p.pct)}</span></div>
               <ProgressBar value={p.pct} tone="success" aria-label="Campaign progress" />
             </div>
@@ -63,7 +63,7 @@ export function Overview({ go }: { go: Go }) {
       <div className="span-1"><StatTile label="Cost per acquired guest" value={formatINR(fig.cpa)} /></div>
       <div className="span-1"><StatTile label="Cancellations" value={`${fig.cancelPct.toFixed(1)}%`} /></div>
     </div>
-    <div className="lu-grid">
+    <div className="lu-grid fill">
       <Widget className="span-3" title="Creator performance" subtitle={`Attributed bookings · ${days}`}>
         <div style={{ overflowX: 'auto' }}>
           <Activatable selector="tbody tr" onActivate={(i) => openCreator(rows[i]!.id, go)} label={(i) => `Open ${rows[i]?.handle ?? 'creator'} in Creators`}>
