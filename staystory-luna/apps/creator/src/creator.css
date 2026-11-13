@@ -1,0 +1,48 @@
+body { background: #E3E7EA; }
+.stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.phone { position: relative; width: 393px; height: 852px; max-width: 100vw; max-height: 100dvh; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+@media (min-width: 500px) and (min-height: 900px) { .phone { border-radius: 40px; box-shadow: 0 24px 60px rgba(0,0,0,.18); } }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Scroll area. The designs use 54px at the top, 136px (with dock) or 120px (with a CTA) at the bottom. */
+.scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: max(54px, env(safe-area-inset-top)) 16px 136px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; }
+.scroll.s120 { padding-bottom: 120px; }
+.scroll.g20 { gap: 20px; }
+.dock-bar { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; z-index: 20; }
+.glass-bar { position: absolute; left: 12px; right: 12px; bottom: 34px; display: flex; gap: 8px; padding: 8px; border-radius: var(--radius-lg); background: var(--glass-bar); -webkit-backdrop-filter: blur(var(--blur-chrome)); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-dock); z-index: 20; }
+.cta { position: absolute; left: 16px; right: 16px; bottom: 34px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
+.grow1 { flex: 1; min-width: 0; }
+.toast-pos { position: absolute; left: 16px; right: 16px; bottom: 120px; z-index: 60; }
+
+.head { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.head.fixed { height: 44px; min-height: 0; }
+.head .ttl { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.meta { font-size: 11px; line-height: 15px; color: var(--muted); }
+.h-title { font-size: 20px; line-height: 28px; font-weight: 700; }
+.t-h1 { font-size: 28px; line-height: 39px; font-weight: 700; }
+.t-big { font-size: 28px; line-height: 39px; font-weight: 700; }
+.t-b { font-size: 13px; line-height: 18px; }
+.t-b2 { font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.t-s { font-size: 13px; line-height: 18px; font-weight: 600; }
+.t-cap { font-size: 11px; line-height: 15px; color: var(--muted); }
+.t-eyebrow { font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.stack { display: flex; flex-direction: column; }
+.row8 { display: flex; gap: 8px; }
+.gap4 { gap: 4px; } .gap8 { gap: 8px; } .gap12 { gap: 12px; } .gap16 { gap: 16px; }
+.wrap { flex-wrap: wrap; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.hero { width: 100%; border-radius: var(--radius-lg); overflow: hidden; flex: none; }
+.hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.line { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--divider); }
+.link-row { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; min-height: 48px; cursor: pointer; text-align: left; color: inherit; }
+.col1 { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.muted-ic { color: var(--muted); display: inline-flex; }
+.pick-btn { cursor: pointer; }
+.sheet-wrap { position: absolute; inset: 0; z-index: 50; display: flex; align-items: flex-end; }
+.sheet-wrap .lu-scrim { cursor: pointer; }
+.sheet-wrap .lu-modal { position: relative; width: 100%; max-height: 82%; overflow-y: auto; border-radius: var(--radius-xl) var(--radius-xl) 0 0; box-sizing: border-box; padding: 20px 16px 34px; }
+.notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); border: 2px solid var(--canvas); box-sizing: content-box; pointer-events: none; }
+.drag-handle { border: 0; background: transparent; padding: 0; color: var(--muted); cursor: grab; display: inline-flex; touch-action: none; border-radius: var(--radius-sm); }
+.dragging { opacity: .6; background: var(--surface-sunken); }
+a.plain { color: inherit; text-decoration: none; }

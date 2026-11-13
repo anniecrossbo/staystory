@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hotel console</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 956px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; padding: 20px clamp(16px, 3.4vw, 48px) 128px; display: flex; flex-direction: column; gap: 20px">
+
+  <div style="display: flex; justify-content: center">
+    <x-import component-from-global-scope="Luna.TopBar" fresh="fresh" refreshed="Synced 4 min ago" time="09:41, Friday" user="Haveli Jheel" initials="HJ" kpis="{{topKpis}}"></x-import>
+  </div>
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">StayStory for hotels · Haveli Jheel, Udaipur</span>
+      <span style="font-size: 28px; line-height: 39px; font-weight: 700">{{heading}}</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <x-import component-from-global-scope="Luna.SegmentedControl" options="{{ranges}}" default-value="30" size="sm" aria-label="Date range"></x-import>
+      <x-import component-from-global-scope="Luna.Button" variant="primary" icon="add">Create campaign</x-import>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <sc-if value="{{isOverview}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+      <x-import component-from-global-scope="Luna.Widget" title="Needs your decision" count="{{ 2 }}" style="flex: 2 1 560px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <x-import component-from-global-scope="Luna.AlertCard" tone="warning" title="4 lake-view rooms unsold for Dec 19 to 21" meta="312 travelers saved Anaya’s Udaipur trip for these dates and have not booked yet"></x-import>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <x-import component-from-global-scope="Luna.Button" variant="primary" icon="nights_stay" on-click="{{goGap}}">Release as Gap Night</x-import>
+            <x-import component-from-global-scope="Luna.Button" variant="tertiary">Dismiss</x-import>
+          </div>
+          <x-import component-from-global-scope="Luna.AlertCard" tone="success" title="@anaya.explores accepted Winter on Lake Pichola" meta="Her Udaipur trip now books your Lake-view Deluxe"></x-import>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Live campaign" subtitle="Winter on Lake Pichola" style="flex: 1 1 280px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <img src="assets/verandah.jpg" alt="" style="width: 100%; height: 112px; border-radius: var(--radius-md); object-fit: cover; display: block">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 20px; line-height: 28px; font-weight: 700">38 of 60</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">bookings · on pace</span></div>
+          <x-import component-from-global-scope="Luna.ProgressBar" value="{{ 63 }}" tone="success" aria-label="Campaign progress"></x-import>
+        </div>
+      </x-import>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px">
+      <x-import component-from-global-scope="Luna.StatTile" label="Attributed bookings" value="184"></x-import>
+      <x-import component-from-global-scope="Luna.StatTile" label="Booking value" value="₹36.8L"></x-import>
+      <x-import component-from-global-scope="Luna.StatTile" label="Cost per acquired guest" value="₹1,520"></x-import>
+      <x-import component-from-global-scope="Luna.StatTile" label="Cancellations" value="4.3%"></x-import>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+      <x-import component-from-global-scope="Luna.Widget" title="Creator performance" subtitle="Attributed bookings · last 30 days" style="flex: 2 1 560px; min-width: 0">
+        <div style="overflow-x: auto"><x-import component-from-global-scope="Luna.DataTable" columns="{{creatorCols}}" rows="{{creatorRows}}" compact="{{ true }}"></x-import></div>
+      </x-import>
+      <div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <x-import component-from-global-scope="Luna.Widget" title="Bookings by creator">
+          <x-import component-from-global-scope="Luna.BarChart" data="{{barData}}" height="{{ 140 }}" aria-label="Bookings by creator"></x-import>
+        </x-import>
+        <x-import component-from-global-scope="Luna.AISummary" label="AI summary" title="Two creators bring 52% of guests" bullets="{{aiBullets}}" next="Invite @couplesgoplaces for Heritage Suite packages."></x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- BOOKINGS (+ detail + empty) -->
+  <sc-if value="{{isBookingsAny}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+      <sc-for list="{{bFilters}}" as="f" hint-placeholder-count="5">
+        <x-import component-from-global-scope="Luna.FilterPill" selected="{{f.on}}" count="{{f.count}}" on-click="{{f.pick}}">{{f.label}}</x-import>
+      </sc-for>
+      <span style="flex: 1"></span>
+      <div style="width: 280px"><x-import component-from-global-scope="Luna.SearchField" placeholder="Search guest or booking" default-value="{{search}}"></x-import></div>
+    </div>
+    <sc-if value="{{hasBookings}}" hint-placeholder-val="{{ true }}">
+      <x-import component-from-global-scope="Luna.Widget" title="Attributed bookings" count="{{bookingCount}}">
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{bookingRows}}" as="b" hint-placeholder-count="6">
+            <button onClick="{{b.open}}" style="display: grid; grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr; gap: 12px; align-items: center; min-height: 52px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--divider); background: {{b.bg}}; text-align: left; cursor: pointer; font-family: inherit; color: inherit; border-radius: var(--radius-sm)">
+              <span style="display: flex; align-items: center; gap: 12px"><x-import component-from-global-scope="Luna.Avatar" initials="{{b.ini}}" size="{{ 34 }}" tone="muted"></x-import><span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{b.guest}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{b.id}}</span></span></span>
+              <span style="font-size: 13px; line-height: 18px; color: var(--primary); font-weight: 600">{{b.creator}}</span>
+              <span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px">{{b.room}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{b.dates}}</span></span>
+              <span style="font-size: 13px; line-height: 18px; font-weight: 600; text-align: right">{{b.value}}</span>
+              <span style="font-size: 13px; line-height: 18px; color: var(--ink-2); text-align: right">{{b.comm}}</span>
+              <span style="display: flex; justify-content: flex-end"><x-import component-from-global-scope="Luna.Badge" tone="{{b.tone}}" dot="{{ true }}">{{b.status}}</x-import></span>
+            </button>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+    <sc-if value="{{isBookingsEmpty}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Widget" title="Attributed bookings" count="{{ 0 }}">
+        <div style="padding: 48px 0">
+          <x-import component-from-global-scope="Luna.EmptyState" icon="event_busy" title="No bookings match “Kapoor”">Check the spelling, or search by booking number such as SS-UDR-48213.</x-import>
+        </div>
+      </x-import>
+    </sc-if>
+  </sc-if>
+
+  <!-- CREATORS / INVITED -->
+  <sc-if value="{{isCreatorsAny}}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{isInvited}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Banner" tone="success" icon="send" title="Invite sent to @couplesgoplaces">They usually reply within a day. You'll see it in Needs your decision.</x-import>
+    </sc-if>
+    <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Matched on destination, audience cities, budget and booking performance.</span>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px">
+      <sc-for list="{{matches}}" as="m" hint-placeholder-count="6">
+        <x-import component-from-global-scope="Luna.Widget" title="{{m.handle}}" subtitle="{{m.followers}} followers · {{m.score}} match">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <img src="{{m.cover}}" alt="" style="width: 100%; height: 96px; border-radius: var(--radius-md); object-fit: cover; display: block">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <x-import component-from-global-scope="Luna.Tag" hue="{{m.hue}}">{{m.niche}}</x-import>
+              <sc-if value="{{m.top}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="Luna.Badge" tone="vip" icon="star">Top converter</x-import></sc-if>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+              <x-import component-from-global-scope="Luna.StatTile" label="Conversion" value="{{m.conv}}"></x-import>
+              <x-import component-from-global-scope="Luna.StatTile" label="Bookings/mo" value="{{m.bookings}}"></x-import>
+              <x-import component-from-global-scope="Luna.StatTile" label="Delhi NCR" value="{{m.ncr}}"></x-import>
+            </div>
+            <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">{{m.why}}</span>
+            <x-import component-from-global-scope="Luna.Button" variant="{{m.variant}}" icon="{{m.icon}}" block="{{ true }}" on-click="{{m.invite}}">{{m.btn}}</x-import>
+          </div>
+        </x-import>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- GAP NIGHT (+ confirm + released) -->
+  <sc-if value="{{isGapAny}}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{isReleased}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Banner" tone="success" icon="check_circle" title="4 rooms released for Dec 19 to 21">Sent to 312 travelers who saved Anaya’s trip. 1 room booked in the first hour.</x-import>
+    </sc-if>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <x-import component-from-global-scope="Luna.Widget" title="Unsold rooms meet saved demand" subtitle="Dec 19 to 21 · your floor is ₹3,000 a night" style="flex: 2 1 520px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+            <x-import component-from-global-scope="Luna.Select" label="Room type" options="{{roomOpts}}" default-value="deluxe"></x-import>
+            <x-import component-from-global-scope="Luna.Select" label="Dates" options="{{dateOpts}}" default-value="wknd"></x-import>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface-sunken)">
+              <span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ink-2)">Rooms</span><span style="font-size: 11px; line-height: 15px; color: var(--ink-2)">4 unsold</span></span>
+              <x-import component-from-global-scope="Luna.Stepper" value="{{rooms}}" min="{{ 1 }}" max="{{ 4 }}" on-change="{{setRooms}}" aria-label="Rooms to release"></x-import>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface-sunken)">
+              <span style="display: flex; flex-direction: column"><span style="font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ink-2)">Gap Night rate per night</span><span style="font-size: 20px; line-height: 28px; font-weight: 700">{{priceLabel}}</span></span>
+              <x-import component-from-global-scope="Luna.Stepper" value="{{price}}" min="{{ 30 }}" max="{{ 48 }}" on-change="{{setPrice}}" aria-label="Price in hundreds of rupees"></x-import>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted)">Send to travelers who</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{audience}}" as="a" hint-placeholder-count="4">
+                <x-import component-from-global-scope="Luna.Chip" selected="{{a.on}}" on-click="{{a.toggle}}">{{a.label}}</x-import>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--divider); padding-top: 16px">
+            <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">312 travelers match · fronted by @anaya.explores · campaign rate ₹4,200</span>
+            <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" icon="send" disabled="{{isReleased}}" on-click="{{askRelease}}">Release {{rooms}} rooms</x-import>
+          </div>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="What travelers see" subtitle="Push notification and offer card" style="flex: 1 1 300px; min-width: 0">
+        <div style="position: relative; height: 340px; border-radius: var(--radius-md); overflow: hidden">
+          <img src="assets/udaipur.jpg" alt="Lake Pichola at dusk" style="width: 100%; height: 100%; object-fit: cover; display: block">
+          <div style="position: absolute; left: 12px; right: 12px; top: 16px; padding: 12px 16px; border-radius: var(--radius-md); background: var(--glass-card); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; line-height: 15px; color: var(--ink-2)"><span style="font-weight: 600">StayStory · Gap Night</span><span>now</span></div>
+            <span style="font-size: 13px; line-height: 18px; font-weight: 600">Three days in Udaipur just got cheaper</span>
+            <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Anaya’s pick drops to {{priceLabel}} a night on the dates you saved.</span>
+          </div>
+        </div>
+      </x-import>
+    </div>
+  </sc-if>
+
+  <!-- PAYOUTS -->
+  <sc-if value="{{isPayouts}}" hint-placeholder-val="{{ false }}">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px">
+      <x-import component-from-global-scope="Luna.StatTile" label="Next settlement · Mon 16" value="₹4,82,300"></x-import>
+      <x-import component-from-global-scope="Luna.StatTile" label="Commission this month" value="₹85,110"></x-import>
+      <x-import component-from-global-scope="Luna.StatTile" label="Waived on cancellations" value="₹9,600"></x-import>
+    </div>
+    <x-import component-from-global-scope="Luna.Widget" title="Weekly statements" subtitle="Each comes with a GST invoice">
+      <div style="overflow-x: auto"><x-import component-from-global-scope="Luna.DataTable" columns="{{stmtCols}}" rows="{{stmtRows}}"></x-import></div>
+    </x-import>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 24px; display: flex; justify-content: center; pointer-events: none">
+    <div style="pointer-events: auto"><x-import component-from-global-scope="Luna.Dock" items="{{dockItems}}" active="{{dockActive}}" on-select="{{setView}}" orb="{{ false }}" aria-label="Hotel console navigation"></x-import></div>
+  </div>
+
+  <!-- SIDE SHEET: booking detail -->
+  <sc-if value="{{isBookingDetail}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: var(--scrim); display: flex; justify-content: flex-end; z-index: 60">
+      <div style="width: 440px; max-width: 100%; height: 100%">
+        <x-import component-from-global-scope="Luna.SideSheet" title="Meera I. · 2 guests" subtitle="SS-UDR-48213 · via @anaya.explores" on-close="{{closeOverlay}}">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <x-import component-from-global-scope="Luna.Badge" tone="info" dot="{{ true }}">Upcoming · booked through Gap Night</x-import>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+              <x-import component-from-global-scope="Luna.StatTile" label="Room value" value="₹6,800"></x-import>
+              <x-import component-from-global-scope="Luna.StatTile" label="Commission at 15%" value="₹1,020"></x-import>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 18px">
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Room</span><span style="font-weight: 600">Lake-view Deluxe</span></div>
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Dates</span><span style="font-weight: 600">Sat 19 to Mon 21 Dec</span></div>
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Offer</span><span style="font-weight: 600">Gap Night · ₹3,400 a night</span></div>
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Arrival</span><span style="font-weight: 600">Also booked: boat ride, cooking class</span></div>
+            </div>
+            <x-import component-from-global-scope="Luna.AISummary" label="Luna inferred · review" title="Came from a saved trip" bullets="{{guestNotes}}"></x-import>
+            <div style="display: flex; gap: 8px">
+              <x-import component-from-global-scope="Luna.Button" variant="primary" icon="mail">Message guest</x-import>
+              <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="receipt_long">Voucher</x-import>
+            </div>
+          </div>
+        </x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- MODAL: confirm release -->
+  <sc-if value="{{isGapConfirm}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: var(--scrim); display: flex; align-items: center; justify-content: center; z-index: 80">
+      <div style="width: 480px; max-width: calc(100% - 32px)">
+        <x-import component-from-global-scope="Luna.Modal" title="Release {{rooms}} rooms as Gap Night?" subtitle="Dec 19 to 21 · Lake-view Deluxe" layout="dialog" on-close="{{closeOverlay}}">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">312 travelers who saved Anaya’s Udaipur trip get a WhatsApp alert now. Booked rooms come off your channel manager automatically. Anaya earns her usual share, so she keeps promoting you.</span>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 18px">
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Rate per night</span><span style="font-weight: 600">{{priceLabel}}</span></div>
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Commission</span><span style="font-weight: 600">15% on completed stays</span></div>
+              <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">You could recover</span><span style="font-weight: 600">up to {{recover}}</span></div>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end">
+              <x-import component-from-global-scope="Luna.Button" variant="tertiary" on-click="{{closeOverlay}}">Cancel</x-import>
+              <x-import component-from-global-scope="Luna.Button" variant="primary" icon="send" on-click="{{release}}">Release rooms</x-import>
+            </div>
+          </div>
+        </x-import>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["overview","bookings","bookingDetail","bookingsEmpty","creators","invited","gap","gapConfirm","released","payouts"],"default":"overview"},"$preview":{"width":1470,"height":956}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'overview', bf: 'All', rooms: 4, price: 34, aud: { saved: true, free: true, budget: true, near: false } };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const IMG = { jaipur: 'assets/jaipur.jpg', udaipur: 'assets/udaipur.jpg', pushkar: 'assets/pushkar.jpg', palace: 'assets/palace.jpg', jodhpur: 'assets/jodhpur.jpg', hampi: 'assets/hampi.jpg' };
+    const fmt = (n) => '₹' + n.toLocaleString('en-IN');
+    const viewOf = { overview: 'overview', bookings: 'bookings', bookingDetail: 'bookings', bookingsEmpty: 'bookings', creators: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
+    const view = viewOf[sc];
+    const HEAD = { overview: 'Creator bookings', bookings: 'Bookings', creators: 'Find creators', gap: 'Gap Night', payouts: 'Payouts' };
+    const TONE = { Upcoming: 'info', 'In house': 'warning', Completed: 'success', Cancelled: 'danger' };
+    const BOOKINGS = [
+      ['SS-UDR-48213', 'Meera I.', 'MI', '@anaya.explores', 'Lake-view Deluxe', 'Dec 19 – 21', 6800, 'Upcoming'],
+      ['SS-UDR-48190', 'Arjun M.', 'AM', '@anaya.explores', 'Jharokha Suite', 'Nov 11 – 13', 14800, 'In house'],
+      ['SS-UDR-48171', 'Sneha K.', 'SK', '@thefoodtrail', 'Courtyard Room', 'Nov 7 – 9', 6400, 'Completed'],
+      ['SS-UDR-48165', 'Rohan T.', 'RT', '@desi.nomad', 'Courtyard Room', 'Nov 6 – 8', 6400, 'Cancelled'],
+      ['SS-UDR-48142', 'Mia W.', 'MW', '@wander.mia', 'Lake-view Deluxe', 'Nov 1 – 3', 8400, 'Completed'],
+      ['SS-UDR-48220', 'Neha P.', 'NP', '@anaya.explores', 'Jharokha Suite', 'Dec 24 – 27', 22200, 'Upcoming']
+    ];
+    const count = (st) => BOOKINGS.filter((b) => st === 'All' || b[7] === st).length;
+    const invited = sc === 'invited';
+    const MATCHES = [
+      { handle: '@anaya.explores', cover: IMG.udaipur, followers: '412K', niche: 'Slow travel', hue: 'moss', score: '94%', conv: '0.37%', bookings: '46', ncr: '15%', why: 'Already your top converter. 312 of her followers saved her Udaipur trip.', top: true, inv: true },
+      { handle: '@roamwithriya', cover: IMG.jaipur, followers: '238K', niche: 'Weekend escapes', hue: 'sky', score: '88%', conv: '0.52%', bookings: '18', ncr: '41%', why: 'Weekend audience from Delhi. Good for Courtyard Room offers.', inv: true },
+      { handle: '@couplesgoplaces', cover: IMG.palace, followers: '96K', niche: 'Couples', hue: 'plum', score: '80%', conv: '0.44%', bookings: '7', ncr: '35%', why: 'Small but high intent. Suited to Heritage Suite packages.', inv: invited },
+      { handle: '@thefoodtrail', cover: IMG.pushkar, followers: '520K', niche: 'Food and culture', hue: 'ochre', score: '83%', conv: '0.29%', bookings: '14', ncr: '30%', why: 'Pairs with your rooftop breakfast and cooking experiences.' },
+      { handle: '@wander.mia', cover: IMG.jodhpur, followers: '64K', niche: 'Solo travel', hue: 'violet', score: '77%', conv: '0.33%', bookings: '5', ncr: '28%', why: 'Safety-minded audience values your central location.' },
+      { handle: '@desi.nomad', cover: IMG.hampi, followers: '180K', niche: 'Budget', hue: 'clay', score: '72%', conv: '0.21%', bookings: '9', ncr: '22%', why: 'Large reach, lower budget. Better for Garden Room offers.' }
+    ];
+    return {
+      heading: HEAD[view], dockActive: view,
+      isOverview: view === 'overview', isBookingsAny: view === 'bookings', isCreatorsAny: view === 'creators', isGapAny: view === 'gap', isPayouts: view === 'payouts',
+      isBookingDetail: sc === 'bookingDetail', isBookingsEmpty: sc === 'bookingsEmpty', hasBookings: sc !== 'bookingsEmpty', isInvited: invited,
+      isGapConfirm: sc === 'gapConfirm', isReleased: sc === 'released',
+      setView: (id) => this.setState({ screen: id }),
+      goGap: () => this.setState({ screen: 'gap' }),
+      closeOverlay: () => this.setState({ screen: view }),
+      askRelease: () => this.setState({ screen: 'gapConfirm' }),
+      release: () => this.setState({ screen: 'released' }),
+      dockItems: [{ id: 'overview', icon: 'space_dashboard', label: 'Overview' }, { id: 'bookings', icon: 'event_available', label: 'Bookings' }, { id: 'creators', icon: 'group', label: 'Creators' }, { id: 'gap', icon: 'nights_stay', label: 'Gap Night' }, { id: 'payouts', icon: 'payments', label: 'Payouts' }],
+      topKpis: [{ icon: 'login', value: 7 }, { icon: 'logout', tone: 'warning', value: 4 }],
+      ranges: [{ value: '7', label: 'Week' }, { value: '30', label: 'Month' }, { value: '90', label: 'Quarter' }],
+      creatorCols: [{ key: 'handle', label: 'Creator' }, { key: 'visits', label: 'Visits', align: 'right' }, { key: 'bookings', label: 'Bookings', align: 'right' }, { key: 'conv', label: 'Conversion', align: 'right' }, { key: 'value', label: 'Value', align: 'right' }, { key: 'cpa', label: 'Cost per guest', align: 'right' }],
+      creatorRows: [
+        { handle: '@anaya.explores', visits: '12,100', bookings: '51', conv: '0.42%', value: '₹10.2L', cpa: '₹1,180' },
+        { handle: '@roamwithriya', visits: '9,840', bookings: '45', conv: '0.46%', value: '₹9.4L', cpa: '₹1,460' },
+        { handle: '@thefoodtrail', visits: '10,300', bookings: '30', conv: '0.29%', value: '₹6.1L', cpa: '₹1,690' },
+        { handle: '@wander.mia', visits: '4,500', bookings: '15', conv: '0.33%', value: '₹2.9L', cpa: '₹1,540' },
+        { handle: '@desi.nomad', visits: '8,600', bookings: '18', conv: '0.21%', value: '₹2.6L', cpa: '₹2,050' }
+      ],
+      barData: [{ label: 'Anaya', value: 51 }, { label: 'Riya', value: 45 }, { label: 'Food', value: 30 }, { label: 'Desi', value: 18 }, { label: 'Mia', value: 15 }],
+      aiBullets: ['@roamwithriya and @anaya.explores drive 96 of 184 bookings', '@desi.nomad costs ₹2,050 per guest, 35% above average', 'Lake-view Deluxe converts best from slow-travel audiences'],
+      bFilters: ['All', 'Upcoming', 'In house', 'Completed', 'Cancelled'].map((label) => ({ label, on: s.bf === label, count: count(label), pick: () => this.setState({ bf: label, screen: 'bookings' }) })),
+      search: sc === 'bookingsEmpty' ? 'Kapoor' : '',
+      bookingCount: count(s.bf),
+      bookingRows: BOOKINGS.filter((b) => s.bf === 'All' || b[7] === s.bf).map((b, i) => ({
+        id: b[0], guest: b[1], ini: b[2], creator: b[3], room: b[4], dates: b[5], value: fmt(b[6]),
+        comm: b[7] === 'Cancelled' ? 'Waived' : fmt(Math.round(b[6] * 0.15)), status: b[7], tone: TONE[b[7]],
+        bg: sc === 'bookingDetail' && i === 0 ? 'var(--surface-tint)' : 'transparent',
+        open: () => this.setState({ screen: 'bookingDetail' })
+      })),
+      guestNotes: ['Saved Anaya’s trip on Nov 13 and booked when the Gap Night alert arrived', 'Booked two experiences, so plan a lake-side table for dinner'],
+      matches: MATCHES.map((m) => ({ ...m, top: !!m.top, variant: m.inv ? 'secondary' : 'primary', icon: m.inv ? 'check' : 'send', btn: m.inv ? 'Invited, awaiting reply' : 'Invite to campaign', invite: () => this.setState({ screen: 'invited' }) })),
+      roomOpts: [{ value: 'deluxe', label: 'Lake-view Deluxe · 4 unsold' }, { value: 'garden', label: 'Courtyard Room · 1 unsold' }],
+      dateOpts: [{ value: 'wknd', label: 'Sat 19 to Mon 21 Dec' }, { value: 'tonight', label: 'Tonight only' }],
+      rooms: s.rooms, setRooms: (v) => this.setState({ rooms: v }),
+      price: s.price, setPrice: (v) => this.setState({ price: v }), priceLabel: fmt(s.price * 100), recover: fmt(s.price * 100 * 2 * s.rooms),
+      audience: [['saved', 'Saved Anaya’s Udaipur trip'], ['free', 'Looked at Dec 19 to 21'], ['budget', 'Budget ₹3k to ₹4k a night'], ['near', 'Flying from Mumbai or Delhi']].map(([k, label]) => ({ label, on: s.aud[k], toggle: () => this.setState({ aud: { ...s.aud, [k]: !s.aud[k] } }) })),
+      stmtCols: [{ key: 'period', label: 'Period' }, { key: 'stays', label: 'Stays', align: 'right' }, { key: 'gross', label: 'Gross', align: 'right' }, { key: 'comm', label: 'Commission', align: 'right' }, { key: 'net', label: 'Settled', align: 'right' }],
+      stmtRows: [
+        { period: 'Nov 2 – 8', stays: '21', gross: '₹4,36,200', comm: '₹65,430', net: '₹3,70,770' },
+        { period: 'Oct 26 – Nov 1', stays: '18', gross: '₹3,52,000', comm: '₹52,800', net: '₹2,99,200' },
+        { period: 'Oct 19 – 25', stays: '24', gross: '₹5,10,400', comm: '₹76,560', net: '₹4,33,840' },
+        { period: 'Oct 12 – 18', stays: '15', gross: '₹2,88,900', comm: '₹43,335', net: '₹2,45,565' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

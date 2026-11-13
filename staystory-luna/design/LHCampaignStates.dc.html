@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hotel campaign builder states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 4602px; height: 2136px; box-sizing: border-box; padding: 48px; background: #E6E9ED; font-family: var(--font-sans); color: var(--ink); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; align-content: start">
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">01 · Build the offer</span>
+    <div style="width: 1470px; height: 956px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LHCampaign" screen="offer" hint-size="1470px,956px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">02 · Commission and incentives</span>
+    <div style="width: 1470px; height: 956px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LHCampaign" screen="commission" hint-size="1470px,956px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">03 · Choose creators</span>
+    <div style="width: 1470px; height: 956px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LHCampaign" screen="creators" hint-size="1470px,956px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">04 · Review and launch</span>
+    <div style="width: 1470px; height: 956px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LHCampaign" screen="review" hint-size="1470px,956px"></dc-import></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <span style="font-size: 16px; line-height: 28px; font-weight: 600">05 · Launched</span>
+    <div style="width: 1470px; height: 956px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lift)"><dc-import name="LHCampaign" screen="launched" hint-size="1470px,956px"></dc-import></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":4602,"height":2136}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

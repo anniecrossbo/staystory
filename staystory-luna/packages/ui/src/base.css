@@ -1,0 +1,14 @@
+html, body, #root { margin: 0; min-height: 100%; }
+body { background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+a { color: var(--primary); } a:hover { color: var(--primary-hover); }
+.eyebrow { font-size: 10px; line-height: 14px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.h1 { font-size: 28px; line-height: 39px; font-weight: 700; }
+.h2 { font-size: 20px; line-height: 28px; font-weight: 700; }
+.body { font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.caption { font-size: 11px; line-height: 15px; color: var(--muted); }
+.strong { font-weight: 600; color: var(--ink); }
+.row { display: flex; align-items: center; gap: 8px; }
+.col { display: flex; flex-direction: column; }
+.wrap { flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.g4 { gap: 4px; } .g8 { gap: 8px; } .g12 { gap: 12px; } .g16 { gap: 16px; } .g20 { gap: 20px; }

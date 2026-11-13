@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traveler my trips</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#0F5563}a:hover{color:#0C4552}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums">
+  <div style="position: absolute; inset: 0; overflow-y: auto; padding: 54px 16px 136px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+      <sc-if value="{{showBack}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.IconButton" icon="arrow_back" label="Back" variant="white" on-click="{{back}}"></x-import>
+      </sc-if>
+      <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{headMeta}}</span><span style="font-size: 20px; line-height: 28px; font-weight: 700">{{headTitle}}</span></span>
+    </div>
+
+    <!-- LISTS -->
+    <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+      <x-import component-from-global-scope="Luna.SegmentedControl" options="{{tabs}}" value="{{tab}}" on-change="{{setTab}}" size="lg" aria-label="Trip lists"></x-import>
+
+      <sc-if value="{{isUpcoming}}" hint-placeholder-val="{{ true }}">
+        <x-import component-from-global-scope="Luna.Widget" title="Udaipur · {{dates}}" subtitle="In 36 days · 2 adults">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="position: relative; height: 180px; border-radius: var(--radius-md); overflow: hidden">
+              <img src="assets/udaipur.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block">
+              <div style="position: absolute; top: 12px; left: 12px"><x-import component-from-global-scope="Luna.Badge" tone="success" dot="{{ true }}">Confirmed</x-import></div>
+            </div>
+            <span style="font-size: 13px; line-height: 18px; color: var(--ink-2)">Haveli Jheel · 3 experiences · via @anaya.explores</span>
+            <x-import component-from-global-scope="Luna.Button" variant="primary" block="{{ true }}" icon-right="arrow_forward" on-click="{{openDetail}}">Trip details</x-import>
+          </div>
+        </x-import>
+      </sc-if>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+        <div style="padding-top: 64px">
+          <x-import component-from-global-scope="Luna.EmptyState" icon="luggage" title="No upcoming trips">Trips you book from a creator's link appear here, with vouchers and check-in details.</x-import>
+        </div>
+        <x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon="explore">Discover trips</x-import>
+      </sc-if>
+
+      <sc-if value="{{showRows}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.Widget" title="{{listTitle}}" count="{{rowCount}}">
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="2">
+              <button onClick="{{r.open}}" style="display: flex; align-items: center; gap: 12px; padding: 8px 0; min-height: 64px; border: 0; border-bottom: 1px solid var(--divider); background: transparent; text-align: left; cursor: pointer; font-family: inherit; color: inherit">
+                <img src="{{r.img}}" alt="" style="width: 56px; height: 56px; border-radius: var(--radius-sm); object-fit: cover">
+                <span style="display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 4px">
+                  <span style="font-size: 13px; line-height: 18px; font-weight: 600">{{r.title}}</span>
+                  <span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{r.meta}}</span>
+                </span>
+                <x-import component-from-global-scope="Luna.Badge" tone="{{r.tone}}">{{r.status}}</x-import>
+              </button>
+            </sc-for>
+          </div>
+        </x-import>
+      </sc-if>
+    </sc-if>
+
+    <!-- DETAIL / CANCELLED -->
+    <sc-if value="{{isDetailAny}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; height: 200px; border-radius: var(--radius-lg); overflow: hidden">
+        <img src="assets/udaipur.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block">
+        <div style="position: absolute; top: 12px; left: 12px"><x-import component-from-global-scope="Luna.Badge" tone="{{statusTone}}" dot="{{ true }}">{{statusLabel}}</x-import></div>
+      </div>
+      <sc-if value="{{isCancelled}}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="Luna.Banner" tone="success" icon="currency_rupee" title="Refund of ₹14,000 started">It reaches your UPI account in 5 to 7 working days. The creator's link is unaffected.</x-import>
+      </sc-if>
+      <x-import component-from-global-scope="Luna.Widget" title="Vouchers" subtitle="SS-UDR-48213 · show at check-in">
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{vouchers}}" as="v" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--divider)">
+              <img src="{{v.img}}" alt="" style="width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover">
+              <span style="display: flex; flex-direction: column; flex: 1; min-width: 0"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{v.name}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{v.meta}}</span></span>
+              <x-import component-from-global-scope="Luna.IconButton" icon="qr_code_2" label="Show voucher" variant="ghost"></x-import>
+            </div>
+          </sc-for>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Check-in" subtitle="Haveli Jheel, Lal Ghat · from 14:00">
+        <div style="display: flex; gap: 8px">
+          <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="directions">Directions</x-import>
+          <x-import component-from-global-scope="Luna.Button" variant="secondary" icon="call">Call hotel</x-import>
+          <x-import component-from-global-scope="Luna.Button" variant="ghost" icon="help">Help</x-import>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <!-- CHANGE DATES -->
+    <sc-if value="{{isChange}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Calendar" year="{{ 2027 }}" month="{{ 0 }}" today="{{ 13 }}" range="{{range}}"></x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Available weekends" subtitle="Same stay and experiences">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{dateOpts}}" as="d" hint-placeholder-count="3">
+            <button onClick="{{d.pick}}" aria-pressed="{{d.on}}" style="display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 52px; border: 1px solid {{d.edge}}; background: {{d.bg}}; border-radius: var(--radius-md); cursor: pointer; text-align: left; font-family: inherit; color: inherit">
+              <span style="display: flex; flex-direction: column; flex: 1"><span style="font-size: 13px; line-height: 18px; font-weight: 600">{{d.label}}</span><span style="font-size: 11px; line-height: 15px; color: var(--muted)">{{d.sub}}</span></span>
+              <x-import component-from-global-scope="Luna.Badge" tone="{{d.tone}}">{{d.diff}}</x-import>
+            </button>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <!-- CANCEL -->
+    <sc-if value="{{isCancel}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="Luna.Widget" title="Refund estimate" subtitle="Free cancellation until Dec 12">
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 18px">
+          <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Paid</span><span>₹14,000</span></div>
+          <div style="display: flex; justify-content: space-between"><span style="color: var(--ink-2)">Cancellation fee</span><span>₹0</span></div>
+          <div style="height: 1px; background: var(--divider)"></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">Refund</span><span style="font-size: 20px; line-height: 28px; font-weight: 700; color: var(--success-ink)">₹14,000</span></div>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Why are you cancelling?">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{reasons}}" as="r" hint-placeholder-count="4">
+            <x-import component-from-global-scope="Luna.Radio" label="{{r.label}}" checked="{{r.on}}" on-change="{{r.pick}}"></x-import>
+          </sc-for>
+        </div>
+      </x-import>
+    </sc-if>
+
+    <!-- REVIEW -->
+    <sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+      <div style="height: 160px; border-radius: var(--radius-lg); overflow: hidden"><img src="assets/haveli.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block"></div>
+      <x-import component-from-global-scope="Luna.Widget" title="Haveli Jheel, Udaipur" subtitle="Your stay, Dec 19 to 21">
+        <div style="display: flex; justify-content: space-between">
+          <sc-for list="{{stars}}" as="st" hint-placeholder-count="5">
+            <x-import component-from-global-scope="Luna.IconButton" icon="star" label="{{st.label}}" variant="{{st.variant}}" on-click="{{st.pick}}"></x-import>
+          </sc-for>
+        </div>
+      </x-import>
+      <x-import component-from-global-scope="Luna.Widget" title="Was it like the reel?" subtitle="Shows on @anaya.explores’s trip for the next traveler">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <x-import component-from-global-scope="Luna.SegmentedControl" options="{{matchOpts}}" value="{{match}}" on-change="{{setMatch}}" size="sm" aria-label="Match to reel"></x-import>
+          <x-import component-from-global-scope="Luna.TextField" label="Tip for the next traveler" multiline="{{ true }}" default-value="Book the sunset boat for the second evening. The lake-view room is worth it."></x-import>
+        </div>
+      </x-import>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 120px"><x-import component-from-global-scope="Luna.Toast" tone="success">{{toast}}</x-import></div>
+  </sc-if>
+
+  <sc-if value="{{showDock}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center">
+      <x-import component-from-global-scope="Luna.Dock" items="{{dockItems}}" active="trips" orb="{{ false }}" aria-label="Traveler navigation"></x-import>
+    </div>
+  </sc-if>
+  <sc-if value="{{showActions}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 12px; right: 12px; bottom: 34px; display: flex; gap: 8px; padding: 8px; border-radius: var(--radius-lg); background: var(--glass-bar); backdrop-filter: blur(var(--blur-chrome)); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-dock)">
+      <sc-if value="{{isDetail}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="secondary" size="lg" block="{{ true }}" on-click="{{goCancel}}">Cancel trip</x-import></div>
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{goChange}}">Change dates</x-import></div>
+      </sc-if>
+      <sc-if value="{{isChange}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{confirmChange}}">Confirm new dates</x-import></div>
+      </sc-if>
+      <sc-if value="{{isCancel}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="tertiary" size="lg" block="{{ true }}" on-click="{{back}}">Keep trip</x-import></div>
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="danger" size="lg" block="{{ true }}" on-click="{{confirmCancel}}">Cancel and refund</x-import></div>
+      </sc-if>
+      <sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" on-click="{{submitReview}}">Submit review</x-import></div>
+      </sc-if>
+      <sc-if value="{{isCancelled}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1"><x-import component-from-global-scope="Luna.Button" variant="primary" size="lg" block="{{ true }}" icon="explore">Find another trip</x-import></div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["upcoming","past","saved","empty","detail","change","cancel","cancelled","review"],"default":"upcoming"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'upcoming', dates: 'Dec 19 – 21', pickDate: 1, reason: 0, rating: 4, match: 'spot', toast: '' };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  componentWillUnmount() { clearTimeout(this._t); }
+  flash(msg, extra) {
+    this.setState({ ...(extra || {}), toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '' }), 2400);
+  }
+  renderVals() {
+    const s = this.state;
+    const sc = s.screen;
+    const IMG = { udaipur: 'assets/udaipur.jpg', haveli: 'assets/haveli.jpg', palace: 'assets/palace.jpg', verandah: 'assets/verandah.jpg', jaipur: 'assets/jaipur.jpg', goa: 'assets/goa.jpg', rishikesh: 'assets/rishikesh.jpg', gokarna: 'assets/gokarna.jpg' };
+    const isList = ['upcoming', 'past', 'saved', 'empty'].includes(sc);
+    const tab = sc === 'empty' ? 'upcoming' : sc;
+    const ROWS = {
+      past: [
+        { title: 'Three days in Udaipur', meta: 'Dec 19 – 21 · Haveli Jheel', img: IMG.udaipur, status: 'Rate your stay', tone: 'warning', open: () => this.setState({ screen: 'review' }) },
+        { title: 'Monsoon Goa', meta: 'Aug 14 – 18 · via @kabir.coast', img: IMG.goa, status: 'Reviewed', tone: 'neutral', open: () => {} }
+      ],
+      saved: [
+        { title: 'Three days in Udaipur', meta: '@anaya.explores · now ₹13,000 on Dec 19 to 21', img: IMG.udaipur, status: '₹1,600 cheaper', tone: 'success', open: () => {} },
+        { title: 'Rishikesh reset', meta: '@himalayan.hari · from ₹8,400', img: IMG.rishikesh, status: '₹600 cheaper', tone: 'success', open: () => {} },
+        { title: 'Cliffs and coves, Gokarna', meta: '@kabir.coast · from ₹9,200', img: IMG.gokarna, status: 'Saved', tone: 'info', open: () => {} },
+        { title: 'Coffee estates in Coorg', meta: '@anaya.explores · from ₹12,900', img: 'assets/coorg.jpg', status: '2 rooms left', tone: 'warning', open: () => {} }
+      ]
+    };
+    const DATES = [
+      { label: 'Dec 19 – 21', sub: 'Current dates', diff: 'Current', tone: 'neutral' },
+      { label: 'Jan 9 – 11', sub: 'Everything available', diff: '−₹800', tone: 'success' },
+      { label: 'Jan 23 – 25', sub: 'Boat ride sold out', diff: '+₹400', tone: 'warning' }
+    ];
+    const RANGES = [[19, 21], [9, 11], [23, 25]];
+    const backTo = { detail: 'upcoming', change: 'detail', cancel: 'detail', cancelled: 'upcoming', review: 'past' };
+    const HEAD = {
+      upcoming: ['Meera Iyer', 'My trips'], past: ['Meera Iyer', 'My trips'], saved: ['Meera Iyer', 'My trips'], empty: ['Meera Iyer', 'My trips'],
+      detail: ['SS-UDR-48213', 'Udaipur · ' + s.dates], cancelled: ['SS-UDR-48213', 'Udaipur · ' + s.dates],
+      change: ['Udaipur', 'Change dates'], cancel: ['Udaipur', 'Cancel trip'], review: ['Udaipur', 'Rate your trip']
+    };
+    const cancelled = sc === 'cancelled';
+    return {
+      isList, isUpcoming: sc === 'upcoming', isEmpty: sc === 'empty', showRows: sc === 'past' || sc === 'saved',
+      isDetail: sc === 'detail', isDetailAny: sc === 'detail' || cancelled, isCancelled: cancelled,
+      isChange: sc === 'change', isCancel: sc === 'cancel', isReview: sc === 'review',
+      showBack: !isList, showDock: isList, showActions: !isList,
+      headMeta: HEAD[sc][0], headTitle: HEAD[sc][1],
+      back: () => this.setState({ screen: backTo[sc] || 'upcoming' }),
+      tabs: [{ value: 'upcoming', label: 'Upcoming' }, { value: 'past', label: 'Past', count: 1 }, { value: 'saved', label: 'Saved' }],
+      tab, setTab: (v) => this.setState({ screen: v }),
+      listTitle: sc === 'past' ? 'Past trips' : 'Saved trips', rows: ROWS[sc] || [], rowCount: (ROWS[sc] || []).length,
+      dates: s.dates, openDetail: () => this.setState({ screen: 'detail' }),
+      statusLabel: cancelled ? 'Cancelled' : 'Confirmed', statusTone: cancelled ? 'danger' : 'success',
+      vouchers: [
+        { name: 'Haveli Jheel · 2 nights', meta: 'Lake-view deluxe · breakfast', img: IMG.haveli },
+        { name: 'Sunset boat, Lake Pichola', meta: 'Day 1 · 17:30 · 2 tickets', img: IMG.udaipur },
+        { name: 'City Palace guided walk', meta: 'Day 2 · 09:30 · 2 tickets', img: IMG.palace },
+        { name: 'Rajasthani cooking class', meta: 'Day 2 · 16:00 · 2 seats', img: IMG.verandah }
+      ],
+      goChange: () => this.setState({ screen: 'change' }), goCancel: () => this.setState({ screen: 'cancel' }),
+      range: RANGES[s.pickDate],
+      dateOpts: DATES.map((d, i) => ({ ...d, on: s.pickDate === i, edge: s.pickDate === i ? 'var(--primary-edge)' : 'transparent', bg: s.pickDate === i ? 'var(--surface-tint)' : 'transparent', pick: () => this.setState({ pickDate: i }) })),
+      confirmChange: () => this.flash('Dates changed to ' + DATES[s.pickDate].label, { screen: 'detail', dates: DATES[s.pickDate].label }),
+      reasons: ['Plans changed', 'Found another trip', 'Too expensive', 'Something else'].map((label, i) => ({ label, on: s.reason === i, pick: () => this.setState({ reason: i }) })),
+      confirmCancel: () => this.setState({ screen: 'cancelled' }),
+      stars: [1, 2, 3, 4, 5].map((n) => ({ label: n + ' stars', variant: n <= s.rating ? 'primary' : 'ghost', pick: () => this.setState({ rating: n }) })),
+      matchOpts: [{ value: 'spot', label: 'Spot on' }, { value: 'mostly', label: 'Mostly' }, { value: 'no', label: 'Not really' }],
+      match: s.match, setMatch: (v) => this.setState({ match: v }),
+      submitReview: () => this.flash('Review sent. Thank you.', { screen: 'past' }),
+      dockItems: [{ id: 'discover', icon: 'explore', label: 'Discover' }, { id: 'trips', icon: 'luggage', label: 'Trips' }, { id: 'saved', icon: 'bookmark', label: 'Saved' }, { id: 'me', icon: 'person', label: 'Profile' }],
+      toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

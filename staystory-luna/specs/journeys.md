@@ -1,0 +1,53 @@
+# End-to-end journeys and the quality bar
+
+The three apps share one mock marketplace (`packages/market`, persisted in `localStorage`, synced across tabs on the same origin). Run everything with `npm run dev` (one origin, http://localhost:5173): `/hotel/`, `/creator/`, `/traveler/`, plus `/demo/`, `/viewer/` and `/viewer/compare.html`. Add `?ns=name` to any URL for an isolated marketplace (use your own `ns` when testing in parallel).
+
+## The story, as one chain
+
+Each step is written to the shared store by one app and read by the others. No app may keep a private copy of marketplace data.
+
+1. **Hotel onboards** (`H1`). Property, rooms, commission, payouts, submit. Writes `hotel`. Submitted opens the console.
+2. **Hotel makes a campaign** (`H3`). Offer, commission, creators, review, launch. `campaign/create` with `invites` for every picked creator. The console overview shows it as the live campaign.
+3. **Creator gets the offer** (`C2 offers`). Appears under New for every invited creator (`creatorOffers`). Accept, decline or counter (`offer/respond`).
+4. **Hotel sees the response** (`H2 overview › Needs your decision`). Accepted: success card. Countered: card with the asked commission and message plus **Accept** and **Decline** (`offer/resolveCounter`). Declined: neutral card. Creators page shows each creator's real status (Invite, Invited, Accepted, Countered, Declined).
+5. **Creator builds a trip** (`C3`). Stays step lists hotels; a hotel with a campaign the creator accepted shows "Your offer" and the agreed commission, others do not. Publish writes `trip/publish` (slug from the link field, stays, experiences from the bookable stops, `dmKeyword`). Insights "Your trip links" lists the creator's trips from the store; copy and open work.
+6. **Traveler arrives from the reel** (`T0`). Comment, DM, link opens the trip page (`/traveler/#/trip/trip?...` or by creator and slug). Opening writes the 60-day attribution (`traveler/openLink`). Discover shows every live trip from the store, including the one the creator just published.
+7. **Traveler saves** (`T1`). Signing in is asked only when saving or at checkout. Save writes `traveler/save` (the trip's save count goes up).
+8. **Traveler books** (`T3`). Customize, checkout, pay. `booking/create` writes the booking, a `pending_stay` ledger entry for the credited creator (about 8%), and bumps `travelersBooked`. The hold runs 30 minutes.
+9. **Hotel and creator see it**. Hotel Bookings lists it with the creator and commission; the overview counts move. Creator Earnings shows the new-booking banner and the pending entry.
+10. **Hotel releases a Gap Night** (`H2 gap`). `gap/release` with the trips that include this hotel. Only travelers who saved a covered trip get the alert (`gapAlertFor`): `For you` tab on the trip, "₹1,600 cheaper" on Saved. Booking at the Gap rate uses `source: 'gap_night'` and `gapNightId`, adds to `booked`, and the hotel sees "N rooms booked" and the booking tagged Gap Night.
+11. **Stay completes**. Hotel booking detail: **Mark checked in** (`booking/status in_house`), then **Confirm check-out** (`booking/status completed`). The creator's entry becomes Available.
+12. **Creator withdraws** (`creator/withdraw`): available entries become paid, a Processing entry shows the net after 10% TDS.
+13. **Traveler reviews** (`review/add`) from Past. The tip shows on the trip page ("Was it like the reel?").
+14. **Change and cancel**. Traveler change dates (`booking/dates`) and cancel (`booking/cancel`) show on the hotel (dates, Cancelled, commission waived) and the creator (entry cancelled, ₹0). Refund equals what was paid.
+
+`dev/ensureGap` exists so deep links to result states (`released`, `foryou`, `held`) work when the chain has not been walked yet. Use the same idea for other result states (`accepted`, `withdrawn`, `booked`). Deep links must never crash and must show a sensible state.
+
+## No dead ends (hard rule)
+
+For every screen, in every state:
+
+- Every visible control does something observable: navigates, changes shared state, opens a sheet or shows a toast that reports a real change. No silent buttons, no `href="#"`, no controls that only exist to look right. If a control cannot work in a mock build, wire the nearest honest behaviour (copy to clipboard, open the related screen, show an inline "coming next" only as a last resort and list it in your report).
+- Every screen has a way forward and a way back. After every terminal state (booked, published, launched, released, withdrawn, cancelled, submitted, accepted) there is a primary action to the next useful place.
+- Every empty or error state has a next action.
+- Back never loses the user's input, and refreshing the page on any route renders it.
+- Tab bars and docks reach every destination the spec names, with the right item active.
+- Numbers are consistent everywhere they appear, derived from the store and `@staystory/core`, never typed twice.
+- Keyboard: Enter and Space work on custom buttons, focus is visible, icon-only buttons have labels.
+
+## Pixel and UI bar
+
+The original designs are the source of truth. `/viewer/?file=LunaHotel&screen=gap` renders any original with the Luna bundle; `/viewer/compare.html?file=LunaHotel&screen=gap&app=%2Fhotel%2F%3Fns%3Dx%23%2Fconsole%2Fgap&w=1470&h=956` shows design and app side by side and `await window.__compare()` (in the compare tab) returns text and image geometry mismatches (position, width, font size, weight, colour; missing and extra text).
+
+- Read the design file's inline styles (`design/*.dc.html`), not just the structure: padding, gap, radius, font size and weight, colour tokens, image heights.
+- Aim for zero mismatches over 1.5px, zero font or colour mismatches, no missing text. Differences that are intentional (extra controls that remove a dead end, copy fixed per `specs/shared.md` "Known inconsistencies") are allowed; list them in your report.
+- Use only Luna components and tokens from `design/styles/luna-tokens.css`. No new component library. Sentence case, no emoji, rupees as `₹1,04,000` via `formatINR`.
+- Check at the design size and one narrower size (hotel: 1280 and 1024 wide, widgets wrap; phones: 375 wide). No horizontal scroll, no clipped text, no overlap with the dock or footer bars, safe areas respected.
+- The `*States.dc.html` sheets show intended state order and names. Every enum value in each file's `data-props` must still be reachable and match its original.
+
+## Rules for working in parallel
+
+- Edit only your app's folder (`apps/hotel`, `apps/creator` or `apps/traveler`). Do not touch `packages/ui/vendor`.
+- `packages/market` is shared: additive changes only (new fields, actions, selectors, seed rows), re-read the file right before editing, keep `npx vitest run --root packages/market` green, and say what you changed in your report. Do not change existing behaviour another app relies on.
+- Use your own browser tab (create one) and your own `?ns=` on every URL. Do not start or stop the dev server (already running on 5173). Reset your viewport to desktop when done.
+- Typecheck (`npx tsc --noEmit -p apps/<app>`) and `npx vitest run --root packages/core` must pass before you finish.

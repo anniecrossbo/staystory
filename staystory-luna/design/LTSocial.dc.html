@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Traveler finds the reel</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="styles/luna-tokens.css">
+<link rel="stylesheet" href="ds/luna/components/bundle.css">
+<script src="ds/luna/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,300,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}a{color:#9CC8FF}</style>
+</helmet>
+<div style="width: 393px; height: 852px; position: relative; overflow: hidden; background: #000; font-family: var(--font-sans); color: #fff">
+
+  <!-- REEL (+ comments sheet) -->
+  <sc-if value="{{isReelAny}}" hint-placeholder-val="{{ true }}">
+    <img src="assets/udaipur.jpg" alt="Reel: lake palace in Udaipur at dusk" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 55%, rgba(0,0,0,.75) 100%)"></div>
+    <div style="position: absolute; top: 58px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center">
+      <span style="font-size: 20px; line-height: 28px; font-weight: 700">Reels</span>
+      <x-import component-from-global-scope="Luna.Icon" name="photo_camera" size="{{ 24 }}"></x-import>
+    </div>
+    <div style="position: absolute; right: 12px; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 20px; font-size: 12px; font-weight: 600">
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><x-import component-from-global-scope="Luna.Icon" name="favorite" size="{{ 28 }}" fill="{{ true }}"></x-import>84.2K</span>
+      <button onClick="{{openComments}}" aria-label="Comments" style="display: flex; flex-direction: column; align-items: center; gap: 4px; border: 0; background: transparent; color: #fff; font: inherit; cursor: pointer; padding: 0"><x-import component-from-global-scope="Luna.Icon" name="chat_bubble" size="{{ 28 }}"></x-import>12.4K</button>
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><x-import component-from-global-scope="Luna.Icon" name="send" size="{{ 28 }}"></x-import>9.1K</span>
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 4px"><x-import component-from-global-scope="Luna.Icon" name="bookmark" size="{{ 28 }}"></x-import>21K</span>
+    </div>
+    <div style="position: absolute; left: 16px; right: 72px; bottom: 112px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="width: 32px; height: 32px; border-radius: 999px; background: #C20E4D; border: 2px solid #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">A</span>
+        <span style="font-size: 13px; font-weight: 700">anaya.explores</span>
+        <span style="font-size: 11px; font-weight: 600; padding: 4px 8px; border: 1px solid rgba(255,255,255,.6); border-radius: 8px">Follow</span>
+      </div>
+      <span style="font-size: 13px; line-height: 18px">Three days in Udaipur under ₹15,000, lake-view stay included. Comment <b>link pls</b> and I'll DM you the full bookable trip.</span>
+      <span style="font-size: 11px; line-height: 15px; color: rgba(255,255,255,.75)">Paid partnership · StayStory</span>
+    </div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: #000; display: flex; justify-content: space-around; align-items: flex-start; padding-top: 12px; box-sizing: border-box">
+      <x-import component-from-global-scope="Luna.Icon" name="home" size="{{ 24 }}"></x-import>
+      <x-import component-from-global-scope="Luna.Icon" name="search" size="{{ 24 }}"></x-import>
+      <x-import component-from-global-scope="Luna.Icon" name="smart_display" size="{{ 24 }}" fill="{{ true }}"></x-import>
+      <x-import component-from-global-scope="Luna.Icon" name="chat" size="{{ 24 }}"></x-import>
+      <x-import component-from-global-scope="Luna.Icon" name="person" size="{{ 24 }}"></x-import>
+    </div>
+
+    <sc-if value="{{isComments}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 560px; background: #1C1C1E; border-radius: 20px 20px 0 0; display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: center; padding: 8px 0"><span style="width: 36px; height: 4px; border-radius: 999px; background: #48484A"></span></div>
+        <span style="text-align: center; font-size: 13px; font-weight: 700; padding-bottom: 12px; border-bottom: 1px solid #2C2C2E">Comments</span>
+        <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 16px; padding: 16px">
+          <sc-for list="{{comments}}" as="c" hint-placeholder-count="6">
+            <div style="display: flex; gap: 12px; align-items: flex-start">
+              <span style="width: 32px; height: 32px; border-radius: 999px; background: {{c.bg}}; flex-shrink: 0; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{c.ini}}</span>
+              <span style="display: flex; flex-direction: column; gap: 4px; flex: 1">
+                <span style="font-size: 12px; color: #AEAEB2"><b style="color: #fff">{{c.name}}</b> · {{c.when}}</span>
+                <span style="font-size: 13px; line-height: 18px">{{c.text}}</span>
+                <sc-if value="{{c.reply}}" hint-placeholder-val="{{ false }}">
+                  <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #9CC8FF"><x-import component-from-global-scope="Luna.Icon" name="mark_chat_read" size="{{ 16 }}"></x-import>anaya.explores sent you the trip in DMs</span>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px 34px; border-top: 1px solid #2C2C2E">
+          <span style="width: 32px; height: 32px; border-radius: 999px; background: #5F9298; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">MI</span>
+          <span style="flex: 1; height: 40px; border-radius: 999px; border: 1px solid #3A3A3C; display: flex; align-items: center; padding: 0 16px; font-size: 13px; color: #8E8E93">Add a comment</span>
+          <button onClick="{{openDm}}" aria-label="Open messages" style="border: 0; background: transparent; color: #9CC8FF; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 44px">Inbox 1</button>
+        </div>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <!-- DM -->
+  <sc-if value="{{isDm}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: #000; display: flex; flex-direction: column; padding-top: 54px">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 8px 16px 12px; border-bottom: 1px solid #1C1C1E">
+        <button onClick="{{backReel}}" aria-label="Back" style="border: 0; background: transparent; color: #fff; padding: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; cursor: pointer"><x-import component-from-global-scope="Luna.Icon" name="arrow_back_ios" size="{{ 24 }}"></x-import></button>
+        <span style="width: 36px; height: 36px; border-radius: 999px; background: #C20E4D; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">A</span>
+        <span style="display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 700">anaya.explores</span><span style="font-size: 12px; color: #8E8E93">Anaya Rao</span></span>
+      </div>
+      <div style="flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <span style="align-self: center; font-size: 11px; color: #8E8E93">Today 21:14</span>
+        <span style="align-self: flex-end; max-width: 70%; background: #3797F0; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 19px">link pls</span>
+        <span style="align-self: flex-start; max-width: 80%; background: #262626; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 19px">Hi Meera! Here's my full Udaipur trip. You can change dates, stays and experiences, and book it all in one go.</span>
+        <a href="LunaTraveler.dc.html" style="align-self: flex-start; width: 260px; background: #262626; border-radius: 20px; overflow: hidden; text-decoration: none; color: #fff">
+          <img src="assets/udaipur.jpg" alt="" style="width: 100%; height: 150px; object-fit: cover; display: block">
+          <span style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px">
+            <span style="font-size: 14px; font-weight: 700">Three days in Udaipur</span>
+            <span style="font-size: 12px; color: #AEAEB2">staystory.in/anaya/udaipur</span>
+          </span>
+        </a>
+        <span style="align-self: flex-start; font-size: 11px; color: #8E8E93; padding-left: 8px">Sent automatically by StayStory for @anaya.explores</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px 34px">
+        <span style="flex: 1; height: 44px; border-radius: 999px; background: #1C1C1E; display: flex; align-items: center; padding: 0 16px; font-size: 14px; color: #8E8E93">Message</span>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["reel","comments","dm"],"default":"reel"},"$preview":{"width":393,"height":852}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen || 'reel' };
+  }
+  componentDidUpdate(prev) { if (prev.screen !== this.props.screen && this.props.screen) this.setState({ screen: this.props.screen }); }
+  renderVals() {
+    const sc = this.state.screen;
+    return {
+      isReelAny: sc === 'reel' || sc === 'comments', isComments: sc === 'comments', isDm: sc === 'dm',
+      openComments: () => this.setState({ screen: 'comments' }),
+      openDm: () => this.setState({ screen: 'dm' }),
+      backReel: () => this.setState({ screen: 'reel' }),
+      comments: [
+        { ini: 'MI', bg: '#5F9298', name: 'meera.iyer', when: 'now', text: 'link pls', reply: true },
+        { ini: 'RK', bg: '#8A55E0', name: 'rohan.k', when: '2 min', text: 'link pls! which haveli is this', reply: true },
+        { ini: 'SP', bg: '#B07F2E', name: 'sneha.p', when: '6 min', text: 'link pls', reply: true },
+        { ini: 'DK', bg: '#3D7151', name: 'divya.k', when: '11 min', text: 'how much for 3 days with flights?', reply: false },
+        { ini: 'AM', bg: '#0786B5', name: 'arjun.m', when: '18 min', text: 'link pls', reply: true }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
