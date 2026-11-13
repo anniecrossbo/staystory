@@ -7,6 +7,7 @@
  * /viewer/audit.html?set=hotel|creator|traveler
  * Loads every screen state of one product in a fresh marketplace and reports, per route:
  *   misaligned: controls not centred on their title (see /align.js)
+ *   whiteOnWhite: white blocks on white with no border, shadow or tint of their own (see /surfaces.js)
  *   overflow:   horizontal scroll at the design width (hotel is also checked at 1024)
  * Results: window.__audit = { done, rows: [{ route, width, misaligned, overflow }] }; an empty problems list means clean.
  */
@@ -22,7 +23,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   const cfg = SETS[set]; if (!cfg) { window.__audit.done = true; return; }
   const f = document.createElement('iframe'); document.body.appendChild(f);
-  const add = document.createElement('script'); add.src = '/align.js'; document.head.appendChild(add); await new Promise((r) => (add.onload = r));
+  for (const src of ['/align.js', '/surfaces.js']) { const add = document.createElement('script'); add.src = src; document.head.appendChild(add); await new Promise((r) => (add.onload = r)); }
   let n = 0;
   for (const w of cfg.widths) {
     f.style.width = w + 'px'; f.style.height = cfg.h + 'px';
@@ -34,7 +35,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const sc = d.querySelector('.scroll');
       const over = Math.max(d.documentElement.scrollWidth - d.documentElement.clientWidth, sc ? sc.scrollWidth - sc.clientWidth : 0);
       const misaligned = window.__align(d);
-      if (misaligned.length || over > 1) window.__audit.rows.push({ route, width: w, misaligned, overflow: over > 1 ? over : 0 });
+      const whiteOnWhite = window.__surfaces(d);
+      if (misaligned.length || whiteOnWhite.length || over > 1) window.__audit.rows.push({ route, width: w, misaligned, whiteOnWhite, overflow: over > 1 ? over : 0 });
     }
   }
   window.__audit.done = true; document.getElementById('out').textContent = JSON.stringify(window.__audit.rows, null, 1) || 'clean';

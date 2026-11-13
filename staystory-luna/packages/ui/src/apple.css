@@ -26,6 +26,7 @@
 
   --blur-chrome: 30px;
   --glass-card: rgba(255, 255, 255, 0.9);
+  --glass-dock: rgba(255, 255, 255, 0.58);
   --glass-bar: rgba(249, 249, 251, 0.78);
   --scrim: rgba(0, 0, 0, 0.34);
 
@@ -84,7 +85,7 @@ body { font-optical-sizing: auto; font-feature-settings: 'kern', 'liga', 'calt';
 .lu-modal-head > .lu-iconbtn, .lu-sheet-head > .lu-iconbtn { margin-top: -4px; }
 
 /* ---------- Materials: frosted bars, sheets and cards ---------- */
-.lu-widget, .lu-modal, .lu-dock-track, .footer-bar, .cta-bar, .trip-hero .by {
+.lu-widget, .lu-modal, .lu-dock, .footer-bar, .cta-bar, .trip-hero .by {
   -webkit-backdrop-filter: saturate(180%) blur(var(--blur-chrome));
   backdrop-filter: saturate(180%) blur(var(--blur-chrome));
 }
@@ -135,6 +136,12 @@ body { font-optical-sizing: auto; font-feature-settings: 'kern', 'liga', 'calt';
 
 /* Stat tiles that sit straight on the page become white cards; tiles inside a card keep the quiet grey fill. */
 .tiles .lu-tile, .stat-grid .lu-tile { background: var(--surface); box-shadow: var(--shadow-card); }
+
+/* Alert cards sit inside white widgets: a quiet tint of their tone keeps them from melting into the card */
+.lu-alert { background: var(--surface-sunken); }
+.lu-alert.tone-warning { background: rgba(224, 138, 0, 0.09); }
+.lu-alert.tone-success { background: rgba(15, 163, 127, 0.09); }
+.lu-alert.tone-danger { background: rgba(229, 72, 77, 0.08); }
 
 /* ---------- Chrome details ---------- */
 .lu-toast { box-shadow: var(--shadow-popover); }

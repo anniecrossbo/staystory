@@ -6,3 +6,4 @@ dist
 .env.*
 .vite
 !.env.example
+data/

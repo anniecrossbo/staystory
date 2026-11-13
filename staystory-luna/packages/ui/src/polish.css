@@ -68,7 +68,8 @@ button { -webkit-user-select: none; user-select: none; }
 
 /* ----- Moving between screens: a short cross-fade, with the bars staying put ----- */
 @media (prefers-reduced-motion: no-preference) {
-  .dock-bar, .dock-wrap { view-transition-name: dock; }
+  /* on the glass element itself: a view-transition-name on a wrapper makes it a backdrop root, which hides the page from the dock's blur */
+  .lu-dock { view-transition-name: dock; }
   .cta-bar, .footer-bar { view-transition-name: action-bar; }
   ::view-transition-old(root) { animation: lu-fade 140ms var(--ease-out) reverse both; }
   ::view-transition-new(root) { animation: lu-rise 300ms var(--ease-out) both; }

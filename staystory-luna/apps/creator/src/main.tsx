@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { market } from '@staystory/market';
 import './creator.css';
 import { useRoute } from './router';
 import { CreatorProvider } from './store';
@@ -6,6 +7,8 @@ import { Toasts } from './ui';
 import { Onboard, ONBOARD_SCREENS } from './screens/Onboard';
 import { Create, CREATE_SCREENS } from './screens/Create';
 import { Home, HOME_SCREENS } from './screens/Home';
+
+market.connectApi('/api/db');
 
 function App() {
   const [{ flow, screen, q }, go] = useRoute();

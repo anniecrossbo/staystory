@@ -56,5 +56,203 @@ export async function handleApi(method: string, url: URL, body: unknown, env: En
     if (!res || !res.ok) return json(502, { error: 'Map unavailable' });
     return { status: 200, headers: { 'Content-Type': res.headers.get('content-type') ?? 'image/png', 'Cache-Control': 'public, max-age=86400' }, body: new Uint8Array(await res.arrayBuffer()) };
   }
+
+  // ── Database-backed CRUD endpoints ──────────────────────────────
+
+  // Lazy-load the DB modules to avoid pulling @staystory/market into Vite's config bundle
+  if (path.startsWith('/api/db/')) {
+    const Q = await import('./queries');
+    // A fresh database is empty: seed it (once per connection, idempotent) before serving any /api/db request.
+    (await import('./seed-db')).seedDatabase();
+
+    // GET /api/db/state — full MarketState assembled from all tables
+    if (path === '/api/db/state' && method === 'GET') {
+      return json(200, Q.assembleState());
+    }
+
+    // POST /api/db/dispatch — persist a reducer action to the DB
+    if (path === '/api/db/dispatch' && method === 'POST') {
+      const a = body as Record<string, unknown>;
+      if (!a.type) return bad('action type is required.');
+      try { Q.dispatchAction(a); return json(200, { ok: true }); }
+      catch (e) { return json(500, { error: e instanceof Error ? e.message : 'Dispatch failed' }); }
+    }
+
+    // GET /api/db/bookings?hotelId=&creatorId=&status=
+    if (path === '/api/db/bookings' && method === 'GET') {
+      return json(200, Q.listBookings({ hotelId: q.get('hotelId') ?? undefined, creatorId: q.get('creatorId') ?? undefined, status: q.get('status') ?? undefined }));
+    }
+
+    // POST /api/db/bookings  { ...booking fields }
+    if (path === '/api/db/bookings' && method === 'POST') {
+      const b = body as Record<string, unknown>;
+      if (!b.id || !b.tripId || !b.hotelId) return bad('id, tripId and hotelId are required.');
+      Q.createBooking(b as Parameters<typeof Q.createBooking>[0]);
+      return json(201, { id: b.id });
+    }
+
+    // GET /api/db/bookings/:id
+    const bookingMatch = path.match(/^\/api\/db\/bookings\/([^/]+)$/);
+    if (bookingMatch && method === 'GET') {
+      const bk = Q.getBooking(bookingMatch[1]!);
+      return bk ? json(200, bk) : json(404, { error: 'Booking not found' });
+    }
+
+    // PATCH /api/db/bookings/:id  { status }
+    if (bookingMatch && method === 'PATCH') {
+      const b = body as { status?: string };
+      if (!b.status) return bad('status is required.');
+      Q.updateBookingStatus(bookingMatch[1]!, b.status);
+      return json(200, { ok: true });
+    }
+
+    // GET /api/db/trips?creatorId=
+    if (path === '/api/db/trips' && method === 'GET') {
+      return json(200, Q.listTrips(q.get('creatorId') ?? undefined));
+    }
+
+    // GET /api/db/trips/:id
+    const tripMatch = path.match(/^\/api\/db\/trips\/([^/]+)$/);
+    if (tripMatch && method === 'GET') {
+      const t = Q.getTrip(tripMatch[1]!);
+      return t ? json(200, t) : json(404, { error: 'Trip not found' });
+    }
+
+    // POST /api/db/trips  { ...trip fields }
+    if (path === '/api/db/trips' && method === 'POST') {
+      const t = body as Record<string, unknown>;
+      if (!t.id || !t.creatorId) return bad('id and creatorId are required.');
+      Q.upsertTrip(t as Parameters<typeof Q.upsertTrip>[0]);
+      return json(201, { id: t.id });
+    }
+
+    // GET /api/db/campaigns?hotelId=
+    if (path === '/api/db/campaigns' && method === 'GET') {
+      return json(200, Q.listCampaigns(q.get('hotelId') ?? undefined));
+    }
+
+    // POST /api/db/campaigns  { ...campaign fields }
+    if (path === '/api/db/campaigns' && method === 'POST') {
+      const c = body as Record<string, unknown>;
+      if (!c.id || !c.hotelId || !c.name) return bad('id, hotelId and name are required.');
+      Q.createCampaign(c as Parameters<typeof Q.createCampaign>[0]);
+      return json(201, { id: c.id });
+    }
+
+    // POST /api/db/campaigns/:id/invite  { creatorId }
+    const inviteMatch = path.match(/^\/api\/db\/campaigns\/([^/]+)\/invite$/);
+    if (inviteMatch && method === 'POST') {
+      const b = body as { creatorId?: string };
+      if (!b.creatorId) return bad('creatorId is required.');
+      Q.inviteCreator(inviteMatch[1]!, b.creatorId);
+      return json(201, { ok: true });
+    }
+
+    // POST /api/db/campaigns/:id/respond  { creatorId, status, agreedPct?, counter? }
+    const respondMatch = path.match(/^\/api\/db\/campaigns\/([^/]+)\/respond$/);
+    if (respondMatch && method === 'POST') {
+      const b = body as { creatorId?: string; status?: string; agreedPct?: number; counter?: unknown };
+      if (!b.creatorId || !b.status) return bad('creatorId and status are required.');
+      Q.respondToInvite(respondMatch[1]!, b.creatorId, b.status, b.agreedPct, b.counter);
+      return json(200, { ok: true });
+    }
+
+    // GET /api/db/creators
+    if (path === '/api/db/creators' && method === 'GET') {
+      return json(200, Q.listCreators());
+    }
+
+    // GET /api/db/creators/:id
+    const creatorMatch = path.match(/^\/api\/db\/creators\/([^/]+)$/);
+    if (creatorMatch && method === 'GET') {
+      const c = Q.getCreator(creatorMatch[1]!);
+      return c ? json(200, c) : json(404, { error: 'Creator not found' });
+    }
+
+    // GET /api/db/ledger?creatorId=&status=
+    if (path === '/api/db/ledger' && method === 'GET') {
+      const creatorId = q.get('creatorId');
+      if (!creatorId) return bad('creatorId is required.');
+      return json(200, Q.listLedger(creatorId, q.get('status') ?? undefined));
+    }
+
+    // POST /api/db/ledger  { ...entry fields }
+    if (path === '/api/db/ledger' && method === 'POST') {
+      const l = body as Record<string, unknown>;
+      if (!l.id || !l.creatorId) return bad('id and creatorId are required.');
+      Q.addLedgerEntry(l as Parameters<typeof Q.addLedgerEntry>[0]);
+      return json(201, { id: l.id });
+    }
+
+    // POST /api/db/withdraw  { creatorId, gross, tds, net, upi }
+    if (path === '/api/db/withdraw' && method === 'POST') {
+      const w = body as Record<string, unknown>;
+      if (!w.creatorId || !w.gross || !w.upi) return bad('creatorId, gross and upi are required.');
+      const id = `w${Q.nextSeq('withdrawal')}`;
+      Q.createWithdrawal({ id, ...w } as Parameters<typeof Q.createWithdrawal>[0]);
+      return json(201, { id });
+    }
+
+    // GET /api/db/travelers/:id
+    const travelerMatch = path.match(/^\/api\/db\/travelers\/([^/]+)$/);
+    if (travelerMatch && method === 'GET') {
+      const t = Q.getTraveler(travelerMatch[1]!);
+      return t ? json(200, t) : json(404, { error: 'Traveler not found' });
+    }
+
+    // POST /api/db/travelers  { id, name, whatsapp, ... }
+    if (path === '/api/db/travelers' && method === 'POST') {
+      const t = body as Record<string, unknown>;
+      if (!t.id || !t.name || !t.whatsapp) return bad('id, name and whatsapp are required.');
+      Q.upsertTraveler(t as Parameters<typeof Q.upsertTraveler>[0]);
+      return json(200, { id: t.id });
+    }
+
+    // POST /api/db/attribution  { travelerId, creatorId, tripId }
+    if (path === '/api/db/attribution' && method === 'POST') {
+      const a = body as { travelerId?: string; creatorId?: string; tripId?: string };
+      if (!a.travelerId || !a.creatorId || !a.tripId) return bad('travelerId, creatorId and tripId are required.');
+      Q.recordAttribution(a as Parameters<typeof Q.recordAttribution>[0]);
+      return json(201, { ok: true });
+    }
+
+    // GET /api/db/attribution?travelerId=
+    if (path === '/api/db/attribution' && method === 'GET') {
+      const tid = q.get('travelerId');
+      if (!tid) return bad('travelerId is required.');
+      const a = Q.getAttribution(tid);
+      return a ? json(200, a) : json(404, { error: 'No active attribution' });
+    }
+
+    // GET /api/db/settlements?hotelId=
+    if (path === '/api/db/settlements' && method === 'GET') {
+      const hid = q.get('hotelId');
+      if (!hid) return bad('hotelId is required.');
+      return json(200, Q.listSettlements(hid));
+    }
+
+    // GET /api/db/hotel?id=
+    if (path === '/api/db/hotel' && method === 'GET') {
+      const hid = q.get('id');
+      if (!hid) return bad('id is required.');
+      const h = Q.getHotel(hid);
+      return h ? json(200, h) : json(404, { error: 'Hotel not found' });
+    }
+
+    // GET /api/db/stats/hotel?id=
+    if (path === '/api/db/stats/hotel' && method === 'GET') {
+      const hid = q.get('id');
+      if (!hid) return bad('id is required.');
+      return json(200, Q.hotelStats(hid));
+    }
+
+    // GET /api/db/stats/creator?id=
+    if (path === '/api/db/stats/creator' && method === 'GET') {
+      const cid = q.get('id');
+      if (!cid) return bad('id is required.');
+      return json(200, Q.creatorStats(cid));
+    }
+  }
+
   return null;
 }
