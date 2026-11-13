@@ -1,0 +1,124 @@
+/*
+ * The Apple visual language, on the same screens.
+ * Same content and structure as the Luna designs; the type, materials, shapes and depth change. The brand stays teal.
+ * Loaded after Luna's own styles, so it can override tokens and component rules without !important.
+ */
+
+/* ---------- Tokens: grouped grey canvas, system separators, soft continuous depth ---------- */
+:root {
+  --canvas: #F2F2F7;
+  --surface-sunken: rgba(120, 120, 128, 0.12);
+  --divider: rgba(60, 60, 67, 0.14);
+  --border: rgba(60, 60, 67, 0.22);
+  --border-strong: rgba(60, 60, 67, 0.42);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+
+  --shadow-card: 0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.05);
+  --shadow-lift: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 14px 36px rgba(0, 0, 0, 0.12);
+  --shadow-dock: 0 14px 40px rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 28px 72px rgba(0, 0, 0, 0.24), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  --shadow-popover: 0 18px 48px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  --shadow-sheet: -14px 0 52px rgba(0, 0, 0, 0.16);
+
+  --blur-chrome: 30px;
+  --glass-card: rgba(255, 255, 255, 0.9);
+  --glass-bar: rgba(249, 249, 251, 0.78);
+  --scrim: rgba(0, 0, 0, 0.34);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', Inter, system-ui, sans-serif;
+}
+
+/*
+ * Scrolling screens never squash their content. The designs' own flex layout shrinks fixed-height blocks (a 200px hero became
+ * 95px); with real photographs that reads as a bug, so every direct child keeps its size and the screen scrolls instead.
+ */
+.scroll > *, .page > *, .campaign-body main > *, .campaign-body aside > * { flex-shrink: 0; }
+
+/* ---------- Type: optical sizing, tighter tracking as text grows, bold large titles ---------- */
+body { font-optical-sizing: auto; font-feature-settings: 'kern', 'liga', 'calt'; letter-spacing: -0.006em; }
+.title { font-size: 30px; line-height: 36px; letter-spacing: -0.024em; text-wrap: balance; }
+.h1 { font-size: 34px; line-height: 41px; letter-spacing: -0.026em; font-weight: 700; }
+.h2, .big { letter-spacing: -0.02em; }
+.price-big { letter-spacing: -0.024em; }
+.lu-widget-title, .lu-sheet-title, .lu-modal-title { letter-spacing: -0.016em; }
+.eyebrow { letter-spacing: 0.04em; font-weight: 600; }
+.lu-tile-value { letter-spacing: -0.022em; }
+
+/* Tracking by size for text whose size is set inline (the apps copy the designs' inline type): larger text sits tighter, as in SF. */
+[style*='font-size: 34px'], [style*='font-size: 32px'], [style*='font-size: 30px'], [style*='font-size: 28px'] { letter-spacing: -0.026em; }
+[style*='font-size: 24px'], [style*='font-size: 22px'], [style*='font-size: 20px'] { letter-spacing: -0.02em; }
+[style*='font-size: 18px'], [style*='font-size: 17px'], [style*='font-size: 16px'], [style*='font-size: 15px'] { letter-spacing: -0.012em; }
+[style*='font-size: 10px'], [style*='font-size: 11px'] { letter-spacing: 0.02em; }
+
+/*
+ * Top-level phone screens get a 34px large title; screens with a back button get a 17px semibold nav title.
+ * !important because some apps set the size inline.
+ */
+.head .h2, .head [style*='font-size: 20px'] { font-size: 34px !important; line-height: 41px !important; font-weight: 700 !important; letter-spacing: -0.026em; }
+.head:has(> .lu-iconbtn:first-child) .h2, .head:has(> .lu-iconbtn:first-child) [style*='font-size: 20px'] { font-size: 17px !important; line-height: 22px !important; font-weight: 600 !important; letter-spacing: -0.01em; }
+.head .eyebrow, .head .m11 { letter-spacing: 0.02em; }
+
+/* ---------- Materials: frosted bars, sheets and cards ---------- */
+.lu-widget, .lu-modal, .lu-dock-track, .footer-bar, .cta-bar, .trip-hero .by {
+  -webkit-backdrop-filter: saturate(180%) blur(var(--blur-chrome));
+  backdrop-filter: saturate(180%) blur(var(--blur-chrome));
+}
+.footer-bar { background: var(--glass-bar); border-top: 0.5px solid var(--divider); }
+.cta-bar { background: var(--glass-bar); border-top: 0.5px solid var(--divider); }
+.lu-bsheet { background: rgba(255, 255, 255, 0.94); -webkit-backdrop-filter: saturate(180%) blur(40px); backdrop-filter: saturate(180%) blur(40px); }
+.lu-sheet { background: rgba(247, 247, 250, 0.94); -webkit-backdrop-filter: saturate(180%) blur(40px); backdrop-filter: saturate(180%) blur(40px); }
+
+/* ---------- Shapes: Apple's continuous (squircle) corners where the browser supports them ---------- */
+@supports (corner-shape: squircle) {
+  .lu-widget, .lu-modal, .lu-bsheet, .lu-btn, .lu-input-wrap, .lu-banner, .lu-tile, .lu-chip, .trip-card, .trip-hero, .hero, .cover,
+  .stay-card, .pick-card, .thumb, .reel, .lu-toast { corner-shape: squircle; }
+}
+.lu-btn { border-radius: 14px; }
+.lu-btn-sm { border-radius: 10px; }
+.lu-btn-lg { border-radius: 16px; }
+.lu-btn-primary { box-shadow: 0 1px 2px rgba(15, 85, 99, 0.25); }
+.lu-btn-secondary { background: var(--primary-tint); color: var(--primary); }
+.lu-btn-secondary:hover:not(:disabled) { background: var(--primary-tint-strong); }
+.lu-btn-tertiary, .lu-btn-ghost { color: var(--primary); }
+
+/* ---------- Fields: filled and borderless at rest, a clear ring on focus ---------- */
+.lu-field:not(.has-error) .lu-input-wrap { background: var(--surface-sunken); border-color: transparent; border-radius: 12px; }
+.lu-field:not(.has-error) .lu-input-wrap:hover { border-color: transparent; background: rgba(120, 120, 128, 0.16); }
+.lu-field:not(.has-error) .lu-input-wrap:focus-within { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-ring); }
+.lu-label { letter-spacing: 0; }
+
+/* ---------- Lists: hairlines inset past the thumbnail, as in iOS grouped lists ---------- */
+:root .item-row {
+  border-bottom: 0;
+  background-image: linear-gradient(var(--divider), var(--divider));
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: calc(100% - 60px) 0.5px;
+}
+:root .item-row:last-child { background-image: none; }
+.lu-widget-head { border-bottom-width: 0.5px; }
+.lu-table th { border-bottom-width: 0.5px; }
+.lu-table td { border-bottom-width: 0.5px; }
+
+/* Chips that sit on a photo: frosted white, not the translucent grey fill (which goes muddy over an image) */
+.trip-card .img .b .lu-badge, :where([style*='position: absolute']) > .lu-badge-neutral {
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+}
+
+/* Stat tiles that sit straight on the page become white cards; tiles inside a card keep the quiet grey fill. */
+.tiles .lu-tile, .stat-grid .lu-tile { background: var(--surface); box-shadow: var(--shadow-card); }
+
+/* ---------- Chrome details ---------- */
+.lu-toast { box-shadow: var(--shadow-popover); }
+.lu-badge { letter-spacing: 0; }
+.lu-banner { border-radius: var(--radius-md); }
+
+/* the phone frame gets a device bezel feel on large screens */
+@media (min-width: 500px) and (min-height: 900px) { .phone { box-shadow: 0 32px 80px rgba(0, 0, 0, 0.22), 0 0 0 10px #1c1c1e, 0 0 0 11px #3a3a3c; } }

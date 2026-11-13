@@ -57,3 +57,11 @@ The original designs are the source of truth. `/viewer/?file=LunaHotel&screen=ga
 `packages/ui/src/polish.css` holds the motion and feedback shared by all three apps: press dip and hover depth on controls, one keyboard focus ring, content rising into place, dialogs that pop, sheets that travel, toasts that slide in, and a short cross-fade between screens (`withViewTransition`, with the dock and action bars held still). Everything is switched off under `prefers-reduced-motion`.
 
 The rule for changing it: nothing may change the size or position of anything at rest, so the layouts keep matching the designs. The sweep and compare pages switch animations off in the app frame before measuring, because a hidden tab never finishes them. After any change to this file, re-run all three sweeps and expect the same counts as before.
+
+## The Apple visual layer
+
+`packages/ui/src/apple.css` restyles all three apps in Apple's visual language while keeping every screen's content and structure: a grouped grey canvas with white cards, system separators (inset hairlines on lists), softer continuous depth, squircle corners where the browser supports `corner-shape`, frosted bars and sheets, filled borderless fields with a focus ring, SF-style tracking that tightens as text grows, 34px large titles on top-level phone screens and a 17px nav title where there is a back button. The brand stays teal. It loads after Luna's styles and overrides Luna's tokens, so `design/styles/luna-tokens.css` is untouched.
+
+This changes type and spacing slightly, so the design sweeps are no longer the visual bar: use them to check content, states and structure (missing or extra text), not pixel offsets. Scrolling screens also no longer squash their content (the designs' flex layout shrank fixed-height blocks, which read as a bug with real photography).
+
+Rules for changing it: keep layouts free of horizontal scroll at 375 (phones) and 1024 (hotel); keep error states visible (they have their own classes); text set inline is overridden by attribute selectors, and sizes need `!important`.
