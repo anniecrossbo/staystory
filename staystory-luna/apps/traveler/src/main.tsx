@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { market } from '@staystory/market';
 import './traveler.css';
 import { parseRoute, useRoute } from './lib';
 import { SessionProvider } from './session';
@@ -8,6 +9,8 @@ import { TripFlow, TRIP_SCREENS } from './screens/Trip';
 import { Auth, AUTH_SCREENS } from './screens/Auth';
 import { Discover, DISCOVER_SCREENS } from './screens/Discover';
 import { Trips, TRIPS_SCREENS, Profile } from './screens/Trips';
+
+market.connectApi('/api/db');
 
 function App() {
   const { flow, screen } = useRoute();

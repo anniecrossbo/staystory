@@ -12,6 +12,7 @@ type Listener = () => void;
 export class MarketStore {
   private state: MarketState;
   private listeners = new Set<Listener>();
+  private apiUrl?: string;
   constructor(private persist = typeof window !== 'undefined') {
     this.state = this.load();
     if (this.persist) window.addEventListener('storage', (e) => {
@@ -28,9 +29,18 @@ export class MarketStore {
   private emit() { this.listeners.forEach((l) => l()); }
   get = () => this.state;
   subscribe = (l: Listener) => { this.listeners.add(l); return () => this.listeners.delete(l); };
+  /** Connect to a DB-backed API. Hydrates state from the server and persists future dispatches. */
+  async connectApi(url: string): Promise<void> {
+    this.apiUrl = url;
+    try {
+      const res = await fetch(`${url}/state`);
+      if (res.ok) { this.state = await res.json(); this.emit(); }
+    } catch { /* fall back to localStorage/seed */ }
+  }
   dispatch = (a: Action) => {
     this.state = reduce(this.state, a);
     if (this.persist) try { localStorage.setItem(KEY, JSON.stringify(this.state)); } catch { /* quota or private mode: keep in memory */ }
+    if (this.apiUrl) fetch(`${this.apiUrl}/dispatch`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(a) }).catch(() => {});
     this.emit();
   };
   reset = () => this.dispatch({ type: 'dev/reset' });

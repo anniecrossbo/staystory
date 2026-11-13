@@ -6,6 +6,8 @@ import { Onboarding, ONBOARD_STEPS } from './screens/Onboarding';
 import { Campaign, CAMPAIGN_STEPS } from './screens/Campaign';
 import { Console, CONSOLE_SCREENS } from './screens/Console';
 
+market.connectApi('/api/db');
+
 function App() {
   const [route, go] = useHashRoute('console', 'overview');
   const { flow, screen } = route;
