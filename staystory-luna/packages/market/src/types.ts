@@ -57,6 +57,8 @@ export interface MBooking {
   roomTypeId: string; roomName: string; stayId: string; datesLabel: string; nights: number; guests: number;
   roomValue: Rupees; experiencesValue: Rupees; creatorSaving: Rupees; total: Rupees; experienceIds: string[];
   source: 'link' | 'gap_night'; status: BookingStatus; createdAt: string; gapNightId?: string;
+  /** A creator booking through their own link earns nothing. */
+  selfBooking?: boolean;
 }
 
 export interface MGapNight {
@@ -89,6 +91,10 @@ export interface MarketState {
   attributions: MAttribution[];
   reviews: MReview[];
   settlements: MSettlement[];
+  /** One entry per browser session per trip. Absent in states saved before visits existed. */
+  visits?: MVisit[];
   /** Counters for ids. */
   seq: { booking: number; trip: number; campaign: number; gap: number; ledger: number; withdrawal: number };
 }
+
+export interface MVisit { tripId: string; creatorId: string; sessionId: string; at: string }

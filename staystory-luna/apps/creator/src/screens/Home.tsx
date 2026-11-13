@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatINR, withdrawal } from '@staystory/core';
 import {
-  availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripStats,
+  availableShare, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripStats, tripVisitsLine,
   market, useMarket, type LedgerFilter, type OfferView, type RangeKey,
 } from '@staystory/market';
 import {
@@ -193,7 +193,7 @@ function Insights({ go }: { go: Go }) {
           <div key={t.id} className="line" style={{ padding: '8px 0' }}>
             <button className="link-row" onClick={() => go('app', 'trip', { t: t.id })}>
               <img src={asset(t.img)} alt="" style={{ width: 48, height: 48, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
-              <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{countLabel(st.visits)} visits · {st.booked} bookings{t.status === 'paused' ? ' · paused' : ''}</span></span>
+              <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{tripVisitsLine(st)}{t.status === 'paused' ? ' · paused' : ''}</span></span>
             </button>
             <Button variant="secondary" size="sm" icon="content_copy" onClick={() => copy(`https://${tripUrl(profile.handle, t.slug)}`)}>Copy</Button>
           </div>); })}
@@ -233,6 +233,7 @@ function TripScreen({ go }: { go: Go }) {
             <ProgressBar value={f.w} aria-label={f.label} />
           </div>
         ))}
+        {!st.visits && <div className="t-cap">No visits yet. Share your link.</div>}
         <div className="t-cap">{countLabel(st.saves)} followers have saved this trip.</div>
       </div>
     </Widget>

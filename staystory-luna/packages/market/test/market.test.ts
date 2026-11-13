@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MarketStore, bookingCommission, creatorBalances, creatorOffers, gapAlertFor, hotelBookings, attributionFor, seedState, type MBooking, type MCampaign, type MTrip } from '../src';
+import { MarketStore, tripVisitCount, bookingCommission, creatorBalances, creatorOffers, gapAlertFor, hotelBookings, attributionFor, seedState, type MBooking, type MCampaign, type MTrip } from '../src';
 
 const now = '2026-11-13T10:00:00.000Z';
 const store = () => new MarketStore(false);
@@ -101,5 +101,23 @@ describe('marketplace journey', () => {
     s.dispatch({ type: 'offer/respond', campaignId: 'winter-pichola', creatorId: 'anaya', response: 'declined' });
     s.dispatch({ type: 'campaign/invite', campaignId: 'winter-pichola', creatorId: 'anaya' });
     expect(s.get().campaigns[0]!.invites.anaya).toBe('invited');
+  });
+
+  it('counts a visit once per session per trip, and not for the creator themself', () => {
+    const s = store();
+    const visit = (sessionId: string, byCreatorId?: string) => s.dispatch({ type: 'trip/visit', tripId: 'anaya-udaipur', sessionId, at: now, byCreatorId });
+    visit('s1'); visit('s1'); visit('s2'); visit('s3', 'anaya');
+    expect(tripVisitCount(s.get(), 'anaya-udaipur')).toBe(2);
+    s.dispatch({ type: 'trip/status', tripId: 'anaya-udaipur', status: 'paused' });
+    visit('s4');
+    expect(tripVisitCount(s.get(), 'anaya-udaipur')).toBe(2);
+  });
+
+  it('a creator booking through their own link earns nothing', () => {
+    const s = store();
+    const before = s.get().ledger.length;
+    s.dispatch({ type: 'booking/create', booking: booking({ id: 'SS-UDR-48231', travelerId: 'anaya', creatorId: 'anaya' }) });
+    expect(s.get().bookings[0]!.selfBooking).toBe(true);
+    expect(s.get().ledger).toHaveLength(before);
   });
 });

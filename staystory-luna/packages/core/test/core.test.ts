@@ -136,3 +136,25 @@ describe('commission split on a ₹20,000 booking (onboarding example)', () => {
     expect(splitCommission(20000, 8)).toMatchObject({ commission: 1600, creator: 1600, staystory: 0 });
   });
 });
+
+import { validateCampaign, validateGap } from '../src';
+describe('campaign and Gap Night validation (rules from the prototype)', () => {
+  const ok = { name: 'Winter on Lake Pichola', creatorPrice: 8400, rackPrice: 9600, commissionPct: 15, invitedCount: 1 };
+  it('accepts the sample campaign', () => expect(validateCampaign(ok)).toBeNull());
+  it('rejects each broken field with a reason', () => {
+    expect(validateCampaign({ ...ok, name: ' ' })).toMatch(/name/);
+    expect(validateCampaign({ ...ok, creatorPrice: 0 })).toMatch(/creator price/);
+    expect(validateCampaign({ ...ok, creatorPrice: 9600 })).toMatch(/below your public rate/);
+    expect(validateCampaign({ ...ok, commissionPct: 4 })).toMatch(/between 5% and 30%/);
+    expect(validateCampaign({ ...ok, commissionPct: 31 })).toMatch(/between 5% and 30%/);
+    expect(validateCampaign({ ...ok, invitedCount: 0 })).toMatch(/at least one creator/);
+  });
+  const gap = { rooms: 4, unsold: 4, rate: 3400, floor: 3000, publicRate: 4800 };
+  it('accepts the sample Gap Night', () => expect(validateGap(gap)).toBeNull());
+  it('rejects rooms, floor and public rate violations', () => {
+    expect(validateGap({ ...gap, rooms: 0 })).toMatch(/at least one room/);
+    expect(validateGap({ ...gap, rooms: 5 })).toMatch(/Only 4 rooms are unsold/);
+    expect(validateGap({ ...gap, rate: 2900 })).toMatch(/below your floor/);
+    expect(validateGap({ ...gap, rate: 4800 })).toMatch(/below your public rate/);
+  });
+});

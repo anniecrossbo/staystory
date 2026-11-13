@@ -30,3 +30,6 @@ export const attributionFor = (s: MarketState, travelerId: string, now = new Dat
 export const liveTrips = (s: MarketState) => s.trips.filter((t) => t.status === 'live');
 export const tripByCreatorSlug = (s: MarketState, creator: string, slug: string) => s.trips.find((t) => t.creatorId === creator && t.slug === slug);
 export const campaignForStay = (s: MarketState, hotelId: string) => s.campaigns.find((c) => c.hotelId === hotelId && c.status === 'live');
+
+/** Real, de-duplicated visits to a trip (the seeded baselines are separate). */
+export const tripVisitCount = (s: MarketState, tripId: string) => (s.visits ?? []).filter((v) => v.tripId === tripId).length;

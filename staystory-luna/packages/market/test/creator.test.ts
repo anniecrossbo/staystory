@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MarketStore, acceptedOffers, availableShare, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, daysTitle, initialsOf, latestPendingBooking, ledgerRows, makeCreatorTrip, slugify, builderFromPrice, tripStats, type MBooking } from '../src';
+import { MarketStore, acceptedOffers, availableShare, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, daysTitle, initialsOf, latestPendingBooking, ledgerRows, makeCreatorTrip, slugify, builderFromPrice, tripStats, tripVisitsLine, conversionLabel, matchNamedStay, normaliseStayName, type MBooking } from '../src';
 
 const store = () => new MarketStore(false);
 const now = '2026-11-13T10:00:00.000Z';
@@ -77,12 +77,14 @@ describe('insights and trip performance', () => {
     expect(tripStats(s.get(), 'anaya-udaipur')!.byStay[0]!.n).toBe(18);
     expect(tripStats(s.get(), 'nope')).toBeUndefined();
   });
-  it('a new trip starts at zero and counts opened links', () => {
+  it('a new trip starts at zero and counts real visits, not opened links', () => {
     const s = store();
     const trip = makeCreatorTrip(s.get(), { creatorId: 'anaya', slug: 'pushkar', title: 'Pushkar', place: 'Pushkar', img: 'pushkar', days: [{ n: 1, title: 'Day', stops: [] }], stays: s.get().trips[0]!.stays, pickStayId: 'jheel', dmKeyword: '', reelUrl: '', now });
     s.dispatch({ type: 'trip/publish', trip });
     expect(tripStats(s.get(), trip.id)!.visits).toBe(0);
     s.dispatch({ type: 'traveler/openLink', travelerId: 'meera', creatorId: 'anaya', tripId: trip.id, now });
+    expect(tripStats(s.get(), trip.id)!.visits).toBe(0);
+    s.dispatch({ type: 'trip/visit', tripId: trip.id, sessionId: 's1', at: now });
     expect(tripStats(s.get(), trip.id)!.visits).toBe(1);
   });
 });
@@ -166,5 +168,67 @@ describe('reel extraction helpers', () => {
     const h = { id: 'lp1', name: 'Lake View', address: 'Pichola Rd', starRating: 4, ratePerNight: 5400.4 };
     expect(stayFromHotel(h, 'udaipur')).toEqual({ id: 'liteapi-lp1', hotelId: 'liteapi-lp1', roomTypeId: 'std', name: 'Lake View', tier: 'mid', desc: '4-star · Pichola Rd', nightly: 5400, img: 'udaipur', commissionPct: 0 });
     expect(stayFromHotel({ ...h, ratePerNight: 0 }, 'udaipur')).toBeNull();
+  });
+});
+
+describe('real visits on top of baselines', () => {
+  const visit = (s: ReturnType<typeof store>, tripId: string, sessionId: string) => s.dispatch({ type: 'trip/visit', tripId, sessionId, at: now });
+  it('keeps the design numbers on a fresh store', () => {
+    const s = store().get();
+    const i = creatorInsights(s, 'anaya', '30');
+    expect([i.visits, i.bookings, i.conv]).toEqual([12480, 46, '0.37%']);
+    expect(tripStats(s, 'anaya-udaipur')!.visits).toBe(7820);
+  });
+  it('adds de-duplicated real visits to the baseline and moves conversion', () => {
+    const s = store();
+    visit(s, 'anaya-udaipur', 'a'); visit(s, 'anaya-udaipur', 'a'); visit(s, 'anaya-udaipur', 'b');
+    expect(tripStats(s.get(), 'anaya-udaipur')!.visits).toBe(7822);
+    const i = creatorInsights(s.get(), 'anaya', '30');
+    expect(i.visits).toBe(12482);
+    expect(i.conv).toBe(conversionLabel(46, 12482));
+  });
+  const fresh = () => {
+    const s = store();
+    const trip = makeCreatorTrip(s.get(), { creatorId: 'anaya', slug: 'goa', title: 'Goa', place: 'Goa', img: 'goa', days: [{ n: 1, title: 'x', stops: [] }], stays: s.get().trips[0]!.stays, pickStayId: s.get().trips[0]!.stays[0]!.id, dmKeyword: 'goa', reelUrl: 'x', now });
+    s.dispatch({ type: 'trip/publish', trip });
+    return { s, id: trip.id };
+  };
+  it('a new trip starts at zero with an empty-state line', () => {
+    const { s, id } = fresh();
+    const st = tripStats(s.get(), id)!;
+    expect([st.visits, st.booked, st.checkout, st.customized]).toEqual([0, 0, 0, 0]);
+    expect(st.funnel.every((f) => f.value === 0 && f.w === 0)).toBe(true);
+    expect(tripVisitsLine(st)).toBe('No visits yet. Share your link.');
+    visit(s, id, 'x');
+    expect(tripStats(s.get(), id)!.visits).toBe(1);
+    expect(tripVisitsLine(tripStats(s.get(), id)!)).toBe('1 visit · 0 bookings');
+  });
+  it('conversion never divides by zero', () => {
+    expect(conversionLabel(3, 0)).toBe('0.00%');
+    expect(conversionLabel(1, 200)).toBe('0.50%');
+  });
+  it('self bookings do not count as creator bookings or earnings', () => {
+    const s = store();
+    const before = creatorInsights(s.get(), 'anaya', '30');
+    s.dispatch({ type: 'booking/create', booking: booking({ id: 'SS-UDR-70001', travelerId: 'anaya' }) });
+    s.dispatch({ type: 'booking/create', booking: booking({ id: 'SS-UDR-70002' }) });
+    const after = creatorInsights(s.get(), 'anaya', '30');
+    expect(after.bookings).toBe(before.bookings + 1);
+    expect(after.commission).toBe(before.commission + 1120);
+    expect(tripStats(s.get(), 'anaya-udaipur')!.byStay.find((x) => x.stayId === 'jheel')!.n).toBe(18);
+  });
+});
+
+describe('matching a named stay', () => {
+  const stays = [{ id: 'jheel', name: 'Haveli Jheel' }, { id: 'pichola', name: 'Hotel Pichola View' }, { id: 'x', name: 'Inn' }];
+  it('normalises names', () => expect(normaliseStayName('The Haveli Jheel, Udaipur!', 'Udaipur')).toBe('haveli jheel'));
+  it('matches by containment and by distinctive core', () => {
+    expect(matchNamedStay('Haveli Jheel', 'Udaipur', stays)).toEqual({ status: 'matched', id: 'jheel' });
+    expect(matchNamedStay('the Jheel Haveli Udaipur', 'Udaipur', stays)).toEqual({ status: 'matched', id: 'jheel' });
+    expect(matchNamedStay('Pichola View', 'Udaipur', stays)).toEqual({ status: 'matched', id: 'pichola' });
+  });
+  it('flags a named stay we cannot match', () => expect(matchNamedStay('Taj Lake Palace', 'Udaipur', stays)).toEqual({ status: 'unmatched', name: 'Taj Lake Palace' }));
+  it('ignores empty, short and generic names', () => {
+    for (const n of [null, '', 'Inn', 'abc', 'a haveli by the lake', 'a resort near the beach']) expect(matchNamedStay(n, 'Udaipur', stays).status).toBe('none');
   });
 });

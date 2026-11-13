@@ -16,6 +16,7 @@ export type Action =
   | { type: 'traveler/follow'; id: string; creatorId: string }
   | { type: 'traveler/saveShop'; id: string; creatorId: string }
   | { type: 'traveler/openLink'; travelerId: string; creatorId: string; tripId: string; now: string }
+  | { type: 'trip/visit'; tripId: string; sessionId: string; at: string; byCreatorId?: string }
   | { type: 'booking/create'; booking: MBooking }
   | { type: 'booking/status'; id: string; status: 'in_house' | 'completed' }
   | { type: 'booking/cancel'; id: string }
@@ -84,13 +85,23 @@ export function reduce(s: MarketState, a: Action): MarketState {
       return { ...s, attributions: [...s.attributions.filter((x) => x.travelerId !== a.travelerId), next] };
     }
 
+    case 'trip/visit': {
+      // Counted once per session per live trip, and never for the creator looking at their own trip.
+      const trip = s.trips.find((t) => t.id === a.tripId);
+      if (!trip || trip.status !== 'live' || a.byCreatorId === trip.creatorId) return s;
+      const visits = s.visits ?? [];
+      if (visits.some((v) => v.tripId === a.tripId && v.sessionId === a.sessionId)) return s;
+      return { ...s, visits: [...visits, { tripId: a.tripId, creatorId: trip.creatorId, sessionId: a.sessionId, at: a.at }] };
+    }
+
     case 'booking/create': {
-      const b = a.booking;
+      const self = a.booking.travelerId === a.booking.creatorId;
+      const b = self ? { ...a.booking, selfBooking: true } : a.booking;
       const entry = { id: `l${s.seq.ledger}`, creatorId: b.creatorId, bookingId: b.id, label: `${s.trips.find((t) => t.id === b.tripId)?.place ?? 'Trip'} · ${b.guestName}`, meta: `${b.roomName} · stays ${b.datesLabel}${b.source === 'gap_night' ? ' · via Gap Night' : ''}`, amount: creatorCommission(b.total), status: 'pending_stay' as const, createdAt: b.createdAt };
       return {
         ...s,
         bookings: [b, ...s.bookings],
-        ledger: [entry, ...s.ledger],
+        ledger: self ? s.ledger : [entry, ...s.ledger],
         gapNights: s.gapNights.map((g) => (g.id === b.gapNightId ? { ...g, booked: g.booked + 1 } : g)),
         trips: s.trips.map((t) => (t.id === b.tripId ? { ...t, travelersBooked: t.travelersBooked + 1 } : t)),
         seq: { ...s.seq, booking: s.seq.booking + 1, ledger: s.seq.ledger + 1 },

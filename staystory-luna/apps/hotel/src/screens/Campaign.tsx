@@ -5,6 +5,7 @@ import { market, useMarket, type MCampaign, type MarketState } from '@staystory/
 import type { Go } from '../actions';
 import { asset, matchedCreators, scoreNum, SHORT_NICHE } from '../lib';
 import { toast, ui, useDraft, useUi } from '../ui';
+import { campaignNameError, campaignPriceError, campaignStepErrors, firstCampaignProblem, STEP_INDEX } from '../rules';
 
 export const CAMPAIGN_STEPS = ['offer', 'commission', 'creators', 'review', 'launched'];
 const ICONS: Record<string, string> = { Breakfast: 'free_breakfast', 'Late checkout': 'schedule', 'Sunset boat ride': 'sailing', 'Welcome drink': 'local_bar', 'Room upgrade': 'upgrade', 'Airport pickup': 'local_taxi' };
@@ -46,21 +47,25 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
   const nights = Number.isFinite(nightsNum(d)) && nightsNum(d) >= 1 ? nightsNum(d) : 2;
   const rack = room.rackRate * nights;
   const minHundreds = Math.ceil((rack * 0.625) / 100);
-  const maxHundreds = Math.floor(rack / 100);
+  const maxHundreds = Math.ceil(rack / 100) - 1; // one step below the public rate
   const price = Math.min(maxHundreds, Math.max(minHundreds, d.price)) * 100;
   const perkOn = Object.keys(d.perks).filter((k) => d.perks[k]);
   const pool = matchedCreators(s).sort((a, b) => scoreNum(b) - scoreNum(a));
   const picks = d.picks.filter((id) => s.creators[id]);
-  const err = errors(d, tried);
+  const input = { name: d.name, creatorPrice: price, rackPrice: rack, commissionPct: d.pct, invitedCount: picks.length };
+  const stepErr = campaignStepErrors(input);
+  const problem = firstCampaignProblem(input);
+  const priceErr = campaignPriceError(input);
+  const err = { ...errors(d, tried), name: campaignNameError(input) ?? undefined };
   const target = Number(d.target) > 0 ? Number(d.target) : 60;
   const sp = splitCommission(price, d.pct);
   const resetPrice = (r: typeof room, n: number) => Math.round((r.rackRate * n * 0.875) / 100);
 
   const valid = (step: string) => {
     const e = errors(d, true);
-    if (step === 'offer') return !e.name && !e.nights;
-    if (step === 'commission') return !e.target && !e.cap;
-    if (step === 'creators') return picks.length > 0;
+    if (step === 'offer') return !stepErr.offer && !e.nights;
+    if (step === 'commission') return !stepErr.commission && !e.target && !e.cap;
+    if (step === 'creators') return !stepErr.creators;
     return true;
   };
   const next = () => {
@@ -70,7 +75,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
     setTried(false); to(i + 1);
   };
   const launch = () => {
-    const bad = ['offer', 'commission', 'creators'].find((st) => !valid(st));
+    const bad = ['offer', 'commission', 'creators'].find((st) => !valid(st)) ?? (problem ? problem.step : undefined);
     if (bad) { setTried(true); to(CAMPAIGN_STEPS.indexOf(bad)); toast('Finish the highlighted step before launching', { tone: 'warning' }); return; }
     const st = market.get();
     const slug = d.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'campaign';
@@ -131,6 +136,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
                 <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{formatINR(price)}</span><Badge tone="success">{percentOff(rack, price)}% off rack</Badge></span>
                 <Stepper value={price / 100} min={minHundreds} max={maxHundreds} onChange={(v) => patch({ price: v })} aria-label="Price in hundreds of rupees" />
               </div>
+              {priceErr && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{priceErr}</span>}
             </Widget>
           </>)}
 
@@ -140,6 +146,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
                 <span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{d.pct}%</span>
                 <Stepper value={d.pct} min={8} max={25} onChange={(v) => patch({ pct: v })} aria-label="Commission percent" />
               </div>
+              {stepErr.commission && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.commission}</span>}
             </Widget>
             <Widget title="Incentives">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -170,7 +177,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
                   </div>
                 ))}
               </div>
-              {picks.length === 0 && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>Pick at least one creator to invite.</span>}
+              {stepErr.creators && <span className="err" role="alert" style={{ display: 'block', paddingTop: 8 }}>{stepErr.creators}</span>}
             </Widget>
           )}
 
@@ -185,6 +192,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
                 </Widget>
               ))}
             </div>
+            {problem && <Banner tone="danger" icon="error" title="Fix this before launching" action={<Button variant="secondary" size="sm" onClick={() => to(STEP_INDEX[problem.step])}>Go to {problem.step}</Button>}>{problem.message}</Banner>}
             <Banner tone="warning" icon="info" title="Billed only after check-out">Cancellations and no-shows cost nothing.</Banner>
           </>)}
 
@@ -204,7 +212,7 @@ export function Campaign({ screen, go }: { screen: string; go: Go }) {
             {screen === 'launched'
               ? <Button variant="tertiary" size="lg" icon="add" onClick={() => { clear(); ui.set({ launched: '' }); go('campaign', 'offer'); }}>Create another</Button>
               : <Button variant="tertiary" size="lg" icon="arrow_back" disabled={i === 0} onClick={() => to(Math.max(0, i - 1))}>Back</Button>}
-            <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={screen === 'creators' && picks.length === 0} onClick={next}>
+            <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={(screen === 'creators' && picks.length === 0) || (screen === 'review' && !!problem)} onClick={next}>
               {screen === 'review' ? 'Launch campaign' : screen === 'launched' ? 'View in console' : 'Continue'}
             </Button>
           </div>

@@ -1,6 +1,6 @@
 import { creatorCommission, formatINR, quoteTrip, CREATOR_COMMISSION_PCT } from '@staystory/core';
 import { SEED_BOOKINGS, SEED_TRIPS } from './seed';
-import { bookingCreatorShare, creatorOffers } from './selectors';
+import { bookingCreatorShare, creatorOffers, tripVisitCount } from './selectors';
 import type { InviteStatus, LedgerStatus, MBooking, MCampaign, MExperience, MLedger, MStay, MStop, MTrip, MarketState } from './types';
 
 /* ---------- Offers ---------- */
@@ -100,9 +100,12 @@ const TRIP_BASE: Record<string, { visits: number; byStay: Record<string, { n: nu
 };
 const SEED_BOOKING_IDS = new Set(SEED_BOOKINGS.map((b) => b.id));
 const SEED_SAVES = Object.fromEntries(SEED_TRIPS.map((t) => [t.id, t.saves]));
-const liveBookings = (s: MarketState, creatorId: string) => s.bookings.filter((b) => b.creatorId === creatorId && !SEED_BOOKING_IDS.has(b.id) && b.status !== 'cancelled');
+/** Bookings made after seeding that count for the creator: not cancelled, not the creator booking through their own link. */
+const liveBookings = (s: MarketState, creatorId: string) => s.bookings.filter((b) => b.creatorId === creatorId && !b.selfBooking && !SEED_BOOKING_IDS.has(b.id) && b.status !== 'cancelled');
 
 export const countLabel = (n: number) => new Intl.NumberFormat('en-IN').format(n);
+/** Short line for a trip's visits and bookings; a trip with no visits yet says so. */
+export const tripVisitsLine = (st: { visits: number; booked: number }) => (st.visits ? `${countLabel(st.visits)} ${st.visits === 1 ? 'visit' : 'visits'} · ${st.booked} ${st.booked === 1 ? 'booking' : 'bookings'}` : 'No visits yet. Share your link.');
 export const conversionLabel = (bookings: number, visits: number) => (visits ? `${((bookings / visits) * 100).toFixed(2)}%` : '0.00%');
 
 export function creatorInsights(s: MarketState, creatorId: string, range: RangeKey) {
@@ -111,7 +114,7 @@ export function creatorInsights(s: MarketState, creatorId: string, range: RangeK
   const extraCommission = mine.reduce((t, b) => t + bookingCreatorShare(b), 0);
   const trips = s.trips.filter((t) => t.creatorId === creatorId);
   const extraSaves = trips.reduce((t, x) => t + (x.saves - (SEED_SAVES[x.id] ?? 0)), 0);
-  const extraVisits = s.attributions.filter((a) => a.creatorId === creatorId).length;
+  const extraVisits = trips.reduce((t, x) => t + tripVisitCount(s, x.id), 0);
   const values = base.values.map((v, i) => (i === base.values.length - 1 ? v + extraCommission : v));
   const visits = base.visits + extraVisits;
   const saves = Math.max(0, base.saves + extraSaves);
@@ -128,8 +131,8 @@ export function tripStats(s: MarketState, tripId: string): TripStats | undefined
   const t = s.trips.find((x) => x.id === tripId);
   if (!t) return undefined;
   const base = TRIP_BASE[t.id] ?? { visits: 0, byStay: {} };
-  const visits = base.visits + s.attributions.filter((a) => a.tripId === t.id).length;
-  const live = s.bookings.filter((b) => b.tripId === t.id && b.creatorId === t.creatorId && !SEED_BOOKING_IDS.has(b.id) && b.status !== 'cancelled');
+  const visits = base.visits + tripVisitCount(s, t.id);
+  const live = s.bookings.filter((b) => b.tripId === t.id && b.creatorId === t.creatorId && !b.selfBooking && !SEED_BOOKING_IDS.has(b.id) && b.status !== 'cancelled');
   const byStay = t.stays.map((st) => {
     const b0 = base.byStay[st.id] ?? { n: 0, earn: 0 };
     const mine = live.filter((b) => b.stayId === st.id);

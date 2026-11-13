@@ -23,6 +23,8 @@ export interface Draft {
   caption: string; source?: 'ai' | 'cache' | 'rules'; provider?: string; extractError?: string;
   /** Live partner stays the creator chose (plain stays, no commission). */
   liveStays: MStay[];
+  /** A stay the caption names that we could not match; the creator must pick one before preview. */
+  unmatchedStay?: string;
 }
 interface Ui {
   profile: Profile; setProfile: (p: Partial<Profile>) => void; prefs: Prefs; setPrefs: (p: Partial<Prefs>) => void;

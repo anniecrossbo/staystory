@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { formatINR, validateGapRate } from '@staystory/core';
+import { formatINR } from '@staystory/core';
 import { Banner, Button, Chip, Modal, Select, Stepper, Widget } from '@staystory/ui';
 import { liveTrips, market, useMarket, type MGapNight } from '@staystory/market';
 import { Overlay } from '../components';
 import type { Go } from '../actions';
 import { asset, AUDIENCE, audienceKeys, GAP_DATES, liveCampaigns, liveGap, matchCount, toWords, unsoldRooms } from '../lib';
 import { toast, ui, useUi } from '../ui';
+import { gapError, gapRateMax } from '../rules';
 
 export function GapNight({ screen, go }: { screen: string; go: Go }) {
   const s = useMarket();
@@ -21,10 +22,11 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
   const mine = s.gapNights.find((x) => x.hotelId === s.hotel.id && x.status === 'live' && x.roomTypeId === roomType.id);
   const frozen = unsold === 0 && !!mine;
   const nights = gap.dates === 'wknd' ? 2 : 1;
-  const rooms = frozen ? mine!.rooms : Math.min(Math.max(1, gap.rooms), Math.max(1, unsold));
+  const rooms = frozen ? mine!.rooms : Math.max(1, gap.rooms);
   const rate = frozen ? mine!.rate : gap.rate;
   const floor = s.hotel.floorRate;
-  const error = validateGapRate(rate, floor, roomType.rackRate);
+  const check = () => gapError({ rooms, unsold, rate, floor, publicRate: roomType.rackRate });
+  const error = check();
   const matches = frozen ? mine!.sentTo : matchCount(gap.aud);
   const camp = liveCampaigns(s).find((c) => c.roomTypeId === roomType.id);
   const campRate = camp ? Math.round(camp.creatorPrice / camp.nights) : roomType.rackRate;
@@ -37,6 +39,8 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
   const closeOverlay = () => go('console', 'gap');
 
   const release = () => {
+    const bad = check() ?? (matches === 0 ? 'No travelers match. Choose at least one audience.' : null);
+    if (bad) { toast(bad, { tone: 'warning' }); go('console', 'gap'); return; }
     const st = market.get();
     const gn: MGapNight = {
       id: `gap${st.seq.gap}`, hotelId: st.hotel.id, roomTypeId: roomType.id, datesLabel: gap.dates === 'wknd' ? GAP_DATES : 'Tonight', rooms, booked: 0, rate, campaignRate: campRate,
@@ -59,7 +63,7 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
             <Select label="Room type" value={roomType.id}
-              onChange={(v) => { const r = s.hotel.rooms.find((x) => x.id === v)!; set({ room: v, rooms: Math.min(gap.rooms, Math.max(1, unsoldRooms(s, v))), rate: Math.min(gap.rate, r.rackRate) }); }}
+              onChange={(v) => { const r = s.hotel.rooms.find((x) => x.id === v)!; set({ room: v, rooms: Math.min(gap.rooms, Math.max(1, unsoldRooms(s, v))), rate: Math.min(gap.rate, gapRateMax(r.rackRate)) }); }}
               options={['lake-deluxe', 'courtyard'].map((id) => ({ value: id, label: `${s.hotel.rooms.find((r) => r.id === id)?.name ?? id} · ${unsoldRooms(s, id)} unsold` }))} />
             <Select label="Dates" value={gap.dates} onChange={(v) => set({ dates: v })} options={[{ value: 'wknd', label: 'Sat 19 to Mon 21 Dec' }, { value: 'tonight', label: 'Tonight only' }]} />
           </div>
@@ -70,7 +74,7 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
               <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--ink-2)' }}>Gap Night rate per night</span><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{formatINR(rate)}</span></span>
-              <Stepper value={rate / 100} min={frozen ? rate / 100 : floor / 100} max={frozen ? rate / 100 : roomType.rackRate / 100} onChange={(v) => set({ rate: v * 100 })} aria-label="Price in hundreds of rupees" />
+              <Stepper value={rate / 100} min={frozen ? rate / 100 : floor / 100} max={frozen ? rate / 100 : gapRateMax(roomType.rackRate) / 100} onChange={(v) => set({ rate: v * 100 })} aria-label="Price in hundreds of rupees" />
             </div>
           </div>
           {error && !frozen && <span className="err" role="alert">{error}</span>}
