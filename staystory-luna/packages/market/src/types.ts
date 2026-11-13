@@ -93,8 +93,12 @@ export interface MarketState {
   settlements: MSettlement[];
   /** One entry per browser session per trip. Absent in states saved before visits existed. */
   visits?: MVisit[];
+  /** Comments on creators' reels and the DMs the automation sent. Absent in older saved states. */
+  reelComments?: MReelComment[];
   /** Counters for ids. */
   seq: { booking: number; trip: number; campaign: number; gap: number; ledger: number; withdrawal: number };
 }
 
 export interface MVisit { tripId: string; creatorId: string; sessionId: string; at: string }
+
+export interface MReelComment { id: string; tripId: string; travelerId: string; name: string; text: string; at: string; /** Set when the keyword matched and the trip was DMed. */ dmSent: boolean }

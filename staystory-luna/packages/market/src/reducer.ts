@@ -1,4 +1,4 @@
-import { ATTRIBUTION_DAYS, creatorCommission, withdrawal, TDS_PCT } from '@staystory/core';
+import { ATTRIBUTION_DAYS, creatorCommission, matchesKeyword, withdrawal, TDS_PCT } from '@staystory/core';
 import { seedState } from './seed';
 import type { InviteStatus, MBooking, MCampaign, MGapNight, MReview, MTraveler, MTrip, MarketState } from './types';
 
@@ -16,6 +16,7 @@ export type Action =
   | { type: 'traveler/follow'; id: string; creatorId: string }
   | { type: 'traveler/saveShop'; id: string; creatorId: string }
   | { type: 'traveler/openLink'; travelerId: string; creatorId: string; tripId: string; now: string }
+  | { type: 'reel/comment'; id: string; tripId: string; travelerId: string; name: string; text: string; at: string }
   | { type: 'trip/visit'; tripId: string; sessionId: string; at: string; byCreatorId?: string }
   | { type: 'booking/create'; booking: MBooking }
   | { type: 'booking/status'; id: string; status: 'in_house' | 'completed' }
@@ -83,6 +84,15 @@ export function reduce(s: MarketState, a: Action): MarketState {
       if (active && cur!.creatorId === a.creatorId) return s;
       const next = { travelerId: a.travelerId, creatorId: a.creatorId, tripId: a.tripId, openedAt: a.now, expiresAt: new Date(new Date(a.now).getTime() + ATTRIBUTION_DAYS * 86_400_000).toISOString() };
       return { ...s, attributions: [...s.attributions.filter((x) => x.travelerId !== a.travelerId), next] };
+    }
+
+    case 'reel/comment': {
+      // The automation: a keyword match on a live trip's reel sends one DM per follower per trip.
+      const trip = s.trips.find((t) => t.id === a.tripId);
+      const comments = s.reelComments ?? [];
+      const already = comments.some((c) => c.tripId === a.tripId && c.travelerId === a.travelerId && c.dmSent);
+      const dmSent = !!trip && trip.status === 'live' && !already && matchesKeyword(a.text, trip.dmKeyword);
+      return { ...s, reelComments: [{ id: a.id, tripId: a.tripId, travelerId: a.travelerId, name: a.name, text: a.text.slice(0, 300), at: a.at, dmSent }, ...comments] };
     }
 
     case 'trip/visit': {

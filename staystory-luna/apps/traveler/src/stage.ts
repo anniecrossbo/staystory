@@ -16,6 +16,10 @@ export function stage(r: Route) {
   const gap = () => { if (st().trips.some((t) => t.id === 'anaya-udaipur')) d({ type: 'dev/ensureGap', now: new Date().toISOString() }); };
   const fresh = !me().signedIn;
   const key = `${r.flow}/${r.screen}`;
+  // The DM thread is real: a fresh deep link to it records the design's sample comment once.
+  if (key === 'social/dm' && trip && !(st().reelComments ?? []).some((c) => c.tripId === trip.id && c.travelerId === ME)) {
+    d({ type: 'reel/comment', id: `stage-${trip.id}`, tripId: trip.id, travelerId: ME, name: 'meera.iyer', text: 'link pls', at: new Date().toISOString() });
+  }
   const wantsGap = ['trip/foryou', 'trip/held'].includes(key) || (r.flow === 'trip' && r.params.gap === '1');
 
   if (wantsGap) { signIn(); save(trip?.id ?? 'anaya-udaipur'); gap(); return; }

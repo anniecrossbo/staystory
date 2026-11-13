@@ -33,3 +33,10 @@ export const campaignForStay = (s: MarketState, hotelId: string) => s.campaigns.
 
 /** Real, de-duplicated visits to a trip (the seeded baselines are separate). */
 export const tripVisitCount = (s: MarketState, tripId: string) => (s.visits ?? []).filter((v) => v.tripId === tripId).length;
+
+/** Comments on a trip's reel, newest first, and whether the follower has been DMed the trip. */
+export const reelComments = (s: MarketState, tripId: string) => (s.reelComments ?? []).filter((c) => c.tripId === tripId);
+export const dmSentTo = (s: MarketState, tripId: string, travelerId: string) => (s.reelComments ?? []).some((c) => c.tripId === tripId && c.travelerId === travelerId && c.dmSent);
+
+/** Comments that got the follower the trip in their DMs. */
+export const tripDmCount = (s: MarketState, tripId: string) => (s.reelComments ?? []).filter((c) => c.tripId === tripId && c.dmSent).length;

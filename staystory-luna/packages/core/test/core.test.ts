@@ -158,3 +158,28 @@ describe('campaign and Gap Night validation (rules from the prototype)', () => {
     expect(validateGap({ ...gap, rate: 4800 })).toMatch(/below your public rate/);
   });
 });
+
+import { buildDm, matchesKeyword } from '../src';
+describe('comment-to-DM', () => {
+  it('matches the keyword as a whole word, ignoring case and punctuation', () => {
+    expect(matchesKeyword('link pls', 'link')).toBe(true);
+    expect(matchesKeyword('Link!!', 'link')).toBe(true);
+    expect(matchesKeyword('link pls! which haveli is this', 'link')).toBe(true);
+    expect(matchesKeyword('send me the LINK', 'link')).toBe(true);
+  });
+  it('does not match partial words or unrelated comments', () => {
+    expect(matchesKeyword('linked in profile', 'link')).toBe(false);
+    expect(matchesKeyword('how much for 3 days with flights?', 'link')).toBe(false);
+    expect(matchesKeyword('anything', '')).toBe(false);
+  });
+  it('matches multi-word keywords', () => {
+    expect(matchesKeyword('Udaipur trip please', 'udaipur trip')).toBe(true);
+    expect(matchesKeyword('trip to udaipur', 'udaipur trip')).toBe(false);
+  });
+  it('the DM names the creator and says it was sent automatically', () => {
+    const m = buildDm({ creatorHandle: '@anaya.explores', tripTitle: 'Three days in Udaipur', url: 'staystory.in/anaya/udaipur', firstName: 'Meera' });
+    expect(m.text).toBe("Hi Meera! Here's my full Udaipur trip. You can change dates, stays and experiences, and book it all in one go.");
+    expect(m.footer).toBe('Sent automatically by StayStory for @anaya.explores');
+    expect(m.cardUrl).toBe('staystory.in/anaya/udaipur');
+  });
+});

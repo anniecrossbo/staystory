@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MarketStore, tripVisitCount, bookingCommission, creatorBalances, creatorOffers, gapAlertFor, hotelBookings, attributionFor, seedState, type MBooking, type MCampaign, type MTrip } from '../src';
+import { MarketStore, dmSentTo, tripDmCount, reelComments, tripVisitCount, bookingCommission, creatorBalances, creatorOffers, gapAlertFor, hotelBookings, attributionFor, seedState, type MBooking, type MCampaign, type MTrip } from '../src';
 
 const now = '2026-11-13T10:00:00.000Z';
 const store = () => new MarketStore(false);
@@ -119,5 +119,28 @@ describe('marketplace journey', () => {
     s.dispatch({ type: 'booking/create', booking: booking({ id: 'SS-UDR-48231', travelerId: 'anaya', creatorId: 'anaya' }) });
     expect(s.get().bookings[0]!.selfBooking).toBe(true);
     expect(s.get().ledger).toHaveLength(before);
+  });
+
+  it('a comment with the trip keyword sends one DM; other comments and repeats do not', () => {
+    const s = store();
+    const say = (id: string, text: string) => s.dispatch({ type: 'reel/comment', id, tripId: 'anaya-udaipur', travelerId: 'meera', name: 'meera.iyer', text, at: now });
+    say('c1', 'how much for 3 days with flights?');
+    expect(dmSentTo(s.get(), 'anaya-udaipur', 'meera')).toBe(false);
+    say('c2', 'link pls');
+    expect(dmSentTo(s.get(), 'anaya-udaipur', 'meera')).toBe(true);
+    say('c3', 'link pls again');
+    expect(reelComments(s.get(), 'anaya-udaipur').filter((c) => c.dmSent)).toHaveLength(1);
+    expect(reelComments(s.get(), 'anaya-udaipur')).toHaveLength(3);
+    expect(tripDmCount(s.get(), 'anaya-udaipur')).toBe(1);
+    expect(tripDmCount(s.get(), 'anaya-coorg')).toBe(0);
+    s.dispatch({ type: 'reel/comment', id: 'c4', tripId: 'anaya-udaipur', travelerId: 'other', name: 'x', text: 'link', at: now });
+    expect(tripDmCount(s.get(), 'anaya-udaipur')).toBe(2);
+  });
+
+  it('no DM for a paused trip', () => {
+    const s = store();
+    s.dispatch({ type: 'trip/status', tripId: 'anaya-udaipur', status: 'paused' });
+    s.dispatch({ type: 'reel/comment', id: 'c1', tripId: 'anaya-udaipur', travelerId: 'meera', name: 'meera.iyer', text: 'link pls', at: now });
+    expect(dmSentTo(s.get(), 'anaya-udaipur', 'meera')).toBe(false);
   });
 });
