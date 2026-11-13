@@ -20,5 +20,5 @@ export function inviteCreator(creatorId: string, go: Go): void {
 
 export function openCreator(creatorId: string, go: Go): void {
   ui.set({ focusCreator: creatorId });
-  go('console', 'creators');
+  go('console', `creatorDetail?c=${creatorId}`);
 }

@@ -11,9 +11,9 @@ import { Creators } from './Creators';
 import { GapNight } from './GapNight';
 import { Payouts } from './Payouts';
 
-export const CONSOLE_SCREENS = ['overview', 'bookings', 'bookingDetail', 'bookingsEmpty', 'creators', 'invited', 'gap', 'gapConfirm', 'released', 'payouts'];
-const VIEW_OF: Record<string, string> = { overview: 'overview', bookings: 'bookings', bookingDetail: 'bookings', bookingsEmpty: 'bookings', creators: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
-const HEAD: Record<string, string> = { overview: 'Creator bookings', bookings: 'Bookings', creators: 'Find creators', gap: 'Gap Night', payouts: 'Payouts' };
+export const CONSOLE_SCREENS = ['overview', 'bookings', 'bookingDetail', 'bookingsEmpty', 'creators', 'creatorDetail', 'invited', 'gap', 'gapConfirm', 'released', 'payouts'];
+const VIEW_OF: Record<string, string> = { overview: 'overview', bookings: 'bookings', bookingDetail: 'bookings', bookingsEmpty: 'bookings', creators: 'creators', creatorDetail: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
+const HEAD: Record<string, string> = { overview: 'Creator bookings', bookings: 'Bookings', creators: 'Creators', gap: 'Gap Night', payouts: 'Payouts' };
 /** Creators and the gap night have no dated figures; the choice still carries to the overview. */
 const NO_EFFECT = ['creators', 'gap'];
 
@@ -46,7 +46,7 @@ export function Console({ screen, go }: { screen: string; go: Go }) {
 
       <div className="dock-wrap"><div>
         <Dock aria-label="Hotel console navigation" active={view} orb={false} onSelect={toScreen}
-          items={[{ id: 'overview', icon: 'space_dashboard', label: 'Overview' }, { id: 'bookings', icon: 'event_available', label: 'Bookings' }, { id: 'creators', icon: 'group', label: 'Creators' }, { id: 'gap', icon: 'nights_stay', label: 'Gap Night' }, { id: 'payouts', icon: 'payments', label: 'Payouts' }]} />
+          items={[{ id: 'overview', icon: 'space_dashboard', label: 'Overview' }, { id: 'creators', icon: 'group', label: 'Creators' }, { id: 'bookings', icon: 'event_available', label: 'Bookings' }, { id: 'gap', icon: 'nights_stay', label: 'Gap Night' }, { id: 'payouts', icon: 'payments', label: 'Payouts' }]} />
       </div></div>
     </div>
   );
