@@ -7,15 +7,16 @@ import { RANGES, type Range } from '../lib';
 import type { Go } from '../actions';
 import { Overview } from './Overview';
 import { Bookings } from './Bookings';
+import { Campaigns } from './Campaigns';
 import { Creators } from './Creators';
 import { GapNight } from './GapNight';
 import { Payouts } from './Payouts';
 
-export const CONSOLE_SCREENS = ['overview', 'bookings', 'bookingDetail', 'bookingsEmpty', 'creators', 'creatorDetail', 'invited', 'gap', 'gapConfirm', 'released', 'payouts'];
-const VIEW_OF: Record<string, string> = { overview: 'overview', bookings: 'bookings', bookingDetail: 'bookings', bookingsEmpty: 'bookings', creators: 'creators', creatorDetail: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
-const HEAD: Record<string, string> = { overview: 'Creator bookings', bookings: 'Bookings', creators: 'Creators', gap: 'Gap Night', payouts: 'Payouts' };
-/** Creators and the gap night have no dated figures; the choice still carries to the overview. */
-const NO_EFFECT = ['creators', 'gap'];
+export const CONSOLE_SCREENS = ['overview', 'campaigns', 'campaignDetail', 'bookingDetail', 'creators', 'creatorDetail', 'invited', 'gap', 'gapConfirm', 'released', 'payouts'];
+const VIEW_OF: Record<string, string> = { overview: 'overview', campaigns: 'campaigns', campaignDetail: 'campaigns', bookingDetail: 'campaigns', creators: 'creators', creatorDetail: 'creators', invited: 'creators', gap: 'gap', gapConfirm: 'gap', released: 'gap', payouts: 'payouts' };
+const HEAD: Record<string, string> = { overview: 'Creator bookings', campaigns: 'Campaigns', creators: 'Creators', gap: 'Gap Night', payouts: 'Payouts' };
+/** Creators, campaigns and the gap night have no dated figures; the choice still carries to the overview. */
+const NO_EFFECT = ['creators', 'campaigns', 'gap'];
 
 export function Console({ screen, go }: { screen: string; go: Go }) {
   const s = useMarket();
@@ -39,14 +40,14 @@ export function Console({ screen, go }: { screen: string; go: Go }) {
       </div>
 
       {view === 'overview' && <Overview go={go} />}
-      {view === 'bookings' && <Bookings screen={screen} go={go} />}
+      {view === 'campaigns' && (screen === 'bookingDetail' ? <Bookings screen={screen} go={go} /> : <Campaigns screen={screen} go={go} />)}
       {view === 'creators' && <Creators screen={screen} go={go} />}
       {view === 'gap' && <GapNight screen={screen} go={go} />}
       {view === 'payouts' && <Payouts />}
 
       <div className="dock-wrap"><div>
         <Dock aria-label="Hotel console navigation" active={view} orb={false} onSelect={toScreen}
-          items={[{ id: 'overview', icon: 'space_dashboard', label: 'Overview' }, { id: 'creators', icon: 'group', label: 'Creators' }, { id: 'bookings', icon: 'event_available', label: 'Bookings' }, { id: 'gap', icon: 'nights_stay', label: 'Gap Night' }, { id: 'payouts', icon: 'payments', label: 'Payouts' }]} />
+          items={[{ id: 'overview', icon: 'space_dashboard', label: 'Overview' }, { id: 'creators', icon: 'group', label: 'Creators' }, { id: 'campaigns', icon: 'campaign', label: 'Campaigns' }, { id: 'gap', icon: 'nights_stay', label: 'Gap Night' }, { id: 'payouts', icon: 'payments', label: 'Payouts' }]} />
       </div></div>
     </div>
   );
