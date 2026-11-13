@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Chip, Input, Select, SelectItem, Textarea } from "@heroui/react";
+import { Button, Chip, TextField, Select, Icon, Widget, ProgressBar, Banner, Tag } from "@/luna";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createTripFromReel } from "@/app/actions";
@@ -59,69 +59,75 @@ export function NewTripView({ samples, cities, liveEnabled }: { samples: Sample[
 
   if (busy) {
     return (
-      <div className="flex flex-col gap-6 p-5 pt-8">
-        <h1 className="text-2xl font-bold tracking-tight">Building your trip</h1>
-        <div className="rounded-large bg-default-100 p-4 text-sm leading-relaxed text-default-700">{caption || "Using the city you picked."}</div>
-        <ol className="flex flex-col gap-4" aria-live="polite">
-          {STEPS.map((label, i) => {
-            const done = i < step;
-            const current = i === step;
-            return (
-              <li key={label} className="flex items-center gap-3">
-                <span
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    done ? "bg-success text-success-foreground" : current ? "border-[3px] border-primary-100 border-t-primary motion-safe:animate-spin" : "border-2 border-default-200"
-                  }`}
-                  aria-hidden="true"
-                >
-                  {done ? "✓" : ""}
-                </span>
-                <span className={current ? "font-semibold" : done ? "" : "text-default-500"}>{label}</span>
-              </li>
-            );
-          })}
-        </ol>
-        <p className="text-sm text-default-500">Only partner stays are priced. Anything the agent can't match is flagged for you to review.</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "32px 20px" }}>
+        <h1 style={{ fontSize: 28, lineHeight: "39px", fontWeight: 700 }}>Building your trip</h1>
+        <div style={{ padding: 16, borderRadius: "var(--radius-md)", background: "var(--surface-sunken)", fontSize: 13, lineHeight: "18px", color: "var(--ink-2)" }}>
+          {caption || "Using the city you picked."}
+        </div>
+        <Widget title="Luna is extracting" subtitle="From caption and reel link">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {STEPS.map((label, i) => {
+              const done = i < step;
+              const current = i === step;
+              return (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 24 }}>
+                  <span style={{ display: "flex", color: done ? "var(--success)" : current ? "var(--primary)" : "var(--faint)" }}>
+                    <Icon name={done ? "check_circle" : current ? "progress_activity" : "radio_button_unchecked"} size={20} />
+                  </span>
+                  <span style={{ flex: 1, fontSize: 13, lineHeight: "18px", color: done || current ? "var(--ink)" : "var(--muted)" }}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Widget>
+        <ProgressBar value={Math.round(((step + 1) / STEPS.length) * 100)} aria-label="Trip builder progress" />
+        <p style={{ fontSize: 13, lineHeight: "18px", color: "var(--muted)" }}>Only partner stays are priced. Anything the agent can't match is flagged for you to review.</p>
       </div>
     );
   }
 
   return (
     <form
-      className="flex flex-col gap-5 p-5 pt-8"
+      style={{ display: "flex", flexDirection: "column", gap: 20, padding: "32px 20px" }}
       onSubmit={(e) => {
         e.preventDefault();
         void run(needCity && city ? city : undefined);
       }}
     >
       <div>
-        <h1 className="text-[26px] font-bold leading-tight tracking-tight">Turn a reel into a bookable trip</h1>
-        <p className="mt-2 text-[15px] leading-relaxed text-default-600">
+        <h1 style={{ fontSize: 28, lineHeight: "39px", fontWeight: 700 }}>Turn a reel into a bookable trip</h1>
+        <p style={{ marginTop: 8, fontSize: 15, lineHeight: "22px", color: "var(--ink-2)" }}>
           Paste your reel. We build the itinerary, price it with partner stays and give you one link that earns on every booking.
         </p>
       </div>
-      <Input label="Reel link" labelPlacement="outside" placeholder="instagram.com/reel/…" value={reelUrl} onValueChange={setReelUrl} type="url" size="lg" />
-      <Textarea
+
+      <TextField
+        label="Reel link"
+        placeholder="instagram.com/reel/…"
+        icon="link"
+        value={reelUrl}
+        onChange={(e) => setReelUrl(e.target.value)}
+        type="url"
+      />
+
+      <TextField
+        multiline
         label="Caption"
-        labelPlacement="outside"
-        description="The agent reads places, days and budget from it."
+        hint="The agent reads places, days and budget from it."
         placeholder="Three slow days in Udaipur…"
         value={caption}
-        onValueChange={setCaption}
-        minRows={4}
-        size="lg"
+        onChange={(e) => setCaption(e.target.value)}
       />
+
       <div>
-        <div className="mb-2 text-sm text-default-500">Or try a sample reel</div>
-        <div className="flex flex-wrap gap-2">
+        <div style={{ marginBottom: 8, fontSize: 11, lineHeight: "15px", fontWeight: 600, letterSpacing: "0.02em", textTransform: "uppercase" as const, color: "var(--muted)" }}>Or try a sample reel</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {samples.map((s) => (
-            <Button
+            <Chip
               key={s.id}
-              size="sm"
-              radius="full"
-              variant={caption === s.caption ? "solid" : "flat"}
-              color={caption === s.caption ? "primary" : "default"}
-              onPress={() => {
+              selected={caption === s.caption}
+              icon="auto_awesome"
+              onClick={() => {
                 setReelUrl(s.reelUrl);
                 setCaption(s.caption);
                 setNeedCity(false);
@@ -129,30 +135,36 @@ export function NewTripView({ samples, cities, liveEnabled }: { samples: Sample[
               }}
             >
               {s.label}
-            </Button>
+            </Chip>
           ))}
         </div>
       </div>
+
       {needCity && (
-        <Select label="Where is this trip?" labelPlacement="outside" placeholder="Pick a city" selectedKeys={city ? [city] : []} onSelectionChange={(k) => setCity(String(Array.from(k)[0] ?? ""))}>
-          {cities.map((c) => (
-            <SelectItem key={c.name}>{c.name}</SelectItem>
-          ))}
-        </Select>
+        <Select
+          label="Where is this trip?"
+          placeholder="Pick a city"
+          options={cities.map((c) => ({ value: c.name, label: c.name }))}
+          value={city || undefined}
+          onChange={(v) => setCity(v)}
+        />
       )}
+
       {error && (
-        <div role="alert" className="rounded-medium bg-warning-50 p-3 text-sm text-warning-800">
+        <Banner tone="warning" icon="warning" title="Heads up">
           {error}
-        </div>
+        </Banner>
       )}
-      <Button type="submit" color="primary" size="lg" radius="lg" className="font-semibold" isDisabled={needCity && !city}>
+
+      <Button type="submit" variant="primary" size="lg" block disabled={needCity && !city}>
         Build my trip
       </Button>
-      <div className="flex items-center gap-2 text-xs text-default-500">
-        <Chip size="sm" variant="dot" color={liveEnabled ? "success" : "default"}>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, lineHeight: "15px", color: "var(--muted)" }}>
+        <Tag hue={liveEnabled ? "moss" : "charcoal"}>
           {liveEnabled ? "Live agent on" : "Live agent off"}
-        </Chip>
-        {liveEnabled ? "Captions are read by OpenAI." : "No API key set, so cached and rule-based extraction is used."}
+        </Tag>
+        <span>{liveEnabled ? "Captions are read by OpenAI." : "No API key set, so cached and rule-based extraction is used."}</span>
       </div>
     </form>
   );

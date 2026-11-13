@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Chip, Input, Radio, RadioGroup, addToast, cn } from "@heroui/react";
+import { Button, Chip, TextField, Radio, Widget, Tag, Banner, Icon, IconButton, Skeleton } from "@/luna";
 import NextLink from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { publishTrip, updateTrip } from "@/app/actions";
@@ -15,7 +15,7 @@ const TIER_LABEL = { budget: "Budget", mid: "Mid-range", premium: "Premium" } as
 function Stars({ count }: { count: number }) {
   const n = Math.min(Math.max(Math.round(count), 0), 5);
   return (
-    <span className="text-xs text-warning-500" aria-label={`${n} stars`}>
+    <span style={{ fontSize: 12, color: "var(--gold, #D4A017)" }} aria-label={`${n} stars`}>
       {"★".repeat(n)}{"☆".repeat(5 - n)}
     </span>
   );
@@ -47,6 +47,7 @@ export function ReviewView({
   const [hotelId, setHotelId] = useState(trip.recommendedHotelId);
   const [drafts, setDrafts] = useState<string[]>(trip.days.map(() => ""));
   const [pending, start] = useTransition();
+  const [saved, setSaved] = useState(false);
   const published = trip.status === "published";
 
   const hotel = hotels.find((h) => h.id === hotelId)!;
@@ -87,219 +88,203 @@ export function ReviewView({
   const totalStops = days.reduce((n, d) => n + d.stops.length, 0);
 
   return (
-    <div className="flex flex-col gap-6 p-5 pt-6">
-      <div className="flex items-center justify-between gap-3">
-        <NextLink href="/creator/trips" className="text-sm text-primary">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "24px 20px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <NextLink href="/creator/trips" style={{ fontSize: 13, color: "var(--primary)", textDecoration: "none" }}>
           My trips
         </NextLink>
-        <div className="flex gap-2">
-          <Chip size="sm" variant="flat">
-            {SOURCE_LABEL[trip.source]}
-          </Chip>
-          <Chip size="sm" variant="flat" color={published ? "success" : "warning"}>
-            {published ? "Live" : "Draft"}
-          </Chip>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Tag hue="charcoal">{SOURCE_LABEL[trip.source]}</Tag>
+          <Tag hue={published ? "moss" : "ochre"}>{published ? "Live" : "Draft"}</Tag>
         </div>
       </div>
 
+      {/* Title */}
       <div>
-        <Input aria-label="Trip title" value={title} onValueChange={setTitle} variant="underlined" classNames={{ input: "text-2xl font-bold tracking-tight" }} />
-        <p className="mt-2 text-sm text-default-600">
+        <TextField
+          aria-label="Trip title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          style={{ fontSize: 24, fontWeight: 700 }}
+        />
+        <p style={{ marginTop: 8, fontSize: 13, lineHeight: "18px", color: "var(--ink-2)" }}>
           {cityName}, {days.length} days and {trip.nights} {trip.nights === 1 ? "night" : "nights"}. From {inr(price.perPerson)} per person for two.
         </p>
       </div>
 
-      <section aria-labelledby="stay-h" className="flex flex-col gap-3">
-        <h2 id="stay-h" className="text-base font-semibold">
-          Where to stay
-        </h2>
-        {trip.unmatchedStay && (
-          <div className="rounded-medium border border-warning-200 bg-warning-50 p-3 text-sm text-warning-800">
-            &ldquo;{trip.unmatchedStay}&rdquo; isn&apos;t a CrossBo partner yet. We picked the closest partner stay. Change it below if you like.
-          </div>
-        )}
-        <RadioGroup aria-label="Recommended stay" value={hotelId} onValueChange={setHotelId}>
-          {hotels.map((h) => (
-            <Radio
-              key={h.id}
-              value={h.id}
-              classNames={{
-                base: cn(
-                  "m-0 inline-flex w-full max-w-full items-center justify-between rounded-large border-2 border-default-200 p-3",
-                  "data-[selected=true]:border-primary data-[selected=true]:bg-primary-50",
-                ),
-                labelWrapper: "w-full",
-              }}
-            >
-              <div className="flex w-full items-center justify-between gap-2">
-                <div>
-                  <div className="font-semibold">{h.name}</div>
-                  <div className="text-xs text-default-600">
-                    {TIER_LABEL[h.tier]}, {h.area}
-                  </div>
-                </div>
-                <div className="text-sm font-semibold tabular-nums">{inr(h.rate)}</div>
+      {/* Where to stay */}
+      <Widget title="Where to stay">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {trip.unmatchedStay && (
+            <Banner tone="warning" icon="info" title="Stay not matched">
+              &ldquo;{trip.unmatchedStay}&rdquo; isn&apos;t a CrossBo partner yet. We picked the closest partner stay. Change it below if you like.
+            </Banner>
+          )}
+          {hotels.map((h) => {
+            const picked = hotelId === h.id;
+            return (
+              <div
+                key={h.id}
+                style={{
+                  display: "flex", gap: 12, alignItems: "center", padding: 12,
+                  borderRadius: "var(--radius-lg)", background: picked ? "var(--surface-tint)" : "var(--surface)",
+                  border: `1px solid ${picked ? "var(--primary-edge)" : "var(--glass-edge)"}`,
+                  boxShadow: "var(--shadow-card)", cursor: "pointer",
+                }}
+                onClick={() => setHotelId(h.id)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={picked}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setHotelId(h.id); } }}
+              >
+                <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{h.name}</span>
+                  <span style={{ fontSize: 11, color: "var(--muted)" }}>{TIER_LABEL[h.tier]}, {h.area}</span>
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{inr(h.rate)}</span>
+                <Radio checked={picked} onChange={() => setHotelId(h.id)} label={h.name} />
               </div>
-            </Radio>
-          ))}
-        </RadioGroup>
-        <p className="text-xs text-default-500">The one you pick is your recommendation. Followers also see the budget and premium options.</p>
-      </section>
+            );
+          })}
+          <span style={{ fontSize: 11, lineHeight: "15px", color: "var(--muted)" }}>
+            The one you pick is your recommendation. Followers also see the budget and premium options.
+          </span>
+        </div>
+      </Widget>
 
+      {/* Live hotels */}
       {liveHotels.length > 0 && (
-        <section aria-labelledby="live-h" className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 id="live-h" className="text-base font-semibold">Live hotels in {cityName}</h2>
-            <Chip size="sm" variant="flat" color="success">LiteAPI</Chip>
-          </div>
-          <p className="text-xs text-default-500">Real-time rates from LiteAPI. These aren&apos;t partner stays yet — showing what&apos;s available.</p>
-          <div className="flex flex-col gap-2">
+        <Widget title={`Live hotels in ${cityName}`} action={<Tag hue="sky">LiteAPI</Tag>}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: 11, lineHeight: "15px", color: "var(--muted)" }}>
+              Real-time rates from LiteAPI. These aren&apos;t partner stays yet — showing what&apos;s available.
+            </span>
             {liveHotels.slice(0, 6).map((h) => (
-              <div key={h.id} className="flex gap-3 rounded-large border border-default-200 p-3">
+              <div key={h.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: 12, borderRadius: "var(--radius-lg)", background: "var(--surface)", border: "1px solid var(--glass-edge)" }}>
                 {h.mainPhoto ? (
-                  <img
-                    src={h.mainPhoto}
-                    alt={h.name}
-                    className="h-16 w-16 shrink-0 rounded-medium object-cover"
-                    loading="lazy"
-                  />
+                  <img src={h.mainPhoto} alt={h.name} style={{ width: 64, height: 64, borderRadius: "var(--radius-md)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
                 ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-medium bg-default-100 text-xs text-default-400">No photo</div>
+                  <div style={{ width: 64, height: 64, borderRadius: "var(--radius-md)", background: "var(--surface-sunken)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, color: "var(--muted)" }}>
+                    No photo
+                  </div>
                 )}
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold text-sm">{h.name}</div>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontWeight: 600, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.name}</span>
                   <Stars count={h.starRating} />
-                  <div className="mt-0.5 truncate text-xs text-default-500">{h.address}</div>
-                  <div className="mt-1 flex items-baseline gap-1">
+                  <span style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.address}</span>
+                  <span style={{ fontSize: 13 }}>
                     {h.ratePerNight > 0 ? (
                       <>
-                        <span className="text-sm font-semibold tabular-nums">{inr(h.ratePerNight)}</span>
-                        <span className="text-xs text-default-500">/ night · {h.boardType}</span>
+                        <span style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{inr(h.ratePerNight)}</span>
+                        <span style={{ fontSize: 11, color: "var(--muted)" }}> / night · {h.boardType}</span>
                       </>
                     ) : (
-                      <span className="text-xs text-default-400">Rate on request</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>Rate on request</span>
                     )}
-                  </div>
+                  </span>
                 </div>
               </div>
             ))}
+            {liveHotels.length > 6 && (
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>+{liveHotels.length - 6} more hotels available</span>
+            )}
           </div>
-          {liveHotels.length > 6 && (
-            <p className="text-xs text-default-500">+{liveHotels.length - 6} more hotels available</p>
-          )}
-        </section>
+        </Widget>
       )}
       {liveSource === "fallback" && liveNote && (
-        <div className="rounded-medium border border-warning-200 bg-warning-50 p-3 text-xs text-warning-700">
-          Live hotel search unavailable: {liveNote}
-        </div>
+        <Banner tone="warning" icon="cloud_off" title="Live hotel search unavailable">
+          {liveNote}
+        </Banner>
       )}
 
-      <section aria-labelledby="days-h" className="flex flex-col gap-3">
-        <h2 id="days-h" className="text-base font-semibold">
-          Day by day
-        </h2>
-        {days.map((d, di) => (
-          <div key={di} className="overflow-hidden rounded-large border border-default-200">
-            <div className="bg-default-100 px-3 py-2">
-              <Input
-                aria-label={`Day ${di + 1} title`}
-                size="sm"
-                variant="flat"
-                startContent={<span className="whitespace-nowrap text-xs font-semibold text-default-600">Day {di + 1}</span>}
-                value={d.title}
-                onValueChange={(v) => setDays((p) => p.map((x, i) => (i === di ? { ...x, title: v } : x)))}
-                classNames={{ inputWrapper: "bg-transparent shadow-none" }}
-              />
-            </div>
-            <ul>
-              {d.stops.map((s, si) => {
-                const act = activities.find((a) => a.id === s.activityId);
-                const first = di === 0 && si === 0;
-                const last = di === days.length - 1 && si === d.stops.length - 1;
-                return (
-                  <li key={s.id} className="flex items-center gap-2 border-t border-default-200 px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm">{s.label}</div>
-                      <div className="text-xs text-default-500">
-                        {act ? (act.kind === "transfer" ? `${inr(act.price)} per car` : `${inr(act.price)} per person`) : "Free stop, not priced"}
-                      </div>
-                    </div>
-                    <Button isIconOnly size="sm" variant="light" aria-label={`Move ${s.label} up`} isDisabled={first} onPress={() => move(di, si, -1)}>
-                      ↑
-                    </Button>
-                    <Button isIconOnly size="sm" variant="light" aria-label={`Move ${s.label} down`} isDisabled={last} onPress={() => move(di, si, 1)}>
-                      ↓
-                    </Button>
-                    <Button isIconOnly size="sm" variant="light" aria-label={`Remove ${s.label}`} onPress={() => remove(di, si)}>
-                      ✕
-                    </Button>
-                  </li>
-                );
-              })}
-              <li className="flex items-center gap-2 border-t border-default-200 px-3 py-2">
-                <Input
+      {/* Day by day */}
+      {days.map((d, di) => (
+        <Widget key={di} title={`Day ${di + 1}`} subtitle={d.title} count={d.stops.length}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {d.stops.map((s, si) => {
+              const act = activities.find((a) => a.id === s.activityId);
+              const first = di === 0 && si === 0;
+              const last = di === days.length - 1 && si === d.stops.length - 1;
+              return (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 48, padding: "4px 0", borderTop: si > 0 ? "1px solid var(--glass-edge)" : undefined }}>
+                  <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{s.label}</span>
+                    <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {act ? (act.kind === "transfer" ? `${inr(act.price)} per car` : `${inr(act.price)} per person`) : "Free stop, not priced"}
+                    </span>
+                  </span>
+                  <IconButton icon="arrow_upward" label={`Move ${s.label} up`} variant="ghost" size="sm" disabled={first} onClick={() => move(di, si, -1)} />
+                  <IconButton icon="arrow_downward" label={`Move ${s.label} down`} variant="ghost" size="sm" disabled={last} onClick={() => move(di, si, 1)} />
+                  <IconButton icon="close" label={`Remove ${s.label}`} variant="ghost" size="sm" onClick={() => remove(di, si)} />
+                </div>
+              );
+            })}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 8 }}>
+              <div style={{ flex: 1 }}>
+                <TextField
                   aria-label={`Add a stop to day ${di + 1}`}
-                  size="sm"
                   placeholder="Add a stop"
                   value={drafts[di]}
-                  onValueChange={(v) => setDrafts((p) => p.map((x, i) => (i === di ? v : x)))}
+                  onChange={(e) => setDrafts((p) => p.map((x, i) => (i === di ? e.target.value : x)))}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      add(di);
-                    }
+                    if (e.key === "Enter") { e.preventDefault(); add(di); }
                   }}
                 />
-                <Button size="sm" variant="flat" onPress={() => add(di)}>
-                  Add
-                </Button>
-              </li>
-            </ul>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => add(di)}>Add</Button>
+            </div>
           </div>
-        ))}
-      </section>
+        </Widget>
+      ))}
 
-      <section className="rounded-large bg-default-100 p-4 text-sm" aria-label="Price for two">
-        {price.lines.map((l) => (
-          <div key={l.label} className="flex justify-between py-0.5">
-            <span className="text-default-600">{l.label}</span>
-            <span className="tabular-nums">{inr(l.amount)}</span>
+      {/* Price summary */}
+      <Widget title="Price for two">
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
+          {price.lines.map((l) => (
+            <div key={l.label} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
+              <span style={{ color: "var(--ink-2)" }}>{l.label}</span>
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>{inr(l.amount)}</span>
+            </div>
+          ))}
+          <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, marginTop: 8, borderTop: "1px solid var(--glass-edge)", fontWeight: 600 }}>
+            <span>Total for two</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{inr(price.total)}</span>
           </div>
-        ))}
-        <div className="mt-2 flex justify-between border-t border-default-200 pt-2 font-semibold">
-          <span>Total for two</span>
-          <span className="tabular-nums">{inr(price.total)}</span>
         </div>
-      </section>
+      </Widget>
 
-      <div className="flex flex-col gap-2 pb-2">
+      {/* Actions */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 8 }}>
         <Button
-          color="primary"
+          variant="primary"
           size="lg"
-          radius="lg"
-          className="font-semibold"
-          isLoading={pending}
-          isDisabled={totalStops === 0}
-          onPress={() => start(() => publishTrip(trip.id, patch()))}
+          block
+          loading={pending}
+          disabled={totalStops === 0}
+          onClick={() => start(() => publishTrip(trip.id, patch()))}
         >
           {published ? "Save and view my link" : "Publish and get my link"}
         </Button>
         {!published && (
           <Button
+            variant="secondary"
             size="lg"
-            radius="lg"
-            variant="flat"
-            isDisabled={pending}
-            onPress={() =>
+            block
+            disabled={pending}
+            onClick={() =>
               start(async () => {
                 await updateTrip(trip.id, patch());
-                addToast({ title: "Draft saved", color: "success" });
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2000);
               })
             }
           >
             Save draft
           </Button>
+        )}
+        {saved && (
+          <Banner tone="success" icon="check_circle" title="Draft saved" />
         )}
       </div>
     </div>
