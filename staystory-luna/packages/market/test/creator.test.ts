@@ -125,3 +125,46 @@ describe('notifications', () => {
     expect(creatorNotifications(s.get(), 'anaya').some((n) => n.id.startsWith('withdraw:'))).toBe(true);
   });
 });
+
+import { distributePlaces, extractionDetails, matchExperience, planItinerary, stayFromHotel } from '../src';
+
+describe('reel extraction helpers', () => {
+  const exps = store().get().trips.find((t) => t.id === 'anaya-udaipur')!.experiences;
+  it('spreads places round robin, in order, up to four a day', () => {
+    expect(distributePlaces(['a', 'b', 'c', 'd', 'e'], 2)).toEqual([['a', 'c', 'e'], ['b', 'd']]);
+    expect(distributePlaces(Array.from({ length: 12 }, (_, i) => i), 2).map((d) => d.length)).toEqual([4, 4]);
+    expect(distributePlaces(['a'], 3)).toEqual([['a'], [], []]);
+    expect(distributePlaces(['a', 'b'], 0)).toEqual([['a'], ['b'], []]); // no length given: three days
+  });
+  it('matches boat, cooking and guided palace walks to experiences, and nothing else', () => {
+    expect(matchExperience('Lake Pichola boat ride', exps)?.pricePerPerson).toBe(900);
+    expect(matchExperience('Rajasthani cooking class', exps)?.pricePerPerson).toBe(1500);
+    expect(matchExperience('City Palace guided walk', exps)?.pricePerPerson).toBe(700);
+    expect(matchExperience('City Palace', exps)).toBeUndefined();
+    expect(matchExperience('Old city food walk', exps)).toBeUndefined();
+  });
+  it('plans an itinerary with tips, one bookable per experience, and coordinates', () => {
+    const plan = planItinerary({ days: 2, places: ['Ambrai Ghat', 'City Palace', 'Lake Pichola boat ride', 'Old City', 'Another boat trip'] }, { 'City Palace': { lat: 24.57, lng: 73.68 } }, exps);
+    expect(plan.map((d) => d.stops.map((s) => s.name))).toEqual([['Ambrai Ghat', 'Lake Pichola boat ride', 'Another boat trip'], ['City Palace', 'Old City']]);
+    const stops = plan.flatMap((d) => d.stops);
+    expect(stops.find((s) => s.name === 'City Palace')).toMatchObject({ kind: 'Tip', bookable: false, lat: 24.57, lng: 73.68 });
+    expect(stops.find((s) => s.name === 'Lake Pichola boat ride')).toMatchObject({ bookable: true, pricePerPerson: 900, time: '17:30', dur: '1 h' });
+    expect(stops.find((s) => s.name === 'Another boat trip')?.bookable).toBe(false);
+    expect(new Set(stops.map((s) => s.id)).size).toBe(stops.length);
+  });
+  it('carries stop coordinates through to the published trip', () => {
+    const plan = planItinerary({ days: 1, places: ['City Palace'] }, { 'City Palace': { lat: 1, lng: 2 } }, exps);
+    const trip = makeCreatorTrip(store().get(), { creatorId: 'anaya', slug: 'x', title: 'T', place: 'Udaipur', img: 'udaipur', days: plan.map((d) => ({ n: d.n, title: d.title, stops: d.stops })), stays: [{ id: 's', hotelId: 'h', roomTypeId: 'std', name: 'S', tier: 'mid', desc: '', nightly: 1000, img: 'udaipur', commissionPct: 0 }], pickStayId: 's', dmKeyword: 'k', reelUrl: '', now });
+    expect(trip.itinerary[0]!.stops[0]).toMatchObject({ lat: 1, lng: 2 });
+  });
+  it('words the detected rows from a reading and admits what is missing', () => {
+    const d = extractionDetails({ destination: 'Udaipur', days: 3, places: [], budgetPerPerson: 15000, namedStay: null, style: ['Slow travel', 'Couples'], title: null }, 'Rajasthan');
+    expect(d).toEqual({ Destination: 'Udaipur, Rajasthan', Length: '3 days, 2 nights', Budget: 'Under ₹15,000 per person', Vibe: 'Slow travel', 'Best for': 'Couples' });
+    expect(extractionDetails({ destination: 'Jodhpur', days: 2, places: [], budgetPerPerson: null, namedStay: null, style: [], title: null }).Budget).toBe('Not mentioned');
+  });
+  it('turns a live hotel into a plain partner stay and refuses a zero rate', () => {
+    const h = { id: 'lp1', name: 'Lake View', address: 'Pichola Rd', starRating: 4, ratePerNight: 5400.4 };
+    expect(stayFromHotel(h, 'udaipur')).toEqual({ id: 'liteapi-lp1', hotelId: 'liteapi-lp1', roomTypeId: 'std', name: 'Lake View', tier: 'mid', desc: '4-star · Pichola Rd', nightly: 5400, img: 'udaipur', commissionPct: 0 });
+    expect(stayFromHotel({ ...h, ratePerNight: 0 }, 'udaipur')).toBeNull();
+  });
+});

@@ -7,6 +7,7 @@ import {
 } from '@staystory/market';
 import { asset, clock, copyText, go, ME, SITE, tripHash } from '../lib';
 import { tripFor, useNow, useSession } from '../session';
+import { MapSection } from '../MapSection';
 import { FooterPill, ToastHost, useEscape } from '../ui';
 
 export const TRIP_SCREENS = ['trip', 'saved', 'customize', 'checkout', 'payfail', 'booked', 'foryou', 'held'];
@@ -212,6 +213,7 @@ function TripPage({ trip, q, saved }: { trip: MTrip; q: ReturnType<typeof quoteS
         ))}
       </div>
     </Widget>
+    <MapSection trip={trip} stay={q.stay} />
     <Widget title="Where you'll stay">
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <img src={asset(q.stay.img)} alt="" style={{ width: 72, height: 72, borderRadius: 'var(--radius-md)', objectFit: 'cover' }} />
