@@ -32,7 +32,8 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
   const banner = s.creators[lastInvited];
   return (<>
     {screen === 'invited' && banner && <Banner tone="success" icon="send" title={`Invite sent to ${banner.handle}`}>They usually reply within a day. You'll see it in Needs your decision.</Banner>}
-    <div className="lu-grid fill">
+    <span className="body">Matched on destination, audience cities, budget and booking performance.</span>
+    <div className="lu-grid fill scrollgrid">
       {creators.map((m) => {
         const st = status(m.id);
         const btn = !st
@@ -42,25 +43,21 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
           : st === 'countered' ? { variant: 'primary' as const, icon: 'forum', label: 'Countered, review offer', disabled: false, onClick: () => go('console', 'overview') }
           : { variant: 'secondary' as const, icon: 'block', label: 'Declined this campaign', disabled: true, onClick: () => {} };
         return (
-          <div key={m.id} id={`creator-${m.id}`} className={`span-1 wrap${focusCreator === m.id ? ' hl' : ''}`}><Widget style={{ flex: 1 }} title={m.handle} subtitle={`${m.followers} followers · ${m.score} match`}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue={m.hue}>{m.niche}</Tag>{m.top && <Badge tone="vip" icon="star">Top converter</Badge>}</div>
-              <div className="mini-stats">
-                <span><b>{m.conv}</b>Conversion</span><span><b>{m.bookingsPerMonth}</b>Bookings/mo</span><span><b>{m.ncr}</b>Delhi NCR</span>
+          <div key={m.id} id={`creator-${m.id}`} className={`span-1${focusCreator === m.id ? ' hl' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
+            <Widget style={{ flex: 1 }} title={m.handle} subtitle={`${m.followers} followers · ${m.score} match`}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <img src={asset(m.cover)} alt="" style={{ width: '100%', height: 96, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue={m.hue}>{m.niche}</Tag>{m.top && <Badge tone="vip" icon="star">Top converter</Badge>}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+                  <StatTile label="Conversion" value={m.conv ?? ''} /><StatTile label="Bookings/mo" value={m.bookingsPerMonth ?? ''} /><StatTile label="Delhi NCR" value={m.ncr ?? ''} />
+                </div>
+                <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{m.why}</span>
+                <Button block variant={btn.variant} icon={btn.icon} disabled={btn.disabled} onClick={btn.onClick}>{btn.label}</Button>
               </div>
-              <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{m.why}</span>
-              <Button block variant={btn.variant} icon={btn.icon} disabled={btn.disabled} onClick={btn.onClick}>{btn.label}</Button>
-            </div>
-          </Widget></div>
+            </Widget>
+          </div>
         );
       })}
-      <Widget className="span-2" title="Your invites" subtitle={camp ? camp.name : 'No live campaign'}>
-        <span className="body">Matched on destination, audience cities, budget and booking performance.</span>
-        {creators.filter((m) => status(m.id)).map((m) => (
-          <div key={m.id} className="kv"><span>{m.handle}</span><Badge tone={status(m.id) === 'accepted' ? 'success' : status(m.id) === 'declined' ? 'neutral' : 'warning'} dot>{({ invited: 'Awaiting reply', accepted: 'Accepted', countered: 'Countered', declined: 'Declined' } as Record<string, string>)[status(m.id)!]}</Badge></div>
-        ))}
-        {creators.every((m) => !status(m.id)) && <span className="caption">No invites sent yet. Invite a creator to start.</span>}
-      </Widget>
     </div>
   </>);
 }

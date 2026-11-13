@@ -36,15 +36,16 @@ export function Bookings({ screen, go }: { screen: string; go: Go }) {
   const clear = () => { setSearch(''); ui.set({ bookingFilter: 'All' }); if (screen !== 'bookings') go('console', 'bookings'); };
 
   return (<>
-    <div className="lu-grid fill">
-      <Widget className="span-1 row-2" title="Find a booking" subtitle={`${all.length} attributed`}>
+    <div className="filters-row">
+      {FILTERS.map((f) => <FilterPill key={f} selected={bookingFilter === f} count={count(f)} onClick={() => { ui.set({ bookingFilter: f }); if (screen !== 'bookings') go('console', 'bookings'); }}>{f}</FilterPill>)}
+      <span className="grow" />
+      <div className="search-w">
         <SearchField placeholder="Search guest or booking" aria-label="Search guest or booking" value={search} onChange={(e) => { setSearch(e.target.value); if (screen === 'bookingsEmpty') go('console', 'bookings'); }} />
-        <div className="pill-col">
-          {FILTERS.map((f) => <FilterPill key={f} selected={bookingFilter === f} count={count(f)} onClick={() => { ui.set({ bookingFilter: f }); if (screen !== 'bookings') go('console', 'bookings'); }}>{f}</FilterPill>)}
-        </div>
-      </Widget>
+      </div>
+    </div>
+    <div className="lu-grid fill">
     {rows.length > 0 ? (
-      <Widget className="span-3 row-2" title="Attributed bookings" count={rows.length}>
+      <Widget className="span-full" title="Attributed bookings" count={rows.length}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {rows.map((b) => (
             <button key={b.id} className={`table-row${detail?.id === b.id ? ' on' : ''}`} aria-label={`Open booking ${b.id} for ${b.guestName}`} onClick={() => go('console', bookingLink(b.id))}>
@@ -60,7 +61,7 @@ export function Bookings({ screen, go }: { screen: string; go: Go }) {
         </div>
       </Widget>
     ) : (
-      <Widget className="span-3 row-2" title="Attributed bookings" count={0}>
+      <Widget className="span-full" title="Attributed bookings" count={0}>
         <div style={{ padding: '48px 0' }}>
           <EmptyState icon="event_busy" title={`No bookings match “${search || bookingFilter}”`} action={<Button variant="secondary" icon="close" onClick={clear}>Clear search and filters</Button>}>Check the spelling, or search by booking number such as SS-UDR-48213.</EmptyState>
         </div>

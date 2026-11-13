@@ -36,29 +36,18 @@ export function Overview({ go }: { go: Go }) {
 
   return (<>
     <div className="lu-grid fill">
-      <Widget className="span-1 row-2" title="Needs your decision" count={decs.length}>
+      <Widget className="span-3" title="Needs your decision" count={decs.length}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {decs.length === 0 && <EmptyState icon="task_alt" title="Nothing needs your decision">Creator replies and unsold rooms for saved demand show up here.</EmptyState>}
           {decs.map((d) => <DecisionItem key={d.key} d={d} s={s} go={go} dismiss={dismiss} />)}
         </div>
-      </Widget>
-      <Widget className="span-1" title="Booking summary" subtitle={`Attributed · ${days}`}>
-        <div className="tiles-2">
-          <StatTile label="Attributed bookings" value={fmtCount(fig.bookings)} />
-          <StatTile label="Booking value" value={fmtLakh(fig.value)} />
-          <StatTile label="Cost per guest" value={formatINR(fig.cpa)} />
-          <StatTile label="Cancellations" value={`${fig.cancelPct.toFixed(1)}%`} />
-        </div>
-      </Widget>
-      <Widget className="span-1" title="Bookings by creator" subtitle={days}>
-        <BarChart height={150} aria-label="Bookings by creator" data={[...rows].sort((a, b) => b.bookings - a.bookings).map((r) => ({ label: r.short, value: r.bookings }))} />
       </Widget>
       <Widget title="Live campaign" subtitle={camp?.name ?? 'No live campaign'} className="span-1">
         {camp ? (() => {
           const p = campaignProgress(s, camp);
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <img src={asset('verandah')} alt="" style={{ width: '100%', height: 96, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
+              <img src={asset('verandah')} alt="" style={{ width: '100%', height: 64, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{p.done} of {p.target}</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)' }}>bookings · {paceLabel(p.done, p.pct)}</span></div>
               <ProgressBar value={p.pct} tone="success" aria-label="Campaign progress" />
             </div>
@@ -67,15 +56,26 @@ export function Overview({ go }: { go: Go }) {
           <EmptyState icon="campaign" title="No live campaign" action={<Button variant="primary" icon="add" onClick={() => go('campaign', 'offer')}>Create campaign</Button>}>Offer creators a private price to get booked by their audiences.</EmptyState>
         )}
       </Widget>
-      <Widget className="span-2" title="Creator performance" subtitle={`Attributed bookings · ${days}`}>
+    </div>
+    <div className="lu-grid">
+      <div className="span-1"><StatTile label="Attributed bookings" value={fmtCount(fig.bookings)} /></div>
+      <div className="span-1"><StatTile label="Booking value" value={fmtLakh(fig.value)} /></div>
+      <div className="span-1"><StatTile label="Cost per acquired guest" value={formatINR(fig.cpa)} /></div>
+      <div className="span-1"><StatTile label="Cancellations" value={`${fig.cancelPct.toFixed(1)}%`} /></div>
+    </div>
+    <div className="lu-grid fill">
+      <Widget className="span-3" title="Creator performance" subtitle={`Attributed bookings · ${days}`}>
         <div style={{ overflowX: 'auto' }}>
           <Activatable selector="tbody tr" onActivate={(i) => openCreator(rows[i]!.id, go)} label={(i) => `Open ${rows[i]?.handle ?? 'creator'} in Creators`}>
-            <DataTable compact columns={[{ key: 'handle', label: 'Creator' }, { key: 'bookings', label: 'Bookings', align: 'right' }, { key: 'conv', label: 'Conversion', align: 'right' }, { key: 'value', label: 'Value', align: 'right' }, { key: 'cpa', label: 'Cost per guest', align: 'right' }]}
-              rows={rows.map((r) => ({ handle: r.handle, bookings: String(r.bookings), conv: `${r.conv.toFixed(2)}%`, value: fmtLakh(r.value), cpa: formatINR(r.cpa) }))} />
+            <DataTable compact columns={[{ key: 'handle', label: 'Creator' }, { key: 'visits', label: 'Visits', align: 'right' }, { key: 'bookings', label: 'Bookings', align: 'right' }, { key: 'conv', label: 'Conversion', align: 'right' }, { key: 'value', label: 'Value', align: 'right' }, { key: 'cpa', label: 'Cost per guest', align: 'right' }]}
+              rows={rows.map((r) => ({ handle: r.handle, visits: fmtCount(r.visits), bookings: String(r.bookings), conv: `${r.conv.toFixed(2)}%`, value: fmtLakh(r.value), cpa: formatINR(r.cpa) }))} />
           </Activatable>
         </div>
       </Widget>
-      <div className="span-1 cell">
+      <div className="span-1 col-stack">
+        <Widget title="Bookings by creator">
+          <BarChart height={140} aria-label="Bookings by creator" data={[...rows].sort((a, b) => b.bookings - a.bookings).map((r) => ({ label: r.short, value: r.bookings }))} />
+        </Widget>
         <Activatable selector=".lu-ai-body" onActivate={() => nextId && inviteCreator(nextId, go)} label={() => `Invite ${nextCreator?.handle ?? 'creator'} to ${camp?.name ?? 'a campaign'}`}>
           <AISummary label="AI summary" title={`Two creators bring ${topShare}% of guests`}
             bullets={[`${c1!.handle} and ${c2!.handle} drive ${c1!.bookings + c2!.bookings} of ${fmtCount(fig.bookings)} bookings`, `${priciest.handle} costs ${formatINR(priciest.cpa)} per guest, ${above}% above average`, 'Lake-view Deluxe converts best from slow-travel audiences']}
