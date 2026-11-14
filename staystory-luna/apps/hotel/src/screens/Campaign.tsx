@@ -10,7 +10,7 @@ import { campaignNameError, campaignPriceError, campaignStepErrors, firstCampaig
 
 export const CAMPAIGN_STEPS = ['offer', 'commission', 'creators', 'review', 'launched'];
 const ICONS: Record<string, string> = { Breakfast: 'free_breakfast', 'Late checkout': 'schedule', 'Sunset boat ride': 'sailing', 'Welcome drink': 'local_bar', 'Room upgrade': 'upgrade', 'Airport pickup': 'local_taxi' };
-const HEAD: Record<string, string> = { offer: 'Build the offer', commission: 'Commission and incentives', creators: 'Choose creators', review: 'Review and launch', launched: 'Launched' };
+const HEAD: Record<string, string> = { offer: 'Make the offer', commission: 'Commission and incentives', creators: 'Choose creators', review: 'Review and launch', launched: 'Launched' };
 const WINDOWS: Record<string, string> = { winter: 'Nov 15 to Jan 31', dec: 'December only' };
 const ROOM_ORDER = ['lake-deluxe', 'jharokha', 'courtyard'];
 
@@ -105,24 +105,24 @@ export function Campaign({ go, onClose }: { go: Go; onClose: () => void }) {
 
   return (
     <Overlay side="center" label="Create campaign" onClose={onClose}>
-      <div className="campaign-builder" style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: 24 }}>
+      <div className="campaign-builder">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div className="cb-head">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span className="eyebrow">{s.hotel.name}, {s.hotel.city} · new campaign</span>
             <span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{HEAD[screen]}</span>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {['Offer', 'Commission', 'Creators', 'Review'].map((label, k) => (
-              <Chip key={label} selected={k === step} icon={k < step ? 'check_circle' : 'radio_button_unchecked'} onClick={() => to(k)}>{label}</Chip>
+              <button key={label} className={`step-pill${k === step ? ' on' : ''}`} aria-current={k === step ? 'step' : undefined} onClick={() => to(k)}><span className="sp-n">{k < step ? '✓' : k + 1}</span>{label}</button>
             ))}
-            <IconButton icon="close" label="Close" variant="ghost" onClick={onClose} />
+            <IconButton icon="close" label="Close" variant="white" onClick={onClose} />
           </div>
         </div>
 
         {/* Two-column body: settings left, preview right */}
-        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', minHeight: 0, flex: 1 }}>
-          <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20, overflow: 'auto' }}>
+        <div className="cb-body">
+          <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
             {screen === 'offer' && (<>
               <Widget title="The offer">
                 <div className="form-grid">
@@ -214,15 +214,6 @@ export function Campaign({ go, onClose }: { go: Go; onClose: () => void }) {
               </Widget>
             )}
 
-            {/* Footer: back / next */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-              {screen === 'launched'
-                ? <Button variant="tertiary" size="lg" icon="add" onClick={() => { clear(); ui.set({ launched: '' }); setStep(0); }}>Create another</Button>
-                : <Button variant="tertiary" size="lg" icon="arrow_back" disabled={step === 0} onClick={() => to(Math.max(0, step - 1))}>Back</Button>}
-              <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={(screen === 'creators' && picks.length === 0) || (screen === 'review' && !!problem)} onClick={next}>
-                {screen === 'review' ? 'Launch campaign' : screen === 'launched' ? 'View campaigns' : 'Continue'}
-              </Button>
-            </div>
           </div>
 
           {/* Right: what creators see */}
@@ -245,6 +236,14 @@ export function Campaign({ go, onClose }: { go: Go; onClose: () => void }) {
             </Widget>
           </aside>
         </div>
+        <div className="cb-foot">
+              {screen === 'launched'
+                ? <Button variant="secondary" size="lg" icon="add" onClick={() => { clear(); ui.set({ launched: '' }); setStep(0); }}>Create another</Button>
+                : <Button variant="secondary" size="lg" disabled={step === 0} onClick={() => to(Math.max(0, step - 1))}>Back</Button>}
+              <Button variant="primary" size="lg" iconRight={screen === 'review' ? 'rocket_launch' : screen === 'launched' ? 'space_dashboard' : 'arrow_forward'} disabled={(screen === 'creators' && picks.length === 0) || (screen === 'review' && !!problem)} onClick={next}>
+                {screen === 'review' ? 'Launch campaign' : screen === 'launched' ? 'View campaigns' : 'Continue'}
+              </Button>
+            </div>
       </div>
     </Overlay>
   );

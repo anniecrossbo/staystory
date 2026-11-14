@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { formatINR } from '@staystory/core';
-import { Banner, Button, Chip, Modal, Select, Stepper, Widget } from '@staystory/ui';
+import { Badge, Banner, Button, Chip, Modal, Select, Stepper, Widget } from '@staystory/ui';
 import { liveTrips, market, useMarket, type MGapNight } from '@staystory/market';
-import { Overlay } from '../components';
+import { Overlay, Tile } from '../components';
 import type { Go } from '../actions';
 import { asset, AUDIENCE, audienceKeys, GAP_DATES, liveCampaigns, liveGap, matchCount, toWords, unsoldRooms } from '../lib';
 import { toast, ui, useUi } from '../ui';
@@ -52,54 +52,80 @@ export function GapNight({ screen, go }: { screen: string; go: Go }) {
     go('console', 'released');
   };
 
+  const nightsList = gap.dates === 'wknd' ? [{ d: 'Fri 19', n: Math.round(matches * 0.67) }, { d: 'Sat 20', n: matches }, { d: 'Sun 21', n: Math.round(matches * 0.6) }] : [{ d: 'Tonight', n: matches }];
+  const peak = Math.max(1, ...nightsList.map((x) => x.n));
+
   return (<>
-    {g && (screen === 'released' || screen === 'gap') && (
-      <Banner tone="success" icon="check_circle" title={`${g.rooms} room${g.rooms > 1 ? 's' : ''} released for ${toWords(g.datesLabel)}`}>
-        Sent to {g.sentTo} travelers who saved Anaya’s trip. {g.booked > 0 ? `${g.booked} room${g.booked > 1 ? 's' : ''} booked so far.` : 'No rooms booked yet.'}
-      </Banner>
-    )}
-    <div className="lu-grid fill">
-      <Widget className="span-3" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-            <Select label="Room type" value={roomType.id}
-              onChange={(v) => { const r = s.hotel.rooms.find((x) => x.id === v)!; set({ room: v, rooms: Math.min(gap.rooms, Math.max(1, unsoldRooms(s, v))), rate: Math.min(gap.rate, gapRateMax(r.rackRate)) }); }}
-              options={['lake-deluxe', 'courtyard'].map((id) => ({ value: id, label: `${s.hotel.rooms.find((r) => r.id === id)?.name ?? id} · ${unsoldRooms(s, id)} unsold` }))} />
-            <Select label="Dates" value={gap.dates} onChange={(v) => set({ dates: v })} options={[{ value: 'wknd', label: 'Sat 19 to Mon 21 Dec' }, { value: 'tonight', label: 'Tonight only' }]} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
-              <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--ink-2)' }}>Rooms</span><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--ink-2)' }}>{unsold} unsold{mine ? ` · ${mine.rooms} released` : ''}</span></span>
-              <Stepper value={rooms} min={frozen ? rooms : 1} max={frozen ? rooms : Math.max(1, unsold)} onChange={(v) => set({ rooms: v })} aria-label="Rooms to release" />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--surface-sunken)' }}>
-              <span style={{ display: 'flex', flexDirection: 'column' }}><span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600, color: 'var(--ink-2)' }}>Gap Night rate per night</span><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{formatINR(rate)}</span></span>
-              <Stepper value={rate / 100} min={frozen ? rate / 100 : floor / 100} max={frozen ? rate / 100 : gapRateMax(roomType.rackRate) / 100} onChange={(v) => set({ rate: v * 100 })} aria-label="Price in hundreds of rupees" />
-            </div>
-          </div>
-          {error && !frozen && <span className="err" role="alert">{error}</span>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span className="eyebrow">Send to travelers who</span>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {AUDIENCE.map((a) => <Chip key={a.key} selected={frozen ? mine!.audience.includes(a.key) : gap.aud[a.key]} disabled={frozen} onClick={() => { const cur = ui.get().gap.aud; set({ aud: { ...cur, [a.key]: !cur[a.key] } }); }}>{a.label}</Chip>)}
-            </div>
-          </div>
-          {blocker && !frozen && !error && <span className="err" role="alert">{blocker}</span>}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', borderTop: '1px solid var(--divider)', paddingTop: 16 }}>
-            <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{matches} travelers match · fronted by {fronted} · campaign rate {formatINR(campRate)}</span>
-            <Button variant="primary" size="lg" icon="send" disabled={!canRelease} onClick={() => go('console', 'gapConfirm')}>Release {rooms} room{rooms > 1 ? 's' : ''}</Button>
-          </div>
+    <div className="lu-grid fill g42">
+      <Widget className="c1 span-2 r1" title="Unsold rooms meet saved demand" subtitle={`${gap.dates === 'wknd' ? toWords(GAP_DATES) : 'Tonight'} · your floor is ${formatINR(floor)} a night`} action={<Badge tone="warning">{unsold} unsold</Badge>}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16 }}>
+          <Select label="Room type" value={roomType.id}
+            onChange={(v) => { const r = s.hotel.rooms.find((x) => x.id === v)!; set({ room: v, rooms: Math.min(gap.rooms, Math.max(1, unsoldRooms(s, v))), rate: Math.min(gap.rate, gapRateMax(r.rackRate)) }); }}
+            options={['lake-deluxe', 'courtyard'].map((id) => ({ value: id, label: `${s.hotel.rooms.find((r) => r.id === id)?.name ?? id} · ${unsoldRooms(s, id)} unsold` }))} />
+          <Select label="Dates" value={gap.dates} onChange={(v) => set({ dates: v })} options={[{ value: 'wknd', label: 'Sat 19 to Mon 21 Dec' }, { value: 'tonight', label: 'Tonight only' }]} />
+        </div>
+        <span className="eyebrow-s">Saved demand by night</span>
+        <div className="demand" role="img" aria-label={`Saved demand by night: ${nightsList.map((x) => `${x.d} ${x.n}`).join(', ')}`}>
+          {nightsList.map((x) => (
+            <div className="dcol" key={x.d}><div className={`dbar${x.n === peak ? ' peak' : ''}`} style={{ height: 28 + (x.n / peak) * 36 }} /><b>{x.n}</b><span>{x.d}</span></div>
+          ))}
         </div>
       </Widget>
-      <Widget title="What travelers see" subtitle="WhatsApp alert and offer card" className="span-1">
-        <div style={{ position: 'relative', height: 340, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-          <img src={asset('udaipur')} alt="Lake Pichola at dusk" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+
+      <Widget className="c3 r1" title="Rooms and rate" subtitle="What you release">
+        <div className="field-box">
+          <span className="fl"><b style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>Rooms</b><span style={{ fontSize: 11, lineHeight: '15px', color: 'var(--ink-2)' }}>{unsold} unsold{mine ? ` · ${mine.rooms} released` : ''}</span></span>
+          <Stepper value={rooms} min={frozen ? rooms : 1} max={frozen ? rooms : Math.max(1, unsold)} onChange={(v) => set({ rooms: v })} aria-label="Rooms to release" />
+        </div>
+        <div className="field-box">
+          <span className="fl"><b style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>Gap Night rate per night</b><span style={{ fontSize: 24, lineHeight: '32px', fontWeight: 600 }}>{formatINR(rate)}</span></span>
+          <Stepper value={rate / 100} min={frozen ? rate / 100 : floor / 100} max={frozen ? rate / 100 : gapRateMax(roomType.rackRate) / 100} onChange={(v) => set({ rate: v * 100 })} aria-label="Price in hundreds of rupees" />
+        </div>
+        {error && !frozen && <span className="err" role="alert">{error}</span>}
+        <div className="kvrows">
+          <div className="kv"><span>Rack rate</span><span>{formatINR(roomType.rackRate)}</span></div>
+          <div className="kv"><span>Campaign rate</span><span>{formatINR(campRate)}</span></div>
+          <div className="kv"><span>You could recover</span><span style={{ color: 'var(--success-strong, #137a52)' }}>up to {formatINR(recover)}</span></div>
+        </div>
+      </Widget>
+
+      <Widget className="c4 r1 h2" title="What travelers see" subtitle="WhatsApp alert and offer card">
+        <div style={{ position: 'relative', flex: '1 1 0', minHeight: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <img src={asset('udaipur')} alt="Lake Pichola at dusk" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
           <div style={{ position: 'absolute', left: 12, right: 12, top: 16, padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'var(--glass-card)', backdropFilter: 'blur(var(--blur-chrome))', border: '1px solid var(--glass-edge)', display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: '15px', color: 'var(--ink-2)' }}><span style={{ fontWeight: 600 }}>StayStory · Gap Night</span><span>now</span></div>
             <span style={{ fontSize: 13, lineHeight: '18px', fontWeight: 600 }}>{front?.title ?? 'Three days in Udaipur'} just got cheaper</span>
             <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>Anaya’s pick drops to {formatINR(rate)} a night on the dates you saved.</span>
           </div>
         </div>
+        <div aria-hidden="true" style={{ pointerEvents: 'none' }}><Button block variant="primary" tabIndex={-1}>Book at {formatINR(rate)}</Button></div>
+      </Widget>
+
+      <Widget className="c1 span-2 r2" title="Send to travelers who" subtitle={`${matches} travelers match · fronted by ${fronted}`}>
+        {g && (screen === 'released' || screen === 'gap') && (
+          <Banner tone="success" icon="check_circle" title={`${g.rooms} room${g.rooms > 1 ? 's' : ''} released for ${toWords(g.datesLabel)}`}>
+            Sent to {g.sentTo} travelers who saved Anaya’s trip. {g.booked > 0 ? `${g.booked} room${g.booked > 1 ? 's' : ''} booked so far.` : 'No rooms booked yet.'}
+          </Banner>
+        )}
+        <div className="chip-row">
+          {AUDIENCE.map((a) => { const on = frozen ? mine!.audience.includes(a.key) : gap.aud[a.key]; return <Chip key={a.key} selected={on} icon={on ? 'check' : undefined} disabled={frozen} onClick={() => { const cur = ui.get().gap.aud; set({ aud: { ...cur, [a.key]: !cur[a.key] } }); }}>{a.label}</Chip>; })}
+        </div>
+        {blocker && !frozen && !error && <span className="err" role="alert">{blocker}</span>}
+        <div className="tiles" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', flex: '0 0 auto' }}>
+          <Tile size="sm" tone="teal" label="Travelers match" value={String(matches)} />
+          <Tile size="sm" tone="sky" label="Typical booking rate" value="38%" />
+          <Tile size="sm" tone="ochre" label="You could recover" value={formatINR(recover)} />
+        </div>
+      </Widget>
+
+      <Widget className="c3 r2" title="Release" subtitle={`Campaign rate ${formatINR(campRate)}`}>
+        <span style={{ fontSize: 13, lineHeight: '18px' }}>Releasing {rooms} {roomType.name} room{rooms > 1 ? 's' : ''} at {formatINR(rate)} a night sends a WhatsApp alert to {matches} travelers now. Booked rooms come off your channel manager automatically.</span>
+        <div className="row-box" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div className="kv"><span>Rooms</span><span>{rooms} {roomType.name}</span></div>
+          <div className="kv"><span>Rate</span><span>{formatINR(rate)} a night</span></div>
+          <div className="kv"><span>Alerts</span><span>{matches} travelers on WhatsApp</span></div>
+        </div>
+        <div style={{ marginTop: 'auto' }}><Button block variant="primary" size="lg" icon="send" disabled={!canRelease} onClick={() => go('console', 'gapConfirm')}>Release {rooms} room{rooms > 1 ? 's' : ''}</Button></div>
       </Widget>
     </div>
 

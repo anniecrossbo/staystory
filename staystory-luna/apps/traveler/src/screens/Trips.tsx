@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatINR, refundAmount } from '@staystory/core';
 import { Avatar, Badge, Banner, Button, Calendar, Chip, EmptyState, Icon, IconButton, Radio, SegmentedControl, TextField, Toggle, Widget } from '@staystory/ui';
-import { changeOptions, daysUntil, freeCancelUntil, savedStatus, type MBooking, type MTrip } from '@staystory/market';
-import { asset, go, hashFor, sentence, tripHash } from '../lib';
+import { changeOptions, daysUntil, freeCancelUntil, gapForTrip, savedStatus, type MBooking, type MTrip } from '@staystory/market';
+import { asset, go, hashFor, sentence, tripHash, tripName } from '../lib';
 import { useSession } from '../session';
 import { FooterPill, LinkButton, QrCode, Sheet, ToastHost, TravelerDock, useEscape } from '../ui';
 
@@ -76,6 +76,11 @@ function Lists({ screen, upcoming, completed, cancelled, reviewedIds, unreviewed
   const tab = screen === 'empty' ? 'upcoming' : screen;
   const tripOf = (id: string) => s.trips.find((t) => t.id === id);
   const savedTrips = me.savedTripIds.map(tripOf).filter(Boolean) as MTrip[];
+  const offer = useMemo(() => {
+    for (const t of savedTrips) { const g = gapForTrip(s, me.id, t.id); if (g) return { g, t, stay: t.stays.find((x) => x.hotelId === g.hotelId && x.roomTypeId === g.roomTypeId) }; }
+    return undefined;
+  }, [s, me.id, savedTrips]);
+  const rateRow = completed.find((b) => !reviewedIds.has(b.id));
 
   const pastRows = [
     ...completed.map((b) => { const t = tripOf(b.tripId); const done = reviewedIds.has(b.id); return { key: b.id, title: t?.title ?? b.roomName, meta: `${b.datesLabel} · ${t?.stays.find((x) => x.id === b.stayId)?.name ?? b.roomName}`, img: t?.img ?? 'udaipur', status: done ? 'Reviewed' : 'Rate your stay', tone: done ? 'neutral' as const : 'warning' as const, open: () => go('trips', 'review', { b: b.id }) }; }),
@@ -89,26 +94,63 @@ function Lists({ screen, upcoming, completed, cancelled, reviewedIds, unreviewed
   const rows = screen === 'past' ? pastRows : savedRows;
 
   return (<>
-    <div className="scroll">
-      <Head meta={me.name} title="My trips" />
+    <div className="scroll tvx" style={{ gap: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span className="tv-hi">{me.name}</span><span className="tv-title">My trips</span></div>
       <SegmentedControl size="lg" aria-label="Trip lists" value={tab} onChange={(v) => go('trips', v)}
         options={[{ value: 'upcoming', label: 'Upcoming' }, { value: 'past', label: 'Past', count: unreviewed || undefined }, { value: 'saved', label: 'Saved' }]} />
 
-      {(screen === 'upcoming' || screen === 'empty') && (upcoming.length > 0 && screen === 'upcoming' ? upcoming.map((b) => {
-        const t = tripOf(b.tripId); const stay = t?.stays.find((x) => x.id === b.stayId); const n = b.experienceIds.length; const d = daysUntil(b.datesLabel);
-        return (
-          <Widget key={b.id} title={`${t?.place ?? 'Trip'} · ${b.datesLabel}`} subtitle={`${b.status === 'in_house' ? 'Checked in' : d === 0 ? 'Today' : `In ${d} day${d === 1 ? '' : 's'}`} · ${b.guests} adults`}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ position: 'relative', height: 180, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                <img src={asset(t?.img ?? 'udaipur')} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                <div style={{ position: 'absolute', top: 12, left: 12 }}><Badge tone={b.status === 'in_house' ? 'info' : 'success'} dot>{b.status === 'in_house' ? 'Checked in' : 'Confirmed'}</Badge></div>
+      {(screen === 'upcoming' || screen === 'empty') && (upcoming.length > 0 && screen === 'upcoming' ? (<>
+        {upcoming.map((b) => {
+          const t = tripOf(b.tripId); const stay = t?.stays.find((x) => x.id === b.stayId); const d = daysUntil(b.datesLabel);
+          const inHouse = b.status === 'in_house';
+          return (
+            <div key={b.id} className="tv-card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <img src={asset(t?.img ?? 'udaipur')} alt="" style={{ width: '100%', height: 128, objectFit: 'cover', display: 'block' }} />
+              <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span className="ell" style={{ fontSize: 17, lineHeight: '22px', fontWeight: 700, letterSpacing: '-.005em' }}>{t ? tripName(t) : b.roomName}</span>
+                    <span className="ell" style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>{stay?.name ?? b.roomName} · {b.datesLabel}</span>
+                  </span>
+                  <span className="tv-chip ok" style={{ fontSize: 11, padding: '3px 10px', ...(inHouse ? { background: 'var(--primary-tint)', color: 'var(--primary)' } : {}) }}>{inHouse ? 'Checked in' : 'Booked'}</span>
+                </div>
+                <button className="reset" onClick={() => go('trips', 'detail', { b: b.id })} aria-label="Trip details" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F1F5F7', borderRadius: 12, padding: '10px 12px', width: '100%', boxSizing: 'border-box', fontSize: 13, fontWeight: 510 }}>
+                  <span style={{ color: 'var(--primary)', display: 'flex' }}><Icon name="calendar_month" size={15} /></span>
+                  <span style={{ flex: 1 }}>{inHouse ? 'Checked in' : d === 0 ? 'Check-in today' : `Check-in in ${d} day${d === 1 ? '' : 's'}`}</span>
+                  <span style={{ color: 'var(--muted)', display: 'flex' }}><Icon name="chevron_right" size={15} /></span>
+                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="secondary" size="md" icon="confirmation_number" onClick={() => go('trips', 'detail', { b: b.id })} style={{ flex: 1 }}>Voucher</Button>
+                  <Button variant="secondary" size="md" onClick={() => go('trips', 'change', { b: b.id })} style={{ flex: 1 }}>Change dates</Button>
+                </div>
               </div>
-              <span className="body">{stay?.name ?? b.roomName} · {n} experience{n === 1 ? '' : 's'} · via {s.creators[b.creatorId]?.handle}</span>
-              <Button variant="primary" block iconRight="arrow_forward" onClick={() => go('trips', 'detail', { b: b.id })}>Trip details</Button>
             </div>
-          </Widget>
-        );
-      }) : (<>
+          );
+        })}
+        {offer && (
+          <div style={{ background: '#E3F5EE', borderRadius: 20, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 1.2px 3.6px rgba(0,0,0,.03)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="tv-gapbar" style={{ padding: 0, background: 'none' }}><span className="dot"><Icon name="dark_mode" size={18} /></span></span>
+              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 590, color: '#0B6B50' }}>Saved trip is {formatINR(offer.g.campaignRate - offer.g.rate)} cheaper</span>
+                <span style={{ fontSize: 12, lineHeight: '16px', color: 'rgba(11,107,80,.85)' }}>{tripName(offer.t)} · {offer.stay?.name ?? offer.t.place} Gap Night · {offer.g.rooms - offer.g.booked} rooms left</span>
+              </span>
+            </div>
+            <Button variant="primary" size="md" block onClick={() => go('trip', 'foryou', { c: offer.t.creatorId, s: offer.t.slug, from: 'saved' })}>See the offer</Button>
+          </div>
+        )}
+        {rateRow && (() => { const t = tripOf(rateRow.tripId); return (
+          <button className="reset tv-card" onClick={() => go('trips', 'review', { b: rateRow.id })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, width: '100%', boxSizing: 'border-box' }}>
+            <img src={asset(t?.img ?? 'coorg')} alt="" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
+            <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span className="ell" style={{ fontSize: 14, lineHeight: '18px', fontWeight: 590 }}>{t ? tripName(t) : rateRow.roomName}</span>
+              <span style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>Stayed {rateRow.datesLabel}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 590, color: 'var(--primary)' }}><span style={{ display: 'flex', color: '#E6A817' }}><Icon name="star" size={12} /></span>Was it like the reel? Tell us</span>
+            </span>
+            <span style={{ color: 'var(--muted)', display: 'flex' }}><Icon name="chevron_right" size={16} /></span>
+          </button>
+        ); })()}
+      </>) : (<>
         <div style={{ paddingTop: 64 }}><EmptyState icon="luggage" title="No upcoming trips">Trips you book from a creator's link appear here, with vouchers and check-in details.</EmptyState></div>
         <Button variant="primary" size="lg" block icon="explore" onClick={() => go('discover', 'feed')}>Discover trips</Button>
       </>))}

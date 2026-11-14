@@ -5,7 +5,7 @@ import {
   attributionFor, buildBooking, gapForTrip, market, orderedStays, quoteSelection, shortINR, tripDateOptions, tripFromPriceFor, tripNights, freeCancelUntil, TIER_LABEL,
   type MBooking, type MGapNight, type MStay, type MTrip,
 } from '@staystory/market';
-import { asset, clock, copyText, go, ME, SITE, tripHash } from '../lib';
+import { asset, clock, copyText, go, ME, placeLine, SITE, stayDays, tripHash, tripName } from '../lib';
 import { tripFor, useNow, useSession } from '../session';
 import { MapSection } from '../MapSection';
 import { FooterPill, ToastHost, useEscape } from '../ui';
@@ -134,34 +134,67 @@ function TripScreens({ trip, screen, booking }: { trip: MTrip; screen: string; b
     else if (screen === 'booked') go('trips', 'detail', { b: booking?.id });
   };
 
-  return (<>
-    <div className="scroll">
-      <div className="head">
-        <IconButton icon="arrow_back" label="Back" variant="white" onClick={back} />
-        <div className="col1"><span className="m11">{HEAD[screen]![0]}</span><span className="h2" style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{HEAD[screen]![1]}</span></div>
-        {isTripPage && <IconButton icon={saved ? 'bookmark_added' : 'bookmark'} label={saved ? 'Remove from saved trips' : 'Save trip'} variant={saved ? 'primary' : 'white'} onClick={onSave} />}
-      </div>
-      {(isTripPage || isForYou) && (
-        <SegmentedControl size="sm" aria-label="Trip or offers" value={isForYou ? 'foryou' : 'trip'} onChange={(v) => to(v === 'foryou' ? 'foryou' : saved ? 'saved' : 'trip')}
-          options={[{ value: 'trip', label: 'Itinerary' }, { value: 'foryou', label: 'For you', count: gapQ ? 1 : undefined }]} />
-      )}
+  const share = async () => { const link = `${SITE}/${trip.creatorId}/${trip.slug}`; flash((await copyText(link)) ? 'Trip link copied' : `Copy this link: ${link}`); };
+  const onTrip = isTripPage || isForYou;
+  const placeScore = s.reviews.filter((r) => r.tripId === trip.id);
+  const rating = placeScore.length ? (placeScore.reduce((a, r) => a + r.rating, 0) / placeScore.length).toFixed(1) : '4.8';
+  const seg = (
+    <SegmentedControl size="sm" aria-label="Trip or offers" value={isForYou ? 'foryou' : 'trip'} onChange={(v) => to(v === 'foryou' ? 'foryou' : saved ? 'saved' : 'trip')}
+      options={[{ value: 'trip', label: 'Trip' }, { value: 'foryou', label: 'For you', count: gapQ ? 1 : undefined }]} />
+  );
+  const isBooked = screen === 'booked';
+  const showTotal = onTrip || screen === 'customize';
 
-      {isTripPage && <TripPage trip={trip} q={q} saved={saved} />}
-      {screen === 'customize' && <Customize trip={trip} gap={gap} />}
-      {(screen === 'checkout' || screen === 'payfail') && <Checkout trip={trip} q={q} failed={screen === 'payfail'} />}
-      {screen === 'booked' && booking && <Booked trip={trip} b={booking} />}
-      {isForYou && <ForYou trip={trip} screen={screen} gap={gap} gapStay={gapStay} onHold={() => { startHold(trip.id); to('held'); }} onSave={onSave} saved={saved} />}
+  return (<>
+    <div className={onTrip ? 'scroll tvx tvt' : isBooked ? 'scroll tvx tvb' : 'scroll tvx'}>
+      {onTrip ? (<>
+        <div style={{ position: 'relative', height: 300, flexShrink: 0 }}>
+          <img src={asset(trip.img)} alt={`Illustrated ${trip.place}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', top: 'max(54px, env(safe-area-inset-top))', left: 16, right: 16, display: 'flex', justifyContent: 'space-between' }}>
+            <IconButton icon="arrow_back" label="Back" variant="white" onClick={back} />
+            <span style={{ display: 'flex', gap: 8 }}>
+              <IconButton icon="ios_share" label="Share trip" variant="white" onClick={share} />
+              {isTripPage && <IconButton icon="favorite" label={saved ? 'Remove from saved trips' : 'Save trip'} variant={saved ? 'primary' : 'white'} onClick={onSave} />}
+            </span>
+          </div>
+        </div>
+        <div className="tv-sheet">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="tv-av tv-av22"><Avatar initials={creator.ini} size={24} name={creator.name} /></span><span style={{ fontSize: 12, fontWeight: 590, color: 'var(--primary)' }}>Trip by {creator.handle}</span></span>
+            <h1 style={{ margin: 0, fontSize: 28, lineHeight: '34px', fontWeight: 700, letterSpacing: '-.016em' }}>{tripName(trip)}</h1>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, lineHeight: '16px', color: 'var(--muted)', flexWrap: 'wrap' }}>
+              <Icon name="location_on" size={14} />{placeLine(trip.place)}<span>·</span><span style={{ display: 'inline-flex', color: '#E6A817' }}><Icon name="star" size={14} /></span>{rating} · {trip.travelersBooked.toLocaleString('en-IN')} travelers
+            </span>
+          </div>
+          {seg}
+          {isTripPage && <TripPage trip={trip} q={q} saved={saved} />}
+          {isForYou && <ForYou trip={trip} screen={screen} gap={gap} gapStay={gapStay} onHold={() => { startHold(trip.id); to('held'); }} onSave={onSave} saved={saved} />}
+        </div>
+      </>) : (<>
+        {!isBooked && (
+          <div className="head" style={{ justifyContent: 'space-between' }}>
+            <IconButton icon="arrow_back" label="Back" variant="white" onClick={back} />
+            <div className="col1" style={{ alignItems: 'center', textAlign: 'center' }}><span style={{ fontSize: 17, lineHeight: '22px', fontWeight: 590 }}>{HEAD[screen]![1]}</span><span className="m11">{HEAD[screen]![0]}</span></div>
+            <span style={{ width: 40, flexShrink: 0 }} />
+          </div>
+        )}
+        {screen === 'customize' && <Customize trip={trip} gap={gap} />}
+        {(screen === 'checkout' || screen === 'payfail') && <Checkout trip={trip} q={q} failed={screen === 'payfail'} />}
+        {isBooked && booking && <Booked trip={trip} b={booking} onView={next} onShare={share} />}
+      </>)}
     </div>
 
-    <FooterPill gap={screen === 'booked' ? 0 : 12}>
-      {screen !== 'booked' && (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-          <span className="m11">{isForYou && gapQ ? 'Gap Night total for 2' : isTripPage || isForYou ? 'Est. total for 2' : 'Total for 2'}</span>
-          <span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{formatINR(isForYou && gapQ ? gapQ.total : q.total)}</span>
-        </div>
-      )}
-      <Button variant="primary" size="lg" iconRight={cta[screen]![1]} loading={paying} block={screen === 'booked'} onClick={next}>{cta[screen]![0]}</Button>
-    </FooterPill>
+    {!isBooked && (
+      <FooterPill gap={14} className="tv">
+        {showTotal && (
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 1 }}>
+            <span style={{ fontSize: 11, lineHeight: '14px', color: 'var(--muted)' }}>{isForYou && gapQ ? 'Gap Night total for 2' : 'Total for 2 travelers'}</span>
+            <span style={{ fontSize: 20, lineHeight: '24px', fontWeight: 700, letterSpacing: '-.008em' }}>{formatINR(isForYou && gapQ ? gapQ.total : q.total)}</span>
+          </div>
+        )}
+        <Button variant="primary" size="lg" icon={screen === 'checkout' ? 'lock' : undefined} iconRight={screen === 'checkout' || onTrip ? undefined : cta[screen]![1]} loading={paying} block={!showTotal} onClick={next}>{cta[screen]![0]}</Button>
+      </FooterPill>
+    )}
     <ToastHost />
   </>);
 }
@@ -186,6 +219,14 @@ function dayPlan(trip: MTrip, stay: MStay, expIds: string[]) {
   return days;
 }
 
+/** Icon and tint for an itinerary stop. */
+function stopLook(name: string, tag: string) {
+  if (/check in|stay/i.test(name)) return { icon: 'bed', bg: '#E4EDF7', fg: '#4C7FA6' };
+  if (/lunch|dinner|breakfast|cook|food|café|cafe|thali|kitchen|restaurant/i.test(name)) return { icon: 'restaurant', bg: '#FAF0E0', fg: '#B07F2E' };
+  if (/boat|sunset|evening|night|cruise/i.test(name)) return { icon: 'dark_mode', bg: '#E4EDF7', fg: '#4C7FA6' };
+  return { icon: 'location_on', bg: '#E3EFE6', fg: tag === 'Tip' ? '#3F7A52' : '#3F7A52' };
+}
+
 function TripPage({ trip, q, saved }: { trip: MTrip; q: ReturnType<typeof quoteSelection>; saved: boolean }) {
   const { s, selFor } = useSession();
   const creator = s.creators[trip.creatorId]!;
@@ -193,45 +234,32 @@ function TripPage({ trip, q, saved }: { trip: MTrip; q: ReturnType<typeof quoteS
   const days = dayPlan(trip, q.stay, sel.expIds);
   const reviews = s.reviews.filter((r) => r.tripId === trip.id && r.tip.trim());
   return (<>
-    {saved && <Banner tone="success" icon="bookmark_added" title="Saved to your trips">We'll WhatsApp you if the price drops or rooms run low. Credit stays with {creator.handle} for 60 days.</Banner>}
-    <div style={{ position: 'relative', height: 240, borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
-      <img src={asset(trip.img)} alt={`Illustrated ${trip.place}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-      <div style={{ position: 'absolute', left: 12, right: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--glass-bar)', backdropFilter: 'blur(var(--blur-chrome))', border: '1px solid var(--glass-edge)' }}>
-        <Avatar initials={creator.ini} size={34} name={creator.name} />
-        <div className="col1"><span className="t13">{creator.name}</span><span className="m11">{creator.handle} · {creator.followers} followers</span></div>
-        <Badge tone="success" dot>Bookable</Badge>
-      </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-      <StatTile label="Saves" value={trip.saves.toLocaleString('en-IN')} /><StatTile label="Travelers" value={trip.travelersBooked.toLocaleString('en-IN')} /><StatTile label="From, for 2" value={shortINR(tripFromPriceFor(trip))} />
-    </div>
-    <Widget title="Day by day" subtitle={`${trip.days} day${trip.days === 1 ? '' : 's'} · ${tripNights(trip)} night${tripNights(trip) === 1 ? '' : 's'}`}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {days.map((d) => (
-          <div key={d.n} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 0' }}>
-            <span style={label10}>Day {d.n} · {d.title}</span>
-            {d.items.map((st, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44 }}>
-                <img src={asset(st.img)} alt="" style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }} />
-                <div className="col1"><span className="t13 ell">{st.name}</span><span className="m11">{st.meta}</span></div>
-                <Tag hue={st.hue}>{st.tag}</Tag>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </Widget>
-    <MapSection trip={trip} stay={q.stay} />
-    <Widget title="Where you'll stay">
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        <img src={asset(q.stay.img)} alt="" style={{ width: 72, height: 72, borderRadius: 'var(--radius-md)', objectFit: 'cover' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
-          {q.stay.tier === 'creator_pick' ? <Badge tone="vip" icon="star">Creator's pick</Badge> : <Badge tone="neutral">{TIER_LABEL[q.stay.tier]}</Badge>}
-          <span className="t13">{q.stay.name}</span>
-          <span className="m11">{q.stay.desc} · {formatINR(q.nightly)} a night</span>
+    {saved && <Banner tone="success" icon="favorite" title="Saved to your trips">We'll WhatsApp you if the price drops or rooms run low. Credit stays with {creator.handle} for 60 days.</Banner>}
+    {days.map((d) => (
+      <div key={d.n} className="tv-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 16, lineHeight: '20px', fontWeight: 590 }}>Day {d.n} · {d.title}</span>
+          <span style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>{d.items.length} stop{d.items.length === 1 ? '' : 's'}</span>
         </div>
+        {d.items.map((st, i) => { const l = stopLook(st.name, st.tag); return (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span className="tv-ico" style={{ background: l.bg, color: l.fg }}><Icon name={l.icon} size={17} /></span>
+            <div className="col1" style={{ gap: 1 }}><span className="ell" style={{ fontSize: 14, lineHeight: '18px', fontWeight: 590 }}>{st.name}</span><span style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>{st.meta}</span></div>
+            {st.tag === 'Bookable' ? <span className="tv-chip ok">Bookable</span> : <span className="tv-chip" style={{ background: '#E6E8EB', color: '#2C3543' }}>Tip</span>}
+          </div>
+        ); })}
       </div>
-    </Widget>
+    ))}
+    <MapSection trip={trip} stay={q.stay} />
+    <div className="tv-card" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <img src={asset(q.stay.img)} alt="" style={{ width: 84, height: 84, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, flex: 1, minWidth: 0 }}>
+        {q.stay.tier === 'creator_pick' ? <span className="tv-chip pick">{creator.name.split(' ')[0]}’s pick</span> : <span className="tv-chip" style={{ background: '#E6E8EB', color: '#2C3543' }}>{TIER_LABEL[q.stay.tier]}</span>}
+        <span style={{ fontSize: 16, lineHeight: '20px', fontWeight: 590 }}>{q.stay.name}</span>
+        <span style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>{q.stay.desc.split(',')[0]} · {tripNights(trip)} night{tripNights(trip) === 1 ? '' : 's'}</span>
+        <span style={{ fontSize: 12, lineHeight: '15px', fontWeight: 590, color: 'var(--primary)' }}>{formatINR(q.nightly)} a night</span>
+      </div>
+    </div>
     {reviews.length > 0 && (
       <Widget title="Was it like the reel?" subtitle={`${reviews.length} traveler tip${reviews.length === 1 ? '' : 's'}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -307,64 +335,102 @@ function Checkout({ trip, q, failed }: { trip: MTrip; q: ReturnType<typeof quote
   const attr = attributionFor(s, ME, now);
   const creatorId = attr?.creatorId ?? trip.creatorId;
   const handle = (s.creators[creatorId]?.handle ?? '').slice(1);
-  const left = ui.hold?.tripId === trip.id ? Math.max(0, new Date(ui.hold.until).getTime() - now.getTime()) : 0;
+  const holding = ui.hold?.tripId === trip.id;
+  const left = holding ? Math.max(0, new Date(ui.hold!.until).getTime() - now.getTime()) : 0;
   const mm = String(Math.floor(left / 60000)).padStart(2, '0'), ss = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
   const credit = creditLine(handle, attr ? new Date(attr.openedAt) : now);
   const guest = (k: 'name' | 'mobile' | 'email') => ({ value: ui.guest[k], onChange: (e: React.ChangeEvent<HTMLInputElement>) => patchUi({ guest: { ...ui.guest, [k]: e.target.value } }) });
   return (<>
     {failed && <Banner tone="danger" icon="credit_card_off" title="Payment didn't go through">Your UPI app declined the request. No money was taken. Try again or pay by card.</Banner>}
-    <Widget title="Lead guest">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <TextField label="Full name" autoComplete="name" {...guest('name')} />
-        <TextField label="Mobile" icon="call" autoComplete="tel" inputMode="tel" {...guest('mobile')} />
-        <TextField label="Email" icon="mail" hint="Vouchers are sent here" autoComplete="email" inputMode="email" {...guest('email')} />
+    {holding && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FBF0E3', borderRadius: 16, padding: '12px 14px', flexShrink: 0 }}>
+        <span style={{ color: '#B8741A', display: 'flex' }}><Icon name="schedule" size={18} /></span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <span style={{ fontSize: 13, lineHeight: '16px', fontWeight: 590, color: '#B8741A' }}>{left > 0 ? `Your room is held for ${mm}:${ss}` : 'Your hold ended'}</span>
+          <span style={{ fontSize: 11, lineHeight: '14px', color: 'rgba(184,116,26,.85)' }}>{left > 0 ? 'Pay to confirm before the hold ends' : 'We’ll check the rooms are still free when you pay.'}</span>
+        </span>
       </div>
-    </Widget>
-    <Widget title="Pay with">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <SegmentedControl options={[{ value: 'upi', label: 'UPI' }, { value: 'card', label: 'Card' }, { value: 'emi', label: 'EMI' }]} value={ui.pay} onChange={(v) => patchUi({ pay: v as 'upi' | 'card' | 'emi' })} size="sm" aria-label="Payment method" />
-        {ui.pay === 'upi'
-          ? <TextField label="UPI ID" icon="qr_code" value={ui.upi} onChange={(e) => patchUi({ upi: e.target.value })} autoComplete="off" />
-          : <span className="m11">You'll enter your {ui.pay === 'card' ? 'card' : 'EMI card'} details in the secure payment window.</span>}
-      </div>
-    </Widget>
-    <Widget title="Summary" subtitle={`${sel.dateLabel} · 2 adults`}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, lineHeight: '18px' }}>
-        <div className="kv"><span>Stay · {q.stay.name}</span><span>{formatINR(q.roomValue)}</span></div>
-        <div className="kv"><span>Experiences · {q.experienceCount}</span><span>{formatINR(q.experiencesValue)}</span></div>
-        {q.gap
-          ? <div className="kv"><span>Gap Night rate, {formatINR(q.gapSaving / q.nights)} off a night</span><span style={{ color: 'var(--success-ink)', fontWeight: 600 }}>{formatINR(-q.gapSaving)}</span></div>
-          : q.creatorSaving > 0 && <div className="kv"><span>Creator-exclusive saving</span><span style={{ color: 'var(--success-ink)', fontWeight: 600 }}>{formatINR(-q.creatorSaving)}</span></div>}
-        <div style={{ height: 1, background: 'var(--divider)' }} />
-        <div className="kv" style={{ alignItems: 'baseline' }}><span style={{ fontWeight: 600, color: 'var(--ink)' }}>Total</span><span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 700 }}>{formatINR(q.total)}</span></div>
-        <span className="m11">Taxes included. Free cancellation until {freeCancelUntil(sel.dateLabel)}.</span>
-        <span className="m11" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="verified" size={16} />{credit}</span>
-        {ui.hold?.tripId === trip.id && (
-          <span className="m11" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name={left > 0 ? 'timer' : 'timer_off'} size={16} />{left > 0 ? `Rooms held for ${HOLD_MINUTES} minutes · ${mm}:${ss} left to pay` : 'Your hold ended. We’ll check the rooms are still free when you pay.'}</span>
-        )}
-      </div>
-    </Widget>
+    )}
+    <div className="tv-card" style={{ padding: '12px 12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <img src={asset(q.stay.img)} alt="" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+        <span className="ell" style={{ fontSize: 15, lineHeight: '19px', fontWeight: 590 }}>{tripName(trip)}</span>
+        <span className="ell" style={{ fontSize: 12, lineHeight: '15px', color: 'var(--muted)' }}>{q.stay.name} · {q.stay.desc.split(',')[0]}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, lineHeight: '15px', fontWeight: 510, color: 'var(--primary)' }}><Icon name="calendar_month" size={12} />{sel.dateLabel} · 2 travelers</span>
+      </span>
+    </div>
+    <div className="tv-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="tv-row"><span>Stay · {q.stay.name}</span><span>{formatINR(q.roomValue)}</span></div>
+      <div className="tv-row"><span>Experiences · {q.experienceCount}</span><span>{formatINR(q.experiencesValue)}</span></div>
+      {q.gap
+        ? <div className="tv-row" style={{ color: '#0FA37F' }}><span style={{ color: '#0FA37F' }}>Gap Night rate, {formatINR(q.gapSaving / q.nights)} off a night</span><span style={{ color: '#0FA37F' }}>{formatINR(-q.gapSaving)}</span></div>
+        : q.creatorSaving > 0 && <div className="tv-row"><span style={{ color: '#0FA37F' }}>{s.creators[creatorId]?.name.split(' ')[0]}’s follower price</span><span style={{ color: '#0FA37F' }}>{formatINR(-q.creatorSaving)}</span></div>}
+      <div className="tv-row"><span>Taxes and fees</span><span>₹0</span></div>
+      <div className="tv-hr" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: 15, fontWeight: 590 }}>Total</span><span style={{ fontSize: 22, lineHeight: '28px', fontWeight: 700, letterSpacing: '-.008em' }}>{formatINR(q.total)}</span></div>
+      <span className="m11">Taxes included. Free cancellation until {freeCancelUntil(sel.dateLabel)}.</span>
+      <span className="m11" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="verified" size={16} />{credit}</span>
+    </div>
+    <div className="tv-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <span style={{ fontSize: 16, lineHeight: '20px', fontWeight: 590 }}>Pay with</span>
+      <SegmentedControl options={[{ value: 'upi', label: 'UPI' }, { value: 'card', label: 'Card' }, { value: 'emi', label: 'EMI' }]} value={ui.pay} onChange={(v) => patchUi({ pay: v as 'upi' | 'card' | 'emi' })} size="sm" aria-label="Payment method" />
+      {ui.pay === 'upi'
+        ? <TextField label="UPI ID" icon="qr_code" value={ui.upi} onChange={(e) => patchUi({ upi: e.target.value })} autoComplete="off" />
+        : <span className="m11">You'll enter your {ui.pay === 'card' ? 'card' : 'EMI card'} details in the secure payment window.</span>}
+    </div>
+    <div className="tv-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <span style={{ fontSize: 16, lineHeight: '20px', fontWeight: 590 }}>Lead guest</span>
+      <TextField label="Full name" autoComplete="name" {...guest('name')} />
+      <TextField label="Mobile" icon="call" autoComplete="tel" inputMode="tel" {...guest('mobile')} />
+      <TextField label="Email" icon="mail" hint="Vouchers are sent here" autoComplete="email" inputMode="email" {...guest('email')} />
+    </div>
   </>);
 }
 
-function Booked({ trip, b }: { trip: MTrip; b: MBooking }) {
-  const { s, ui } = useSession();
+function Booked({ trip, b, onView, onShare }: { trip: MTrip; b: MBooking; onView: () => void; onShare: () => void }) {
+  const { ui } = useSession();
+  const { s } = useSession();
   const creator = s.creators[b.creatorId];
   const stay = trip.stays.find((x) => x.id === b.stayId);
-  const n = b.experienceIds.length;
+  const cancelled = b.status === 'cancelled';
+  const d = stayDays(b.datesLabel);
+  const via = ui.pay === 'card' ? 'card' : ui.pay === 'emi' ? 'EMI' : 'UPI';
+  const first = creator?.name.split(' ')[0] ?? 'The creator';
   return (<>
-    <div style={{ height: 200, borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}><img src={asset(stay?.img ?? trip.img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <span><Badge tone={b.status === 'cancelled' ? 'danger' : 'success'} icon={b.status === 'cancelled' ? 'cancel' : 'check_circle'}>{b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}</Badge></span>
-      <span className="ttl">Your trip is booked</span>
-      <span className="body">Booking {b.id}. Vouchers sent to {ui.guest.email}.</span>
+    <div style={{ alignSelf: 'center', width: 96, height: 96, borderRadius: 99, background: cancelled ? 'var(--danger-tint)' : '#D9F1E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <span style={{ width: 68, height: 68, borderRadius: 99, background: cancelled ? 'var(--danger-strong)' : '#0FA37F', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name={cancelled ? 'close' : 'check'} size={34} /></span>
     </div>
-    <Widget title={`${trip.place} · ${b.datesLabel}`} subtitle={`${stay?.name ?? b.roomName} · ${n} experience${n === 1 ? '' : 's'}`}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, lineHeight: '18px' }}>
-        <div className="kv"><span>Paid</span><span style={{ fontWeight: 600 }}>{formatINR(b.total)}</span></div>
-        <div className="kv"><span>Booked via</span><span style={{ fontWeight: 600 }}>{creator?.handle ?? ''}</span></div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', textAlign: 'center' }}>
+      <h1 style={{ margin: 0, fontSize: 30, lineHeight: '36px', fontWeight: 700, letterSpacing: '-.018em' }}>{cancelled ? 'Booking cancelled' : 'You’re booked'}</h1>
+      <span style={{ fontSize: 15, lineHeight: '20px', color: 'var(--muted)' }}>{stay?.name ?? b.roomName} is {cancelled ? 'cancelled' : 'confirmed'} for {b.datesLabel}</span>
+    </div>
+    <span style={{ alignSelf: 'center', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 99, background: 'rgba(255,255,255,.8)', border: '1px solid #E7EAED', fontSize: 13, fontWeight: 590, color: 'var(--primary)' }}><Icon name="confirmation_number" size={14} />{b.id}</span>
+    <div className="tv-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <img src={asset(stay?.img ?? trip.img)} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ fontSize: 17, lineHeight: '22px', fontWeight: 700, letterSpacing: '-.005em' }}>{tripName(trip)}</span>
+          <span style={{ fontSize: 13, lineHeight: '16px', color: 'var(--muted)' }}>{stay?.desc.split(',')[0] ?? b.roomName} · {b.guests} travelers</span>
+        </span>
+        <div className="tv-hr" />
+        <div className="tv-row"><span>Check-in</span><span>{d.inn} · from 2 pm</span></div>
+        <div className="tv-row"><span>Check-out</span><span>{d.out} · by 11 am</span></div>
+        <div className="tv-row"><span>{cancelled ? 'Total' : 'Paid'}</span><span style={{ color: cancelled ? 'var(--ink)' : '#0FA37F' }}>{formatINR(b.total)}{cancelled ? '' : ` via ${via}`}</span></div>
       </div>
-    </Widget>
+    </div>
+    {!cancelled && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#E7F6F0', borderRadius: 18, padding: 14, flexShrink: 0 }}>
+        <span style={{ color: 'var(--primary)', display: 'flex' }}><Icon name="chat_bubble" size={18} /></span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
+          <span style={{ fontSize: 13, fontWeight: 590, color: 'var(--primary)' }}>Voucher sent on WhatsApp</span>
+          <span style={{ fontSize: 12, lineHeight: '16px', color: '#15616D' }}>Show it at the front desk. {first} earns a share after you check out.</span>
+        </span>
+      </div>
+    )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <Button variant="primary" size="lg" block icon="luggage" onClick={onView}>View my trip</Button>
+      <Button variant="secondary" size="lg" block icon="ios_share" onClick={onShare}>Share with friends</Button>
+    </div>
   </>);
 }
 

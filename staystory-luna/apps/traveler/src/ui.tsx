@@ -17,7 +17,7 @@ export function useEscape(fn: (() => void) | undefined) {
 
 const DOCK = [
   { id: 'discover', icon: 'explore', label: 'Discover' }, { id: 'trips', icon: 'luggage', label: 'Trips' },
-  { id: 'saved', icon: 'bookmark', label: 'Saved' }, { id: 'me', icon: 'person', label: 'Profile' },
+  { id: 'saved', icon: 'favorite', label: 'Saved' }, { id: 'me', icon: 'person', label: 'Profile' },
 ];
 const TARGET: Record<string, [string, string]> = { discover: ['discover', 'feed'], trips: ['trips', 'upcoming'], saved: ['trips', 'saved'], me: ['me', 'profile'] };
 
@@ -40,8 +40,8 @@ export function ToastHost() {
 }
 
 /** The floating action bar of the booking and trip screens. */
-export function FooterPill({ children, gap = 12, padding = '8px 8px 8px 16px' }: { children: ReactNode; gap?: number; padding?: string }) {
-  return <div className="footer-pill" style={{ gap, padding }}>{children}</div>;
+export function FooterPill({ children, gap = 12, padding = '8px 8px 8px 16px', className = '' }: { children: ReactNode; gap?: number; padding?: string; className?: string }) {
+  return <div className={`footer-pill ${className}`.trim()} style={className ? undefined : { gap, padding }}>{children}</div>;
 }
 
 /** A bottom sheet over the screen with a scrim. Escape and the scrim close it. */

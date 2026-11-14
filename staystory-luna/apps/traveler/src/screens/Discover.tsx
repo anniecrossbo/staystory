@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { liveTrips, pickStay, tripCardPrice, type MTrip } from '@staystory/market';
-import { copyText, asset, cardTitle, compact, go, hashFor, shopHash, SITE, tripHash } from '../lib';
+import { gapForTrip, liveTrips, pickStay, tripCardPrice, type MTrip } from '@staystory/market';
+import { copyText, asset, cardTitle, compact, go, hashFor, shopHash, SITE, tripHash, tripName } from '../lib';
 import { formatINR } from '@staystory/core';
-import { Avatar, Badge, Button, EmptyState, FilterPill, Icon, IconButton, SearchField, SegmentedControl, Skeleton } from '@staystory/ui';
+import { Avatar, Button, Chip, EmptyState, Icon, IconButton, SearchField, SegmentedControl, Skeleton } from '@staystory/ui';
 import { useSession } from '../session';
 import { ToastHost, TravelerDock, useEscape } from '../ui';
 
 export const DISCOVER_SCREENS = ['feed', 'filtered', 'loading', 'empty', 'creator', 'collection'];
-const FILTERS = ['All', 'Heritage', 'Beaches', 'Mountains', 'Under ₹10k'];
-const matches = (t: MTrip, f: string) => (f === 'All' ? true : f === 'Under ₹10k' ? tripCardPrice(t) < 10000 : t.tags.includes(f));
+const FILTERS = ['All', 'Heritage', 'Hills', 'Under ₹10k', 'Beaches'];
+const matches = (t: MTrip, f: string) => (f === 'All' ? true : f === 'Under ₹10k' ? tripCardPrice(t) < 10000 : f === 'Hills' ? t.tags.includes('Mountains') || t.tags.includes('Hills') : t.tags.includes(f));
 const REEL_VIEWS = ['1.2M', '640K', '410K', '388K', '210K', '96K'];
 /** Shop collections. The design's names and counts, each opening the creator's trips that fit. */
 const COLLECTIONS: { id: string; name: string; meta: string; img: string; fits: (t: MTrip) => boolean }[] = [
@@ -58,53 +58,88 @@ export function Discover({ screen }: { screen: string }) {
   useEscape(screen === 'creator' || screen === 'collection' ? () => go('discover', screen === 'collection' ? 'creator' : 'feed', screen === 'collection' ? { c: route.params.c } : undefined) : undefined);
   if (screen === 'creator' || screen === 'collection') return <Shop screen={screen} />;
 
+  // A saved trip with a live Gap Night offer gets a banner above the feed.
+  const offer = useMemo(() => {
+    if (!signedIn) return undefined;
+    for (const id of me.savedTripIds) {
+      const g = gapForTrip(s, me.id, id); const t = s.trips.find((x) => x.id === id);
+      if (g && t) return { g, t, stay: t.stays.find((x) => x.hotelId === g.hotelId && x.roomTypeId === g.roomTypeId) };
+    }
+    return undefined;
+  }, [s, me.id, me.savedTripIds, signedIn]);
+  const [hero, ...rest] = results;
+  const views = (t: MTrip) => REEL_VIEWS[Math.max(0, live.indexOf(t)) % REEL_VIEWS.length]!;
+  const creatorBtn = (c: { id: string; handle: string }, extra?: string) => (
+    <button className="reset" onClick={() => go('discover', 'creator', { c: c.id })} style={{ minHeight: 18, fontSize: 12, lineHeight: '16px', color: 'var(--ink)' }}>{c.handle}{extra}</button>
+  );
+
   return (<>
-    <div className="scroll d128">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 44 }}>
-        <span style={{ flex: 1, display: 'flex', flexDirection: 'column' }}><span className="m11">Good evening, {me.name.split(' ')[0]}</span><span className="ttl">Where to next?</span></span>
-        <button className="reset" onClick={avatar} aria-label={signedIn ? 'Profile' : 'Sign in'} style={{ display: 'flex' }}><Avatar initials="MI" size={40} name={me.name} /></button>
+    <div className="scroll d128 tvx" style={{ gap: 14, paddingTop: 'max(54px, env(safe-area-inset-top))' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span className="tv-hi">Hi {me.name.split(' ')[0]}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className="tv-title">Discover</span>
+          <button className="reset tv-av" onClick={avatar} aria-label={signedIn ? 'Profile' : 'Sign in'} style={{ display: 'flex' }}><Avatar initials="MI" size={40} name={me.name} /></button>
+        </div>
       </div>
-      <div style={{ flexShrink: 0 }}><SearchField placeholder="A place, a vibe or a creator" aria-label="Search trips" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
-      <div className="pills">{FILTERS.map((f) => <FilterPill key={f} selected={filter === f} onClick={() => pick(f)}>{f}</FilterPill>)}</div>
+      <div style={{ flexShrink: 0, position: 'relative' }}>
+        <SearchField placeholder="Search places, creators, stays" aria-label="Search trips" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <span aria-hidden="true" style={{ position: 'absolute', right: 16, top: 0, bottom: 0, display: 'flex', alignItems: 'center', color: 'var(--primary)', pointerEvents: 'none' }}><Icon name="filter_list" size={18} /></span>
+      </div>
+      <div className="pills">{FILTERS.map((f) => <Chip key={f} selected={filter === f} onClick={() => pick(f)}>{f}</Chip>)}</div>
 
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }} aria-busy="true">
-          <Skeleton variant="rect" height={220} style={{ borderRadius: 20 }} /><Skeleton variant="title" width="60%" /><Skeleton variant="text" width="80%" /><Skeleton variant="rect" height={220} style={{ borderRadius: 20 }} /><Skeleton variant="title" width="50%" />
+          <Skeleton variant="rect" height={236} style={{ borderRadius: 26 }} /><Skeleton variant="title" width="60%" /><Skeleton variant="text" width="80%" />
         </div>
       )}
       {!loading && results.length === 0 && (<>
         <div style={{ paddingTop: 48 }}><EmptyState icon="travel_explore" title={`No trips match “${query || filter}”`}>Try a wider budget, or follow creators who cover {query.split(' ')[0] || 'this place'} to hear about new trips.</EmptyState></div>
         <Button variant="secondary" size="lg" block icon="close" onClick={() => { setQuery(''); setFilter('All'); go('discover', 'feed'); }}>Clear search</Button>
       </>)}
-      {!loading && results.length > 0 && (<>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{filter === 'All' ? 'Trending creator trips' : `${filter} trips`}</span>
-          <span className="m11">{results.length} trips · prices for 2</span>
+      {!loading && offer && filter === 'All' && !q && (
+        <a className="tv-gapbar" href={tripHash(offer.t, 'foryou', { from: 'feed' })}>
+          <span className="dot"><Icon name="dark_mode" size={18} /></span>
+          <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <span style={{ fontSize: 14, fontWeight: 590, color: '#0B6B50' }}>{formatINR(offer.g.campaignRate - offer.g.rate)} cheaper tonight</span>
+            <span className="ell" style={{ fontSize: 12, color: 'rgba(11,107,80,.85)' }}>{offer.stay?.name ?? offer.t.place} · {offer.g.datesLabel.replace(' – ', ' to ')} · {offer.g.rooms - offer.g.booked} rooms</span>
+          </span>
+          <Icon name="chevron_right" size={16} />
+        </a>
+      )}
+      {!loading && hero && (
+        <div style={{ position: 'relative', height: 236, borderRadius: 26, overflow: 'hidden', boxShadow: 'var(--shadow-card)', flexShrink: 0, display: 'flex', alignItems: 'flex-end', padding: 12, boxSizing: 'border-box' }}>
+          <img src={asset(hero.img)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <a href={tripHash(hero, 'trip', { from: 'feed' })} aria-label={`${hero.title}, ${hero.place}, from ${formatINR(tripCardPrice(hero))}`} style={{ position: 'absolute', inset: 0 }} />
+          <div className="tv-glass" style={{ position: 'relative', width: '100%', borderRadius: 20, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
+            <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span className="ell" style={{ fontSize: 18, lineHeight: '22px', fontWeight: 700, letterSpacing: '-.006em' }}>{tripName(hero)}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'auto' }}>
+                <span className="tv-av"><Avatar initials={s.creators[hero.creatorId]!.ini} size={24} /></span>
+                {creatorBtn(s.creators[hero.creatorId]!, ` · ${views(hero)} views`)}
+              </span>
+            </span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}><span style={{ fontSize: 10, lineHeight: '13px', color: 'var(--muted)' }}>from</span><span style={{ fontSize: 17, lineHeight: '22px', fontWeight: 700 }}>{formatINR(tripCardPrice(hero))}</span></span>
+          </div>
         </div>
-        {results.map((t) => {
-          const c = s.creators[t.creatorId]!;
-          return (
-            <div key={t.id} className="glass-card" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', flexShrink: 0 }}>
-              <a href={tripHash(t, 'trip', { from: 'feed' })} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }} aria-label={`${t.title}, ${t.place}`}>
-                <div style={{ position: 'relative', height: 176 }}>
-                  <img src={asset(t.img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <div style={{ position: 'absolute', top: 12, right: 12 }}><Badge tone="neutral" icon="bookmark">{compact(t.saves)} saves</Badge></div>
-                </div>
-                <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span className="cap10">{t.place} · {t.days} days</span>
-                  <span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{cardTitle(t)}</span>
-                </div>
-              </a>
-              <div style={{ padding: '12px 20px 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button className="reset" onClick={() => go('discover', 'creator', { c: c.id })} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                  <Avatar initials={c.ini} size={24} /><span className="t13" style={{ color: 'var(--primary)' }}>{c.handle}</span>
-                </button>
-                <span style={{ flex: 1 }} /><span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{formatINR(tripCardPrice(t))}</span>
+      )}
+      {!loading && rest.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, alignItems: 'start' }}>
+          {rest.map((t) => {
+            const c = s.creators[t.creatorId]!;
+            return (
+              <div key={t.id} className="tv-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <a href={tripHash(t, 'trip', { from: 'feed' })} aria-label={`${t.title}, ${t.place}, from ${formatINR(tripCardPrice(t))}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                  <img src={asset(t.img)} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
+                  <span className="ell" style={{ display: 'block', padding: '10px 12px 0', fontSize: 13, lineHeight: '17px', fontWeight: 590 }}>{tripName(t)}</span>
+                </a>
+                <span style={{ padding: '2px 12px 0', display: 'flex' }}><button className="reset ell" onClick={() => go('discover', 'creator', { c: c.id })} style={{ fontSize: 11, lineHeight: '15px', color: 'var(--muted)', minHeight: 18 }}>{c.handle}</button></span>
+                <span style={{ padding: '2px 12px 12px', fontSize: 12, lineHeight: '16px', fontWeight: 590, color: 'var(--primary)' }}>from {formatINR(tripCardPrice(t))}</span>
               </div>
-            </div>
-          );
-        })}
-      </>)}
+            );
+          })}
+        </div>
+      )}
     </div>
     <TravelerDock active="discover" />
     <ToastHost />
@@ -131,7 +166,7 @@ function Shop({ screen }: { screen: string }) {
   const reelTrips = trips.length ? Array.from({ length: 6 }, (_, i) => trips[i % trips.length]!) : [];
 
   return (<>
-    <div className="scroll d128">
+    <div className="scroll d128 tvx">
       <div className="head">
         <IconButton icon="arrow_back" label="Back" variant="white" onClick={back} />
         <span className="col1"><span style={{ fontSize: 16, lineHeight: '22px', fontWeight: 600 }}>{screen === 'collection' ? (col?.name ?? 'Collection') : `${c.name}’s trip shop`}</span><span className="m11">staystory.in/{c.id}</span></span>

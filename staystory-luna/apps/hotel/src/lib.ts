@@ -208,3 +208,37 @@ export function inRange(b: MBooking, r: Range, now = new Date()): boolean {
   const end = new Date(2026 + (m2 < m1 ? 1 : 0), m2, Number(m[4]), 23, 59).getTime();
   return end >= from;
 }
+
+/* ---------- Bookings dashboard (history from the design plus what the live store adds) ---------- */
+const ROOM_BASE: Record<string, number> = { 'lake-deluxe': 22, jharokha: 14, courtyard: 12, heritage: 8 };
+/** Month totals for the summary tiles and the room-type bars. Illustrative history plus the store's bookings. */
+export function bookingFigures(s: MarketState, r: Range = '30') {
+  const total = scaleVol(24, r) + delta(s, () => 1);
+  const nights = scaleVol(58, r) + delta(s, (b) => b.nights);
+  const guests = scaleVol(49, r) + delta(s, (b) => b.guests);
+  const rooms = s.hotel.rooms.map((rt) => ({ id: rt.id, name: rt.name, count: scaleVol(ROOM_BASE[rt.id] ?? 0, r) + delta(s, (b) => (b.roomTypeId === rt.id ? 1 : 0)) }));
+  if (!rooms.some((x) => x.id === 'heritage')) rooms.push({ id: 'heritage', name: 'Heritage Suite', count: scaleVol(ROOM_BASE.heritage!, r) });
+  return { total, nights, guests, avgStay: total ? nights / total : 0, rooms };
+}
+/** Month by month created, confirmed and cancelled bookings (illustrative history). */
+export const OVERVIEW_SERIES = {
+  labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+  created: [62, 74, 112, 128, 118, 140],
+  confirmed: [52, 66, 100, 112, 104, 126],
+  cancelled: [4, 3, 6, 8, 5, 10],
+};
+/** "Dec 19 – 21" gives the arrival "19 Dec" and the departure "21 Dec". */
+export function stayEnds(label: string): { from: string; to: string } {
+  const m = /^([A-Za-z]{3}) (\d{1,2}) – (?:([A-Za-z]{3}) )?(\d{1,2})$/.exec(label.trim());
+  if (!m) return { from: label, to: label };
+  return { from: `${m[2]} ${m[1]}`, to: `${m[4]} ${m[3] ?? m[1]}` };
+}
+/** Last day of a campaign window, e.g. "Nov 15 to Jan 31" gives "31 Jan". */
+export function windowEnd(label: string): string {
+  const m = /([A-Za-z]{3}) (\d{1,2})$/.exec(label.trim());
+  if (m) return `${m[2]} ${m[1]}`;
+  return /december/i.test(label) ? '31 Dec' : label;
+}
+/** Avatar colours for creators and guests (stand-ins for photos). */
+const AV = ['#A9784F', '#5B6F9A', '#8A6A8C', '#6C8A5E', '#9C6B4F', '#4F8A8B', '#B0793A'];
+export const avatarColor = (key: string) => AV[[...key].reduce((n, c) => n + c.charCodeAt(0), 0) % AV.length]!;

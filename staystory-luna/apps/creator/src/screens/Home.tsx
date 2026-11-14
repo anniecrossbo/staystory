@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
-import { formatINR, matchesKeyword, withdrawal } from '@staystory/core';
+import { creatorCommission, formatINR, matchesKeyword, withdrawal } from '@staystory/core';
 import {
-  availableShare, compactCount, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
+  compactCount, countLabel, creatorBalances, creatorInsights, creatorNotifications, creatorOfferViews, latestPendingBooking, ledgerRows, tripDmCount, tripStats, tripVisitsLine,
   market, reelCaption, reelComments, reelInsights, reelRows, useMarket, type LedgerFilter, type MCreator, type OfferView, type RangeKey,
 } from '@staystory/market';
 import {
-  AIAction, AISummary, Avatar, Badge, Banner, Button, Checkbox, Dock, EmptyState, FilterPill, Icon, IconButton, LineChart,
+  AIAction, AISummary, Avatar, Badge, Banner, Button, Checkbox, Dock, EmptyState, Icon, IconButton,
   ProgressBar, SegmentedControl, Skeleton, StatTile, Stepper, TextField, Tag, Toggle, Widget,
 } from '@staystory/ui';
 import { asset, CREATOR_ID } from '../data';
 import type { Go } from '../router';
 import { useUi } from '../store';
 import { payoutErrors } from './Onboard';
-import { CloseFooter, Sheet, travelerHref, tripUrl, useCopy } from '../ui';
+import { AreaChart, CloseFooter, Sheet, travelerHref, tripUrl, useCopy } from '../ui';
 
 export const HOME_SCREENS = ['insights', 'empty', 'trip', 'reel', 'earnings', 'withdrawn', 'offers', 'offerDetail', 'counter', 'accepted', 'profile'];
 const TAB_OF: Record<string, string> = { insights: 'insights', empty: 'insights', trip: 'insights', reel: 'insights', earnings: 'earnings', withdrawn: 'earnings', offers: 'offers', offerDetail: 'offers', counter: 'offers', accepted: 'offers', profile: 'profile' };
 const BACK: Record<string, string> = { trip: 'insights', reel: 'insights', offerDetail: 'offers', counter: 'offerDetail', accepted: 'offers' };
 const SUB = ['trip', 'reel', 'offerDetail', 'counter', 'accepted'];
 const NOTE: Record<string, string> = { 'winter-pichola': 'My Udaipur audience books for Christmas week. Could we run this through January?' };
-const DOCK_BASE = [{ id: 'insights', icon: 'dashboard', label: 'Dashboard' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'handshake', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
+const DOCK_BASE = [{ id: 'insights', icon: 'dashboard', label: 'Dashboard' }, { id: 'earnings', icon: 'account_balance_wallet', label: 'Earnings' }, { id: 'offers', icon: 'redeem', label: 'Offers' }, { id: 'profile', icon: 'person', label: 'Profile' }];
 const shortDate = (iso: string) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso));
 const words = ['no', 'one', 'two', 'three', 'four', 'five'];
 
@@ -34,9 +34,9 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const bal = creatorBalances(s, CREATOR_ID);
   const to = (sc: string, params?: Record<string, string>) => go('app', sc, params);
   const sub = SUB.includes(screen);
-  const newCount = views.filter((o) => o.tab === 'new').length;
   const creatorHandle = s.creators[CREATOR_ID]?.handle ?? '@anaya.explores';
-  const [sheet, setSheet] = useState<null | 'notifications' | 'decline' | 'withdraw' | 'handle' | 'channels' | 'payout' | 'tax' | 'bio'>(null);
+  const [sheet, setSheet] = useState<null | 'notifications' | 'decline' | 'withdraw' | 'handle' | 'channels' | 'payout' | 'tax' | 'bio' | 'prefs'>(null);
+  const [declineId, setDeclineId] = useState<string | null>(null);
   const [counter, setCounter] = useState<{ id: string; pct: number; extras: boolean[]; message: string; tried: boolean } | null>(null);
   const copy = useCopy();
   const reelId = (reelRows(s, CREATOR_ID).find((r) => r.id === q.get('r')) ?? reelRows(s, CREATOR_ID)[0])?.id;
@@ -60,8 +60,8 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   const HEAD: Record<string, [string, string]> = {
     insights: [creatorHandle, 'Dashboard'], empty: ['Welcome, Anaya', 'Dashboard'], trip: [tripUrl(profile.handle, trip?.slug ?? ''), trip?.title ?? 'Trip'],
     reel: [reelView ? `Posted ${reelView.reel.postedLabel}` : creatorHandle, reelView ? `${reelView.reel.place} reel` : 'Reel'],
-    earnings: [creatorHandle, 'Earnings'], withdrawn: [creatorHandle, 'Earnings'], offers: [newCount ? `${newCount} new this week` : 'No new offers', 'Hotel offers'],
-    offerDetail: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], counter: [offer?.hotelName ?? '', 'Counter offer'], accepted: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], profile: ['Anaya Rao', 'Profile'],
+    earnings: [creatorHandle, 'Earnings'], withdrawn: [creatorHandle, 'Earnings'], offers: [creatorHandle, 'Offers'],
+    offerDetail: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], counter: [offer?.hotelName ?? '', 'Counter offer'], accepted: [offer ? `${offer.city} · ${offer.when}` : 'Offer', offer?.hotelName ?? 'Hotel offers'], profile: ['Your account', 'Profile'],
   };
   const noteTarget = (id: string): (() => void) => () => {
     const [kind, ref] = id.split(':');
@@ -77,7 +77,7 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
         {screen === 'accepted' || offer.status === 'accepted'
           ? <div className="grow1"><Button variant="primary" size="lg" block icon="add" onClick={() => { ui.startNewTrip({ place: offer.city, pickHotelId: offer.campaign.hotelId }); go('create', 'pick'); }}>Build a trip with this stay</Button></div>
           : offer.status === 'invited' ? (<>
-            <Button variant="tertiary" size="lg" onClick={() => setSheet('decline')}>Decline</Button>
+            <Button variant="tertiary" size="lg" onClick={() => { setDeclineId(offer.campaign.id); setSheet('decline'); }}>Decline</Button>
             <Button variant="secondary" size="lg" onClick={() => to('counter', { o: offer.campaign.id })}>Counter</Button>
             <div className="grow1"><Button variant="primary" size="lg" block onClick={() => { market.dispatch({ type: 'offer/respond', campaignId: offer.campaign.id, creatorId: CREATOR_ID, response: 'accepted' }); to('accepted', { o: offer.campaign.id }); }}>Accept</Button></div>
           </>) : <div className="grow1"><Button variant="primary" size="lg" block icon="arrow_back" onClick={() => to('offers')}>Back to offers</Button></div>}
@@ -96,25 +96,46 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
   };
 
   return (<>
-    <div className="scroll">
-      <div className="head">
-        {sub ? <IconButton icon="arrow_back" label="Back" variant="white" onClick={() => to(BACK[screen]!, offer && screen !== 'trip' && screen !== 'reel' ? { o: offer.campaign.id } : undefined)} /> : <Avatar initials="AR" size={40} tone="solid" name="Anaya Rao" />}
-        <div className="ttl">
-          <span className="meta">{screen === 'trip' && trip ? <a className="plain" href={travelerHref(trip.slug)} target="_blank" rel="noreferrer" title="Open the follower page">{HEAD.trip![0]}</a> : HEAD[screen]![0]}</span>
-          <span className="h-title">{HEAD[screen]![1]}</span>
+    <div className="scroll home">
+      {!sub ? (
+        <div className="lt">
+          <span className="eyebrow">{HEAD[screen]![0]}</span>
+          <div className="row">
+            <h1>{HEAD[screen]![1]}</h1>
+            {(screen === 'insights' || screen === 'empty') && (
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                <IconButton icon="notifications" label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'} variant="white" onClick={() => setSheet('notifications')} />
+                {unread.length > 0 && <span className="notif-dot" aria-hidden="true" />}
+              </span>
+            )}
+          </div>
         </div>
-        <span style={{ position: 'relative', display: 'inline-flex' }}>
-          <IconButton icon="notifications" label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'} variant="white" onClick={() => setSheet('notifications')} />
-          {unread.length > 0 && <span className="notif-dot" aria-hidden="true" />}
-        </span>
-      </div>
+      ) : screen === 'reel' ? (
+        <div className="nav">
+          <IconButton icon="arrow_back" label="Back" variant="white" onClick={() => to(BACK[screen]!)} />
+          <div className="nav-title"><span className="nt">{HEAD.reel![1]}</span><span className="ns">{HEAD.reel![0]}</span></div>
+          <span className="nav-spacer" aria-hidden="true" />
+        </div>
+      ) : (
+        <div className="head">
+          <IconButton icon="arrow_back" label="Back" variant="white" onClick={() => to(BACK[screen]!, offer && screen !== 'trip' ? { o: offer.campaign.id } : undefined)} />
+          <div className="ttl">
+            <span className="meta">{screen === 'trip' && trip ? <a className="plain" href={travelerHref(trip.slug)} target="_blank" rel="noreferrer" title="Open the follower page">{HEAD.trip![0]}</a> : HEAD[screen]![0]}</span>
+            <span className="h-title">{HEAD[screen]![1]}</span>
+          </div>
+          <span style={{ position: 'relative', display: 'inline-flex' }}>
+            <IconButton icon="notifications" label={unread.length ? `Notifications, ${unread.length} unread` : 'Notifications'} variant="white" onClick={() => setSheet('notifications')} />
+            {unread.length > 0 && <span className="notif-dot" aria-hidden="true" />}
+          </span>
+        </div>
+      )}
 
       {screen === 'insights' && (myTrips.length ? <Insights go={go} /> : <Empty onNew={() => { ui.startNewTrip(); go('create', 'pick'); }} />)}
       {screen === 'empty' && <Empty onNew={() => { ui.startNewTrip(); go('create', 'pick'); }} />}
       {screen === 'trip' && <TripScreen go={go} />}
       {screen === 'reel' && <ReelScreen go={go} reelId={reelId} />}
       {(screen === 'earnings' || screen === 'withdrawn') && <Earnings screen={screen} payout={payoutLabel} onWithdraw={() => setSheet('withdraw')} />}
-      {screen === 'offers' && <Offers views={views} to={to} />}
+      {screen === 'offers' && <Offers views={views} to={to} onDecline={(id) => { setDeclineId(id); setSheet('decline'); }} />}
       {(screen === 'offerDetail' || screen === 'accepted') && (offer ? <OfferDetail v={offer} accepted={offer.status === 'accepted'} /> : <NoOffer to={to} />)}
       {screen === 'counter' && (offer && c && counterErr ? (<>
         <Widget title="Commission you're asking for" subtitle={`${offer.hotelName} offered ${offer.commissionPct}%`}>
@@ -154,10 +175,11 @@ export function Home({ screen, go, q }: { screen: string; go: Go; q: URLSearchPa
           : <EmptyState icon="notifications" title="Nothing new">Offers, bookings and withdrawals show up here.</EmptyState>}
       </Sheet>
     )}
-    {sheet === 'decline' && offer && (
-      <Sheet title={`Decline ${offer.hotelName}?`} subtitle="They will see that you declined. You can still find the offer under Past." onClose={() => setSheet(null)}
-        footer={<><CloseFooter onClose={() => setSheet(null)} label="Keep offer" /><Button variant="danger" onClick={() => { market.dispatch({ type: 'offer/respond', campaignId: offer.campaign.id, creatorId: CREATOR_ID, response: 'declined' }); ui.setOfferTab('past'); flash('Offer declined. It is now under Past.'); to('offers'); }}>Decline offer</Button></>} />
-    )}
+    {sheet === 'decline' && (() => { const d = views.find((o) => o.campaign.id === declineId) ?? offer; return d ? (
+      <Sheet title={`Decline ${d.hotelName}?`} subtitle="They will see that you declined. You can still find the offer under Declined." onClose={() => setSheet(null)}
+        footer={<><CloseFooter onClose={() => setSheet(null)} label="Keep offer" /><Button variant="danger" onClick={() => { market.dispatch({ type: 'offer/respond', campaignId: d.campaign.id, creatorId: CREATOR_ID, response: 'declined' }); ui.setOfferTab('past'); flash('Offer declined. It is now under Declined.'); to('offers'); }}>Decline offer</Button></>} />
+    ) : null; })()}
+    {sheet === 'prefs' && <PrefsSheet close={() => setSheet(null)} />}
     {sheet === 'withdraw' && (() => { const w = withdrawal(bal.available); return (
       <Sheet title={`Withdraw ${formatINR(w.gross)}?`} subtitle={`${formatINR(w.tds)} TDS is deducted at 10%. You receive ${formatINR(w.net)} in ${payoutLabel} in 1 to 2 working days.`} onClose={() => setSheet(null)}
         footer={<><CloseFooter onClose={() => setSheet(null)} label="Not now" /><Button variant="primary" icon="account_balance" onClick={() => { doWithdraw(); to('withdrawn'); }}>Withdraw {formatINR(w.net)}</Button></>} />); })()}
@@ -179,30 +201,31 @@ function Insights({ go }: { go: Go }) {
   return (<>
     <SegmentedControl size="sm" aria-label="Date range" value={range} onChange={(v) => setRange(v as RangeKey)}
       options={[{ value: '7', label: '7 days' }, { value: '30', label: '30 days' }, { value: '90', label: '90 days' }]} />
-    <Widget title="Commission earned" subtitle={m.sub}>
+    <Widget title="Commission earned" subtitle={`Last ${range} days · from ${countLabel(m.bookings)} ${m.bookings === 1 ? 'booking' : 'bookings'}`}>
       <div className="stack gap12">
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}><span className="t-big">{formatINR(m.commission)}</span><Badge tone="success" icon="trending_up">{m.delta}</Badge></div>
-        <LineChart height={120} aria-label="Commission over time" series={[{ name: 'Commission', values: m.values }]} labels={m.labels} />
+        <div className="hero-amt"><span className="amt34">{formatINR(m.commission)}</span><span className="chip chip-up"><Icon name="north_east" size={11} />{m.delta}</span></div>
+        <AreaChart values={m.values} range={Number(range)} label="Commission over time" />
       </div>
     </Widget>
     <div className="tiles">
       <StatTile label="Link visits" value={countLabel(m.visits)} /><StatTile label="Saved trips" value={countLabel(m.saves)} />
       <StatTile label="Bookings" value={countLabel(m.bookings)} /><StatTile label="Conversion" value={m.conv} />
     </div>
-    <AISummary label="AI summary" title="Udaipur is doing the work"
-      bullets={['Udaipur drives 61% of bookings at a 0.42% conversion', 'Followers often switch to the budget stay; keep it listed', 'Coorg visits are up 38% since the monsoon reel']}
-      next="Pin the Udaipur link in your bio before the December long weekend." />
-    <Widget title="Reel performance" subtitle="Since posted · from your Instagram">
-      <div className="stack">
+    <Widget title="Reel performance" subtitle="Views, DMs and bookings per reel">
+      <div className="rlist">
         {rows.map((r) => (
-          <button key={r.id} className="link-row reel-row" onClick={() => go('app', 'reel', { r: r.id })} aria-label={`${r.place} reel, ${reelCaption(r)}${r.hasTrip ? `, ${formatINR(r.commission)} earned` : ', no trip yet'}`}>
-            <img src={asset(r.img)} alt="" className="reel-thumb" />
-            <span className="col1"><span className="t-s">{r.place}</span><span className="t-cap">{reelCaption(r)}</span></span>
-            <span className="reel-end">{r.hasTrip ? <span className="t-s" style={{ color: 'var(--success-ink)' }}>{formatINR(r.commission)}</span> : <Tag hue="ochre">No trip yet</Tag>}{r.topEarner && <Badge tone="success" icon="trending_up">Top earner</Badge>}</span>
+          <button key={r.id} className="link-row reel-line" onClick={() => go('app', 'reel', { r: r.id })} aria-label={`${r.place} reel, ${reelCaption(r)}${r.hasTrip ? `, ${formatINR(r.commission)} earned` : ', no trip yet'}`}>
+            <span className="rthumb"><img src={asset(r.img)} alt="" /><span className="rscrim" /><Icon name="play_arrow" size={16} fill /></span>
+            <span className="col1"><span className="rt">{r.place} reel</span><span className="rc">{compactCount(r.views)} views{r.hasTrip ? ` · ${countLabel(r.dms)} ${r.dms === 1 ? 'DM' : 'DMs'}` : ''}</span></span>
+            {!r.hasTrip && <Tag hue="ochre">No trip yet</Tag>}
+            <span className="muted-ic"><Icon name="chevron_right" size={20} /></span>
           </button>
         ))}
       </div>
     </Widget>
+    <AISummary label="AI summary" title="Udaipur is doing the work"
+      bullets={['Udaipur drives 61% of bookings at a 0.42% conversion', 'Followers often switch to the budget stay; keep it listed', 'Coorg visits are up 38% since the monsoon reel']}
+      next="Pin the Udaipur link in your bio before the December long weekend." />
     <Widget title="Your trip links" count={links.length}>
       <div className="stack">
         {links.map((t) => { const st = tripStats(s, t.id)!; return (
@@ -300,33 +323,39 @@ function ReelScreen({ go, reelId }: { go: Go; reelId?: string }) {
   return (<>
     <div className="reel-hero">
       <img src={asset(reel.img)} alt={`${reel.place} reel`} />
-      <span className="reel-play" aria-hidden="true"><Icon name="play_arrow" size={28} fill /></span>
+      <span className="reel-play" aria-hidden="true"><Icon name="play_arrow" size={22} fill /></span>
     </div>
-    <Button variant="secondary" block icon="open_in_new" onClick={() => { window.open(`https://${reel.url}`, '_blank', 'noopener'); ui.flash('Opening the reel on Instagram'); }}>Open on Instagram</Button>
+    <button className="obtn" onClick={() => { window.open(`https://${reel.url}`, '_blank', 'noopener'); ui.flash('Opening the reel on Instagram'); }}><Icon name="open_in_new" size={16} />Open on Instagram</button>
     <div className="tiles">
       <StatTile label="Views" value={compactCount(i.views)} /><StatTile label="Comments" value={compactCount(i.comments)} />
       <StatTile label="DMs sent" value={countLabel(i.dms)} /><StatTile label="Commission" value={formatINR(i.commission)} />
     </div>
     {trip ? (<>
-      <Widget title="From reel to booking" subtitle="Since posted">
-        <div className="stack gap12">
-          {i.funnel.map((f) => (
-            <div key={f.label} className="stack gap4">
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }} className="t-b"><span style={{ color: 'var(--ink-2)' }}>{f.label}</span><span style={{ fontWeight: 600 }}>{f.label === 'Views' ? compactCount(f.value) : countLabel(f.value)}</span></div>
-              <ProgressBar value={f.w} aria-label={f.label} />
-            </div>
-          ))}
+      <Widget title="From reel to booking" subtitle="Where viewers drop off">
+        <div className="stack" style={{ gap: 14 }}>
+          {(() => {
+            const NAMES: Record<string, string> = { Views: 'Reel views', 'Commented your keyword': 'Keyword comments', 'Got your DM': 'DMs sent', 'Opened the trip': 'Trip link opens', Booked: 'Bookings' };
+            const steps = i.funnel.filter((f) => NAMES[f.label]);
+            const pctOf = (v: number, prev: number) => { if (!prev) return ''; const p = (v / prev) * 100; return `${p >= 10 ? Math.round(p) : p >= 1 ? (Math.round(p * 10) / 10) : (Math.round(p * 100) / 100)}%`; };
+            return steps.map((f, n) => (
+              <div key={f.label} className="fstep">
+                <div className="frow"><span className="fl">{NAMES[f.label]}</span><span className="fr">{n > 0 && <span className="fp">{pctOf(f.value, steps[n - 1]!.value)}</span>}<span className="fv">{f.label === 'Views' ? compactCount(f.value) : countLabel(f.value)}</span></span></div>
+                <div className="ftrack" role="progressbar" aria-label={NAMES[f.label]} aria-valuenow={f.w} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${f.w}%`, opacity: [1, 0.86, 0.81, 0.69, 0.55][n] ?? 0.55 }} /></div>
+              </div>
+            ));
+          })()}
           <div className="t-cap">{i.openRate} of viewers opened the trip.</div>
         </div>
       </Widget>
-      <Widget title="Auto-DM" subtitle={on ? `Answers “${trip.dmKeyword}” comments` : 'Off. Keyword comments get no DM'}>
-        <div className="stack gap12">
-          <span className="t-b">{countLabel(i.dms)} of {countLabel(i.keywordComments)} keyword comments were answered with a DM.</span>
-          <Toggle checked={on} onChange={(v) => saveKeyword(v, kw)} label={on ? 'Auto-DM is on' : 'Auto-DM is off'} />
-          <TextField label="Change keyword" value={kw} disabled={!on} hint="Anyone who comments this on your reel gets the trip in their DMs"
-            onChange={(e) => setKw(e.target.value.replace(/\s/g, '').toLowerCase())} onBlur={() => saveKeyword(on, kw)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { saveKeyword(on, kw); (e.target as HTMLElement).blur(); } }} />
+      <Widget>
+        <div className="adm-head">
+          <span className="col1"><span className="adm-t">Auto-DM</span><span className="adm-s">{on ? 'Send the trip link when someone comments the keyword' : 'Off. Keyword comments get no DM'}</span></span>
+          <Toggle checked={on} onChange={(v) => saveKeyword(v, kw)} aria-label={on ? 'Auto-DM is on' : 'Auto-DM is off'} />
         </div>
+        <span className="t-cap">{countLabel(i.dms)} of {countLabel(i.keywordComments)} keyword comments were answered with a DM.</span>
+        <TextField label="Change keyword" value={kw} disabled={!on} hint="Anyone who comments this on your reel gets the trip in their DMs"
+          onChange={(e) => setKw(e.target.value.replace(/\s/g, '').toLowerCase())} onBlur={() => saveKeyword(on, kw)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { saveKeyword(on, kw); (e.target as HTMLElement).blur(); } }} />
       </Widget>
       <Widget title="Recent comments" count={comments.length || undefined}>
         {comments.length ? (
@@ -355,7 +384,7 @@ function ReelScreen({ go, reelId }: { go: Go; reelId?: string }) {
 
 function Earnings({ screen, payout, onWithdraw }: { screen: string; payout: string; onWithdraw: () => void }) {
   const s = useMarket();
-  const { ledgerFilter, setLedgerFilter } = useUi();
+  const { ledgerFilter, setLedgerFilter, profile } = useUi();
   const bal = creatorBalances(s, CREATOR_ID);
   const byId = new Map(s.ledger.map((l) => [l.id, l]));
   const rows = ledgerRows(s, CREATOR_ID, ledgerFilter).filter((r) => !byId.get(r.id)?.summary).map((r) => ({ ...r, ini: byId.get(r.id)?.ini ?? (r.raw === 'processing' ? 'NV' : r.ini) }));
@@ -368,55 +397,81 @@ function Earnings({ screen, payout, onWithdraw }: { screen: string; payout: stri
   const none = bal.available <= 0;
   return (<>
     {screen === 'withdrawn' && w && <Banner tone="success" icon="check_circle" title={`${formatINR(w.net)} on its way`}>{formatINR(w.gross)} less {formatINR(w.tds)} TDS.{pb && paidBooking ? ` Includes ${formatINR(paidBooking.amount)} from ${pb.guestName.replace(/ [A-Z]\.$/, '')}’s ${s.trips.find((t) => t.id === pb.tripId)?.place ?? ''} trip, confirmed by the hotel after checkout.` : ''} Arrives in {w.upi} in 1 to 2 working days.</Banner>}
-    {nb && <Banner {...({ tone: 'info' } as object)} icon="celebration" title={`New booking from your ${place} trip`}>{nb.guest} booked {nb.dates} at {nb.hotelName}{nExp ? ` with ${words[nExp] ?? nExp} ${nExp === 1 ? 'experience' : 'experiences'}` : ''}. {formatINR(nb.amount)} becomes available after they check out.</Banner>}
-    <Widget title="Available to withdraw" subtitle={`Paid to ${payout} · 10% TDS`}>
-      <div className="stack gap12">
-        <span className="t-big">{formatINR(bal.available)}</span>
-        <ProgressBar value={availableShare(bal)} aria-label="Share available" />
-        <span className="t-cap">{formatINR(bal.pending)} more unlocks when guests check out</span>
-        <Button variant="primary" size="lg" block icon="account_balance" disabled={none} onClick={onWithdraw}>{none ? (screen === 'withdrawn' || w ? 'Withdrawal requested' : 'Nothing to withdraw') : `Withdraw ${formatINR(bal.available)}`}</Button>
-      </div>
-    </Widget>
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      {(['All', 'Available', 'Pending stay', 'Paid'] as LedgerFilter[]).map((f) => <FilterPill key={f} size="sm" selected={ledgerFilter === f} onClick={() => setLedgerFilter(f)}>{f}</FilterPill>)}
+    <div className="balance">
+      <div className="bal-top"><span className="bal-l">Available to withdraw</span><span className="bal-amt">{formatINR(bal.available)}</span></div>
+      {bal.pending > 0 && <div className="bal-pend"><span className="chip chip-glass"><Icon name="auto_awesome" size={12} fill />{formatINR(bal.pending)} pending until check-out</span></div>}
+      <button className="wbtn" disabled={none} onClick={onWithdraw}>{!none && <Icon name="arrow_downward" size={16} />}{none ? (screen === 'withdrawn' || w ? 'Withdrawal requested' : 'Nothing to withdraw') : `Withdraw ${formatINR(bal.available)}`}</button>
+      <span className="bal-foot">Paid to {profile.payMode === 'upi' ? 'UPI ' : ''}{payout} · 10% TDS is deducted at withdrawal</span>
     </div>
-    <Widget title="Activity">
-      {rows.length ? (
-        <div className="stack">
-          {rows.map((r) => (
-            <div key={r.id} className="line" style={{ minHeight: 56 }}>
-              <Avatar initials={r.ini} size={34} tone="muted" />
-              <span className="col1"><span className="t-s">{r.title}</span><span className="t-cap">{r.meta}</span></span>
-              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}><span className="t-s">{r.amt}</span><Badge tone={r.tone}>{r.status}</Badge></span>
-            </div>
-          ))}
+    {nb && (
+      <div className="note-ok">
+        <span className="note-ic"><Icon name="check" size={18} /></span>
+        <span className="col1"><span className="n1">New booking from your {place} reel</span><span className="n2">{nb.guest.replace(/ ([A-Z])[a-z]+$/, ' $1.')} · {nb.booking.roomName} · {formatINR(nb.amount)} pending</span></span>
+      </div>
+    )}
+    <div className="fchips" role="group" aria-label="Activity filter">
+      {([['All', 'All'], ['Pending stay', 'Pending'], ['Available', 'Available'], ['Paid', 'Paid']] as [LedgerFilter, string][]).map(([f, l]) => <button key={f} className="fchip" aria-pressed={ledgerFilter === f} onClick={() => setLedgerFilter(f)}>{l}</button>)}
+    </div>
+    <div className="ledger">
+      {rows.length ? rows.map((r) => (
+        <div key={r.id} className="lrow">
+          <span className="col1"><span className="lt1">{r.title}</span><span className="lt2">{r.meta}</span></span>
+          <span className="lend"><span className="lamt">{r.amt}</span><span className={`chip chip-s chip-${r.tone === 'warning' ? 'warn' : r.tone === 'success' ? 'ok' : 'mute'}`}>{r.status === 'Pending stay' ? 'Pending' : r.status}</span></span>
         </div>
-      ) : <EmptyState icon="receipt_long" title="Nothing here yet" action={<Button variant="secondary" size="sm" onClick={() => setLedgerFilter('All')}>Show all activity</Button>}>No {ledgerFilter.toLowerCase()} activity.</EmptyState>}
-    </Widget>
+      )) : <EmptyState icon="receipt_long" title="Nothing here yet" action={<Button variant="secondary" size="sm" onClick={() => setLedgerFilter('All')}>Show all activity</Button>}>No {ledgerFilter.toLowerCase()} activity.</EmptyState>}
+    </div>
   </>);
 }
 
-function Offers({ views, to }: { views: OfferView[]; to: (s: string, p?: Record<string, string>) => void }) {
+function Offers({ views, to, onDecline }: { views: OfferView[]; to: (s: string, p?: Record<string, string>) => void; onDecline: (id: string) => void }) {
   const { offerTab: tab, setOfferTab } = useUi();
+  const s = useMarket();
+  const me: MCreator | undefined = s.creators[CREATOR_ID];
   const count = (t: string) => views.filter((o) => o.tab === t).length;
   const list = views.filter((o) => o.tab === tab);
+  const statusChip = (o: OfferView) => (o.status === 'invited' ? 'New offer' : o.status === 'accepted' ? 'Accepted' : o.status === 'countered' ? 'Counter sent' : 'Declined');
   return (<>
     <SegmentedControl size="sm" aria-label="Offer status" value={tab} onChange={(v) => setOfferTab(v as typeof tab)}
-      options={[{ value: 'new', label: 'New', count: count('new') || undefined }, { value: 'active', label: 'Active' }, { value: 'past', label: 'Past' }]} />
-    {list.length === 0 && <EmptyState icon={tab === 'new' ? 'mail' : tab === 'active' ? 'handshake' : 'history'} title={tab === 'new' ? 'No new offers' : tab === 'active' ? 'No active offers' : 'No past offers'} action={tab !== 'new' ? <Button variant="secondary" size="sm" onClick={() => setOfferTab('new')}>See new offers</Button> : undefined}>{tab === 'new' ? 'Hotels send offers when your audience matches their guests. Keep posting and they will come.' : tab === 'active' ? 'Offers you accept or counter move here. Check New for pending ones.' : 'Declined offers show up here.'}</EmptyState>}
-    {list.map((o) => (
-      <Widget key={o.campaign.id} title={o.listTitle} subtitle={`${o.city} · ${o.when}`}>
-        <div className="stack gap12">
-          <img src={asset(o.img)} alt="" style={{ width: '100%', height: 132, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
-          <span className="t-b2">{o.headline}</span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Tag hue="moss">{o.agreedPct ?? o.commissionPct}% commission</Tag><Tag hue="ochre">{o.perk}</Tag></div>
-          {o.status === 'countered' && <div><Badge tone="info" icon="schedule">Counter sent · waiting for the hotel</Badge></div>}
-          {o.status === 'accepted' && <div><Badge tone="success" icon="check">Accepted</Badge></div>}
-          {o.status === 'declined' && <div><Badge tone="neutral">Declined</Badge></div>}
-          <Button variant="secondary" block iconRight="arrow_forward" onClick={() => to(o.status === 'accepted' ? 'accepted' : 'offerDetail', { o: o.campaign.id })}>{o.status === 'invited' ? 'Review offer' : 'View offer'}</Button>
-        </div>
-      </Widget>
-    ))}
+      options={[{ value: 'new', label: `New${count('new') ? ` ${count('new')}` : ''}` }, { value: 'active', label: `Accepted${count('active') ? ` ${count('active')}` : ''}` }, { value: 'past', label: 'Declined' }]} />
+    {list.length === 0 && <EmptyState icon={tab === 'new' ? 'mail' : tab === 'active' ? 'handshake' : 'history'} title={tab === 'new' ? 'No new offers' : tab === 'active' ? 'No accepted offers' : 'No declined offers'} action={tab !== 'new' ? <Button variant="secondary" size="sm" onClick={() => setOfferTab('new')}>See new offers</Button> : undefined}>{tab === 'new' ? 'Hotels send offers when your audience matches their guests. Keep posting and they will come.' : tab === 'active' ? 'Offers you accept or counter move here. Check New for pending ones.' : 'Declined offers show up here.'}</EmptyState>}
+    {list.map((o) => {
+      const pct = o.agreedPct ?? o.commissionPct;
+      const open = () => to(o.status === 'accepted' ? 'accepted' : 'offerDetail', { o: o.campaign.id });
+      const trip = s.trips.find((t) => t.creatorId === CREATOR_ID && t.place === o.city);
+      return (
+        <article key={o.campaign.id} className="ocard">
+          <button className="ophoto" onClick={open} aria-label={`${o.status === 'invited' ? 'Review' : 'View'} offer from ${o.hotelName}`}>
+            <img src={asset(o.img)} alt="" />
+            <span className="oscrim" />
+            <span className="ohead">
+              <span className="ohotel"><span className="on">{o.hotelName}</span>{o.city && <span className="oc"><Icon name="location_on" size={11} fill />{o.city}</span>}</span>
+              <span className="chip chip-white">{statusChip(o)}</span>
+            </span>
+          </button>
+          <div className="obody">
+            <div className="otitles"><span className="o1">{o.listTitle}</span><span className="o2">{o.roomName} · {o.campaign.nights} nights · {o.when}</span></div>
+            <div className="otiles">
+              <span className="ot ot1"><span className="ol">Commission</span><span className="ov">{pct}%</span></span>
+              <span className="ot ot2"><span className="ol">Follower price</span><span className="ov">{formatINR(o.followerPrice)}</span></span>
+              <span className="ot ot3"><span className="ol">You earn</span><span className="ov">{formatINR(creatorCommission(o.followerPrice, pct))}</span></span>
+            </div>
+            <div className="omatch">
+              {me?.campaignScore && <span className="chip chip-ok"><Icon name="auto_awesome" size={11} fill />{me.campaignScore} match</span>}
+              <span className="om">{trip ? `${trip.travelersBooked} of your followers saved ${o.city}` : o.why.split('. ')[0]!.replace(/\.$/, '')}</span>
+            </div>
+            {o.status === 'invited' ? (
+              <div className="oact">
+                <button className="pbtn pbtn-fill" onClick={() => { market.dispatch({ type: 'offer/respond', campaignId: o.campaign.id, creatorId: CREATOR_ID, response: 'accepted' }); to('accepted', { o: o.campaign.id }); }}><Icon name="check" size={15} />Accept</button>
+                <button className="pbtn pbtn-line" onClick={() => to('counter', { o: o.campaign.id })}>Counter</button>
+                <button className="pbtn pbtn-text" onClick={() => onDecline(o.campaign.id)}>Decline</button>
+              </div>
+            ) : (
+              <div className="oact"><button className="pbtn pbtn-line" onClick={open}>View offer<Icon name="arrow_forward" size={15} /></button></div>
+            )}
+          </div>
+        </article>
+      );
+    })}
   </>);
 }
 
@@ -466,80 +521,87 @@ function OfferDetail({ v, accepted }: { v: OfferView; accepted: boolean }) {
   </>);
 }
 
-function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payout' | 'tax' | 'bio') => void }) {
+function Profile({ go, open }: { go: Go; open: (k: 'handle' | 'channels' | 'payout' | 'tax' | 'bio' | 'prefs') => void }) {
   const s = useMarket();
-  const { profile: p, prefs, setPrefs, flash } = useUi();
+  const { profile: p, prefs, flash } = useUi();
   const copy = useCopy();
   const me: MCreator | undefined = s.creators[CREATOR_ID];
   const myTrips = s.trips.filter((t) => t.creatorId === CREATOR_ID);
+  const live = myTrips.filter((t) => t.status !== 'paused').length;
   const connected = Object.values(p.channels).filter(Boolean).length;
-  const rows: ['handle' | 'channels' | 'payout' | 'tax', string, string, string][] = [
-    ['handle', 'link', 'Handle and link', `/${p.handle}`], ['channels', 'photo_camera', 'Connected channels', String(connected)],
-    ['payout', 'account_balance', 'Payout method', p.payMode === 'upi' ? 'UPI' : 'Bank'], ['tax', 'receipt_long', 'Tax details', /^[A-Z]{5}\d{4}[A-Z]$/i.test(p.pan) ? 'PAN added' : 'Add PAN'],
+  const handle = me?.handle ?? `@${p.handle}`;
+  const notePart = [prefs.booking && 'Bookings', prefs.offers && 'offers', prefs.weekly && 'weekly summary'].filter(Boolean) as string[];
+  const rows: ['handle' | 'channels' | 'payout' | 'tax' | 'prefs', string, string, string][] = [
+    ['payout', 'account_balance', 'Payout method', p.payMode === 'upi' ? `UPI · ${p.upi}` : `Bank account · ending ${p.account.replace(/\s/g, '').slice(-4) || '0000'}`],
+    ['channels', 'photo_camera', 'Instagram', p.channels.ig ? `Connected · ${handle}${connected > 1 ? ` and ${connected - 1} more` : ''}` : connected ? `${connected} connected` : 'Not connected'],
+    ['handle', 'link', 'Handle and link', `staystory.in/${p.handle}`],
+    ['tax', 'receipt_long', 'Tax details', /^[A-Z]{5}\d{4}[A-Z]$/i.test(p.pan) ? 'PAN added' : 'Add PAN'],
+    ['prefs', 'notifications', 'Notifications', notePart.length ? `${notePart.join(notePart.length > 2 ? ', ' : ' and ')} on` : 'All off'],
   ];
   return (<>
+    <div className="pcard">
+      <div className="ptop">
+        <span className="pav" aria-hidden="true">{me?.ini ?? 'AR'}</span>
+        <div className="col1" style={{ gap: 3 }}>
+          <span className="pname">{me?.name ?? 'Anaya Rao'}</span>
+          <span className="phandle">{handle}</span>
+          {me?.niche && <span className="chip chip-s chip-moss" style={{ alignSelf: 'flex-start' }}>{me.niche}</span>}
+        </div>
+      </div>
+      {me && (
+        <div className="pstats">
+          <span className="pst"><span className="pv">{me.followers}</span><span className="pl">Followers</span></span>
+          <span className="pst"><span className="pv">{me.tripsCount}</span><span className="pl">Trips</span></span>
+          <span className="pst"><span className="pv">{me.travelers ?? '0'}</span><span className="pl">Travelers</span></span>
+        </div>
+      )}
+      <button className="bio-btn" onClick={() => open('bio')}>{p.bio || 'Add a bio'} <Icon name="edit" size={14} /></button>
+      {p.regions.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{p.regions.map((r) => <Tag key={r} hue="charcoal">{r}</Tag>)}</div>
+      )}
+    </div>
     {myTrips.length > 0 && (
-      <Widget title="Your trip links" count={myTrips.length}>
-        <div className="stack">
+      <Widget title="Your trip links" subtitle="Share these in your bio and DMs" action={<span className="chip chip-ok">{live} live</span>}>
+        <div className="rlist">
           {myTrips.map((t) => {
             const st = tripStats(s, t.id);
             return (
-              <div key={t.id} className="line" style={{ padding: '8px 0' }}>
-                <button className="link-row" onClick={() => go('app', 'trip', { t: t.id })}>
-                  <img src={asset(t.img)} alt="" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', objectFit: 'cover' }} />
-                  <span className="col1"><span className="t-s">{t.title}</span><span className="t-cap">{st ? tripVisitsLine(st) : 'No data yet'}{t.status === 'paused' ? ' · paused' : ''}</span></span>
+              <div key={t.id} className="plink">
+                <button className="link-row plink-t" onClick={() => go('app', 'trip', { t: t.id })}>
+                  <span className="col1"><span className="lt1">{t.title}</span><span className="lt2">{tripUrl(p.handle, t.slug)}{st ? ` · ${countLabel(st.visits)} opens` : ''}{t.status === 'paused' ? ' · paused' : ''}</span></span>
                 </button>
-                <Button variant="secondary" size="sm" icon="content_copy" onClick={() => copy(`https://${tripUrl(p.handle, t.slug)}`)}>Copy</Button>
+                <button className="cbtn" aria-label={`Copy link for ${t.title}`} onClick={() => copy(`https://${tripUrl(p.handle, t.slug)}`)}><Icon name="content_copy" size={15} /></button>
+                <a className="cbtn" aria-label={`Open ${t.title} as followers see it`} href={travelerHref(t.slug)} target="_blank" rel="noreferrer"><Icon name="open_in_new" size={15} /></a>
               </div>
             );
           })}
         </div>
       </Widget>
     )}
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '8px 0 4px' }}>
-      <Avatar initials={me?.ini ?? 'AR'} size={48} tone="solid" name={me?.name ?? 'Anaya Rao'} />
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <span className="t-s" style={{ fontSize: 16, fontWeight: 700 }}>{me?.name ?? 'Anaya Rao'}</span>
-        <span className="t-cap">{me?.handle ?? `@${p.handle}`} · {me?.followers ?? '0'} followers</span>
-        {me?.niche && <Tag hue="moss">{me.niche}</Tag>}
-      </div>
-      <button className="t-cap" onClick={() => open('bio')} style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--ink-2)', padding: 0 }}>
-        {p.bio || 'Add a bio'} <Icon name="edit" size={14} />
-      </button>
+    <div className="settings">
+      {rows.map(([k, icon, label, value]) => (
+        <button key={k} className="srow" onClick={() => open(k)}>
+          <span className="sic"><Icon name={icon} size={18} /></span>
+          <span className="col1"><span className="st1">{label}</span><span className="st2">{value}</span></span>
+          <span className="muted-ic"><Icon name="chevron_right" size={20} /></span>
+        </button>
+      ))}
     </div>
-    {me && (
-      <div className="tiles" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-        <StatTile label="Trips" value={me.tripsCount} />
-        <StatTile label="Conversion" value={me.conv ?? '—'} />
-        <StatTile label="Score" value={me.score ?? '—'} />
-      </div>
-    )}
-    {p.regions.length > 0 && (
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {p.regions.map((r) => <Tag key={r} hue="charcoal">{r}</Tag>)}
-      </div>
-    )}
-    <Widget title="Storefront" subtitle={`staystory.in/${p.handle}`}>
-      <div className="stack">
-        {rows.map(([k, icon, label, value]) => (
-          <button key={k} className="line" onClick={() => open(k)} style={{ minHeight: 48, width: '100%', border: 0, borderBottom: '1px solid var(--divider)', background: 'transparent', padding: 0, cursor: 'pointer', color: 'inherit', textAlign: 'left' }}>
-            <span className="muted-ic"><Icon name={icon} size={20} /></span>
-            <span className="t-b" style={{ flex: 1 }}>{label}</span>
-            <span className="t-cap">{value}</span>
-            <span className="muted-ic"><Icon name="chevron_right" size={20} /></span>
-          </button>
-        ))}
-      </div>
-    </Widget>
-    <Widget title="Notifications">
+    <Button variant="tertiary" size="lg" block icon="logout" onClick={() => { flash('Logged out'); go('onboard', 'welcome'); }}>Log out</Button>
+  </>);
+}
+
+function PrefsSheet({ close }: { close: () => void }) {
+  const { prefs, setPrefs } = useUi();
+  return (
+    <Sheet title="Notifications" subtitle="Choose what we tell you about" onClose={close} footer={<CloseFooter onClose={close} label="Done" />}>
       <div className="stack gap16">
         <Toggle checked={prefs.booking} onChange={(v) => setPrefs({ booking: v })} label="New booking alerts" />
         <Toggle checked={prefs.offers} onChange={(v) => setPrefs({ offers: v })} label="Hotel offers" />
         <Toggle checked={prefs.weekly} onChange={(v) => setPrefs({ weekly: v })} label="Weekly summary email" />
       </div>
-    </Widget>
-    <Button variant="tertiary" size="lg" block icon="logout" onClick={() => { flash('Logged out'); go('onboard', 'welcome'); }}>Log out</Button>
-  </>);
+    </Sheet>
+  );
 }
 
 function ProfileSheet({ kind, close }: { kind: 'handle' | 'channels' | 'payout' | 'tax' | 'bio'; close: () => void }) {

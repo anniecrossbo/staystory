@@ -79,7 +79,7 @@ export function Campaigns({ screen, go }: { screen: string; go: Go }) {
       </div>
     </div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+    <div className="lu-grid fill cr-grid camp-grid">
       {rows.map((c) => {
         const prog = campaignProgress(s, c);
         const bks = campaignBookings(s, c);
@@ -87,8 +87,7 @@ export function Campaigns({ screen, go }: { screen: string; go: Go }) {
         const creators = campaignCreators(s, c);
         const room = s.hotel.rooms.find((r) => r.id === c.roomTypeId);
         return (
-          <div key={c.id} style={{ minWidth: 0 }}>
-            <Widget title={c.name} subtitle={c.windowLabel}>
+          <Widget key={c.id} title={c.name} subtitle={c.windowLabel}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   <Badge tone={STATUS_HUE[c.status] ?? 'info'} dot>{c.status === 'live' ? 'Live' : c.status === 'paused' ? 'Paused' : 'Ended'}</Badge>
@@ -118,8 +117,7 @@ export function Campaigns({ screen, go }: { screen: string; go: Go }) {
                   <Button block variant="secondary" icon="campaign" onClick={() => { setDetail(c.id); go('console', `campaignDetail?id=${c.id}`); }}>View campaign</Button>
                 </div>
               </div>
-            </Widget>
-          </div>
+          </Widget>
         );
       })}
       {rows.length === 0 && (
