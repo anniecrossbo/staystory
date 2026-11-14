@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { formatINR } from '@staystory/core';
-import { Avatar, Badge, Banner, Button, FilterPill, SearchField, SideSheet, StatTile, Tag, Widget } from '@staystory/ui';
+import { Avatar, Badge, Banner, Button, FilterPill, Modal, SearchField, StatTile, Tag, Widget } from '@staystory/ui';
 import { hotelBookings, market, useMarket, type InviteStatus, type MBooking, type MCreator, type MarketState } from '@staystory/market';
-import { Overlay } from '../components';
+import { Av, Overlay } from '../components';
 import { inviteCreator, type Go } from '../actions';
 import { asset, commissionLabel, CREATOR_BASE, inRange, liveCampaigns, longDates, matchedCreators, STATUS_LABEL, STATUS_TONE } from '../lib';
 import { ui, useUi } from '../ui';
@@ -70,52 +70,80 @@ export function Creators({ screen, go }: { screen: string; go: Go }) {
   const detailCreator = detail ? s.creators[detail] : undefined;
   const close = () => { setDetail(null); if (screen === 'creatorDetail') go('console', 'creators'); };
 
+  const matchedRows = rows.filter((m) => matched.has(m.id));
+  const openProfile = (id: string) => { setDetail(id); go('console', `creatorDetail?c=${id}`); };
+  const invitedCount = matchedRows.filter((m) => inviteStatus(m.id)).length;
+  const label = (m: MCreator) => {
+    const st = inviteStatus(m.id);
+    if (st === 'invited') return { text: 'Awaiting reply', tone: 'warning' as const, sub: m.id === 'anaya' ? 'Sent 2 days ago' : 'Sent today' };
+    if (st === 'countered') return { text: `Countered at ${camp?.counters[m.id]?.pct ?? ''}%`, tone: 'info' as const, sub: 'Replied today' };
+    if (st === 'accepted') return { text: 'Accepted', tone: 'success' as const, sub: 'Accepted your offer' };
+    if (st === 'declined') return { text: 'Declined', tone: 'neutral' as const, sub: 'Declined your offer' };
+    return { text: 'Not invited', tone: 'neutral' as const, sub: `${m.niche} fit ${m.score ?? ''}`.trim() };
+  };
+
+  const card = (m: MCreator) => {
+    const st = inviteStatus(m.id);
+    return (
+      <Widget key={m.id} className="cr-card">
+        <div id={`creator-${m.id}`} style={{ display: 'contents' }} />
+        <button className="cr-head cr-open" onClick={() => openProfile(m.id)} aria-label={`View ${m.handle} profile`}>
+          <Av initials={m.ini} id={m.id} size="lg" />
+          <span className="ct"><b>{m.handle}</b><span>{m.followers} followers{m.score ? ` · ${m.score} match` : ''}</span></span>
+        </button>
+        <div className="chip-row">
+          <Tag hue={m.hue}>{m.niche}</Tag>
+          {m.top && <Badge tone="vip" icon="star">Top converter</Badge>}
+          {st === 'accepted' && <Badge tone="success" dot>Accepted</Badge>}
+          {st === 'countered' && <Badge tone="warning" dot>Countered</Badge>}
+        </div>
+        <div className="mini-stats">
+          <div><b>{m.conv ?? '—'}</b><span>Conversion</span></div>
+          <div><b>{m.bookingsPerMonth ?? '—'}</b><span>Bookings/mo</span></div>
+          <div><b>{m.ncr ?? '—'}</b><span>Delhi NCR</span></div>
+        </div>
+        {(m.why || m.bio) && <p className="cr-desc">{m.why ?? m.bio}</p>}
+        <div className="cr-foot">
+          {!st && <Button block variant="primary" icon="send" onClick={() => inviteCreator(m.id, go)}>Invite to campaign</Button>}
+          {st === 'invited' && <Button block variant="secondary" icon="check" disabled>Invited, awaiting reply</Button>}
+          {st === 'accepted' && <Button block variant="secondary" icon="campaign" onClick={() => go('console', 'campaigns')}>View campaign</Button>}
+          {st === 'countered' && <Button block variant="primary" icon="forum" onClick={() => go('console', 'overview')}>Review counter</Button>}
+          {st === 'declined' && <Button block variant="secondary" icon="person" onClick={() => openProfile(m.id)}>View profile</Button>}
+        </div>
+      </Widget>
+    );
+  };
+
   return (<>
-    {screen === 'invited' && banner && <Banner tone="success" icon="send" title={`Invite sent to ${banner.handle}`}>They usually reply within a day. You'll see it in Needs your decision.</Banner>}
-
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      {FILTERS.map((f) => <FilterPill key={f} selected={filter === f} count={count(f)} onClick={() => setFilter(f)}>{f}</FilterPill>)}
-      <span style={{ flex: 1 }} />
-      <div style={{ width: 280 }}>
+    <div className="lu-grid fill cr-grid">
+      {matchedRows.map(card)}
+      <Widget className="inv-widget span-2" title="Your invites" subtitle={camp ? `${camp.name} · matched on destination, audience cities and budget` : 'No live campaign'}
+        action={camp ? <Badge tone="success">{invitedCount} of {matchedRows.length} invited</Badge> : undefined}>
+        {screen === 'invited' && banner && <Banner tone="success" icon="send" title={`Invite sent to ${banner.handle}`}>They usually reply within a day. You'll see it in Needs your decision.</Banner>}
+        <div className="chip-row">
+          {FILTERS.map((f) => <FilterPill key={f} size="sm" selected={filter === f} count={count(f)} onClick={() => setFilter(f)}>{f}</FilterPill>)}
+        </div>
         <SearchField placeholder="Search by name or niche" aria-label="Search creators" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
-    </div>
-
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-      {rows.map((m) => {
-        const st = inviteStatus(m.id);
-        const fig = creatorFigures(s, m.id);
-        const trips = s.trips.filter((t) => t.creatorId === m.id);
-        return (
-          <div key={m.id} id={`creator-${m.id}`} style={{ minWidth: 0 }}>
-            <Widget title={m.handle} subtitle={`${m.followers} followers`}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <button onClick={() => { setDetail(m.id); go('console', `creatorDetail?c=${m.id}`); }}
-                  aria-label={`View ${m.handle} profile`}
-                  style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0, textAlign: 'left', width: '100%' }}>
-                  <img src={asset(m.cover)} alt="" style={{ width: '100%', height: 96, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
-                </button>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Tag hue={m.hue}>{m.niche}</Tag>
-                  {m.top && <Badge tone="vip" icon="star">Top converter</Badge>}
-                  {st === 'accepted' && <Badge tone="success" dot>Accepted</Badge>}
-                  {st === 'invited' && <Badge tone="info" dot>Invited</Badge>}
-                  {st === 'countered' && <Badge tone="warning" dot>Countered</Badge>}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-                  <StatTile label="Trips" value={String(trips.length)} />
-                  <StatTile label="Bookings" value={String(fig.bookings)} />
-                  <StatTile label="Conversion" value={m.conv ?? '—'} />
-                </div>
-                {m.why && <span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{m.why}</span>}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Button block variant="secondary" icon="person" onClick={() => { setDetail(m.id); go('console', `creatorDetail?c=${m.id}`); }}>View profile</Button>
-                </div>
-              </div>
-            </Widget>
-          </div>
-        );
-      })}
+        <div className="inv-list">
+          {matchedRows.length === 0 && <span className="caption">No creators match your filters.</span>}
+          {matchedRows.map((m) => {
+            const l = label(m);
+            return (
+              <button key={m.id} className="inv-row" aria-label={`View ${m.handle} profile`} onClick={() => openProfile(m.id)}>
+                <Av initials={m.ini} id={m.id} size="md" />
+                <span className="it"><b>{m.handle}</b><span>{l.sub}</span></span>
+                <Badge tone={l.tone}>{l.text}</Badge>
+                <span className="material-symbols-rounded" style={{ fontSize: 18, color: 'var(--muted)' }}>chevron_right</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="inv-foot">
+          <span className="caption">Invites go out as private offers in each creator’s StayStory app.</span>
+          <Button variant="primary" size="sm" icon="add" onClick={() => go('console', 'newCampaign')}>Create campaign</Button>
+        </div>
+      </Widget>
+      {rows.filter((m) => !matched.has(m.id)).map(card)}
     </div>
 
     {detailCreator && <CreatorDetail creator={detailCreator} s={s} go={go} onClose={close} />}
@@ -132,8 +160,8 @@ function CreatorDetail({ creator: c, s, go, onClose }: { creator: MCreator; s: M
   const { range } = useUi();
 
   return (
-    <Overlay side="right" label={`${c.handle} profile`} onClose={onClose}>
-      <SideSheet title={c.name} subtitle={`${c.handle} · ${c.followers} followers`} onClose={onClose}>
+    <Overlay side="center" wide label={`${c.handle} profile`} onClose={onClose}>
+      <Modal layout="dialog" title={c.name} subtitle={`${c.handle} · ${c.followers} followers`} onClose={onClose}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Header with cover */}
           <img src={asset(c.cover)} alt="" style={{ width: '100%', height: 120, borderRadius: 'var(--radius-md)', objectFit: 'cover', display: 'block' }} />
@@ -182,7 +210,7 @@ function CreatorDetail({ creator: c, s, go, onClose }: { creator: MCreator; s: M
             {st === 'countered' && <Button variant="primary" icon="forum" onClick={() => go('console', 'overview')}>Review counter</Button>}
           </div>
         </div>
-      </SideSheet>
+      </Modal>
     </Overlay>
   );
 }

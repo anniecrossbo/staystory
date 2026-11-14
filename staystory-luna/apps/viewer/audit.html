@@ -14,8 +14,8 @@
 const set = new URLSearchParams(location.search).get('set');
 const R = (flow, list) => list.map((s) => `${flow}/${s}`);
 const SETS = {
-  hotel: { widths: [1470, 1024], h: 956, root: 'hotel', routes: [...R('console', ['overview','bookings','bookingDetail','bookingsEmpty','creators','invited','gap','gapConfirm','released','payouts']), ...R('onboarding', ['property','rooms','commission','payouts','review','submitted']), ...R('campaign', ['offer','commission','creators','review','launched'])] },
-  creator: { widths: [393, 375], h: 852, root: 'creator', routes: [...R('app', ['insights','empty','trip','earnings','withdrawn','offers','offerDetail','counter','accepted','profile']), ...R('onboard', ['welcome','connect','audience','payout','terms','done']), ...R('create', ['pick','analyzing','error','detected','days','stays','preview','published'])] },
+  hotel: { widths: [1512, 1470, 1280, 1024], h: 956, root: 'hotel', routes: [...R('console', ['overview','bookings','bookingDetail','bookingsEmpty','creators','invited','gap','gapConfirm','released','payouts']), ...R('onboarding', ['property','rooms','commission','payouts','review','submitted']), ...R('campaign', ['offer','commission','creators','review','launched'])] },
+  creator: { widths: [393, 375], h: 852, root: 'creator', routes: [...R('app', ['insights','empty','trip','reel?r=udaipur','reel?r=pushkar','earnings','withdrawn','offers','offerDetail','counter','accepted','profile']), ...R('onboard', ['welcome','connect','audience','payout','terms','done']), ...R('create', ['pick','analyzing','error','detected','days','stays','preview','published'])] },
   traveler: { widths: [393, 375], h: 852, root: 'traveler', routes: [...R('social', ['reel','comments','dm']), ...R('trip', ['trip','saved','customize','checkout','payfail','booked','foryou','held']), ...R('auth', ['welcome','phone','otp','otpError','prefs','done']), ...R('discover', ['feed','filtered','loading','empty','creator']), ...R('trips', ['upcoming','past','saved','empty','detail','change','cancel','cancelled','review']), 'me/profile'] },
 };
 window.__audit = { done: false, rows: [] };
@@ -23,7 +23,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
   const cfg = SETS[set]; if (!cfg) { window.__audit.done = true; return; }
   const f = document.createElement('iframe'); document.body.appendChild(f);
-  for (const src of ['/align.js', '/surfaces.js']) { const add = document.createElement('script'); add.src = src; document.head.appendChild(add); await new Promise((r) => (add.onload = r)); }
+  for (const src of ['/align.js', '/surfaces.js', '/grid.js']) { const add = document.createElement('script'); add.src = src; document.head.appendChild(add); await new Promise((r) => (add.onload = r)); }
   let n = 0;
   for (const w of cfg.widths) {
     f.style.width = w + 'px'; f.style.height = cfg.h + 'px';
@@ -36,7 +36,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const over = Math.max(d.documentElement.scrollWidth - d.documentElement.clientWidth, sc ? sc.scrollWidth - sc.clientWidth : 0);
       const misaligned = window.__align(d);
       const whiteOnWhite = window.__surfaces(d);
-      if (misaligned.length || whiteOnWhite.length || over > 1) window.__audit.rows.push({ route, width: w, misaligned, whiteOnWhite, overflow: over > 1 ? over : 0 });
+      const grid = window.__grid ? window.__grid(d) : [];
+      if (misaligned.length || whiteOnWhite.length || grid.length || over > 1) window.__audit.rows.push({ route, width: w, misaligned, whiteOnWhite, grid, overflow: over > 1 ? over : 0 });
     }
   }
   window.__audit.done = true; document.getElementById('out').textContent = JSON.stringify(window.__audit.rows, null, 1) || 'clean';

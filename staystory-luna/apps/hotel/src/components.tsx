@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
-import { Menu, Toast, TopBar } from '@staystory/ui';
+import { IconButton, Menu, Toast, TopBar } from '@staystory/ui';
 import { market, useMarket } from '@staystory/market';
 import { dismissToast, toast, ui, useToasts, useUi } from './ui';
-import { RANGES } from './lib';
+import { RANGES, avatarColor } from './lib';
 
 /* ---------- Overlay: dialog semantics, Escape, focus trap and restore ---------- */
 const stack: symbol[] = [];
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Overlay({ side, onClose, label, children, z, print }: { side: 'right' | 'center'; onClose: () => void; label: string; children: ReactNode; z?: number; print?: boolean }) {
+export function Overlay({ side = 'center', onClose, label, children, z, print, wide }: { side?: 'center'; onClose: () => void; label: string; children: ReactNode; z?: number; print?: boolean; wide?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -38,7 +38,7 @@ export function Overlay({ side, onClose, label, children, z, print }: { side: 'r
   }, []);
   return (
     <div className={`overlay ${side}${print ? ' print-area' : ''}`} style={z ? { zIndex: z } : undefined} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={box} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`overlay-box ${side}`}>{children}</div>
+      <div ref={box} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} className={`overlay-box ${side}${wide ? ' wide' : ''}`}>{children}</div>
     </div>
   );
 }
@@ -98,7 +98,7 @@ export function ChromeTopBar({ go }: { go: (flow: string, screen?: string) => vo
   };
   const labels = ['Sync rates and availability', 'Account menu', 'Arrivals today', 'Departures today'];
   return (
-    <div ref={wrap} className="row" style={{ justifyContent: 'center', position: 'relative' }}>
+    <div ref={wrap} className="topbar-slot">
       <Activatable selector=".lu-topbar-pill.is-fresh, .lu-topbar-pill.has-avatar, .lu-topbar-pill.has-disc" onActivate={act} label={(i) => labels[i] ?? ''}>
         <TopBar fresh="fresh" refreshed={syncLabel} time="09:41, Friday" user={s.hotel.name} initials={s.hotel.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
           kpis={[{ icon: 'login', value: 7 }, { icon: 'logout', tone: 'warning', value: 4 }]} />
@@ -121,4 +121,42 @@ export function ChromeTopBar({ go }: { go: (flow: string, screen?: string) => vo
 export const rangeInfo = (r: string) => RANGES.find((x) => x.value === r) ?? RANGES[1]!;
 export function Heading({ t, d }: { t: string; d: string }) {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 28, lineHeight: '39px', fontWeight: 700 }}>{t}</span><span style={{ fontSize: 13, lineHeight: '18px', color: 'var(--ink-2)' }}>{d}</span></div>;
+}
+
+/* ---------- Small building blocks for the Luna widgets ---------- */
+export function Tile({ label, value, tone, unit, size }: { label: string; value: ReactNode; tone: 'teal' | 'sky' | 'violet' | 'ochre'; unit?: string; size?: 'sm' }) {
+  return <div className={`tile ${tone}${size ? ' ' + size : ''}`}><span className="tl">{label}</span><span className="tv">{value}{unit && <small>{unit}</small>}</span></div>;
+}
+
+/** Horizontal bars, widest first. Each bar fades from the brand colour as it gets shorter. */
+export function HBars({ rows, large }: { rows: { label: string; value: number }[]; large?: boolean }) {
+  const max = Math.max(1, ...rows.map((r) => r.value));
+  return (
+    <div className="hbars">
+      {rows.map((r, i) => (
+        <div className="hbar" key={r.label}>
+          <div className={`hb-top${large ? ' lg' : ''}`}><span>{r.label}</span><span>{r.value}</span></div>
+          <div className="hb-track"><div className="hb-fill" style={{ width: `${(r.value / max) * 100}%`, opacity: large ? 1 - Math.min(i, 3) * 0.2 : 1 - i * 0.12 }} /></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function Av({ initials, id, size }: { initials: string; id: string; size?: 'md' | 'lg' }) {
+  return <span className={`av${size ? ' ' + size : ''}`} style={{ background: avatarColor(id) }} aria-hidden="true">{initials}</span>;
+}
+
+/** Dialog with a header (title, subtitle, a right-hand slot and close), a scrolling body and a footer. */
+export function Dialog({ title, subtitle, aside, onClose, footer, children }: { title: string; subtitle?: string; aside?: ReactNode; onClose: () => void; footer?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="dlg">
+      <div className="dlg-head">
+        <div><h2>{title}</h2>{subtitle && <div className="sub">{subtitle}</div>}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>{aside}<IconButton icon="close" label="Close" onClick={onClose} /></div>
+      </div>
+      <div className="dlg-body">{children}</div>
+      {footer && <div className="dlg-foot">{footer}</div>}
+    </div>
+  );
 }

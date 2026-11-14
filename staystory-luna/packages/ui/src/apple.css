@@ -150,3 +150,9 @@ body { font-optical-sizing: auto; font-feature-settings: 'kern', 'liga', 'calt';
 
 /* the phone frame gets a device bezel feel on large screens */
 @media (min-width: 500px) and (min-height: 900px) { .phone { box-shadow: 0 32px 80px rgba(0, 0, 0, 0.22), 0 0 0 10px #1c1c1e, 0 0 0 11px #3a3a3c; } }
+
+/* Segmented controls fill their container and split it evenly (every segment the same width). Compact only in a page header's control cluster. */
+.lu-seg { display: flex; width: 100%; box-sizing: border-box; }
+.lu-seg button { flex: 1 1 0; min-width: 0; }
+.page-title-row .controls .lu-seg { display: inline-flex; width: auto; }
+.page-title-row .controls .lu-seg button { flex: 0 0 auto; }

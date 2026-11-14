@@ -52,6 +52,25 @@ export const compact = (n: number) => (n >= 10000 ? `${Math.floor(n / 1000)}K` :
 /** The feed and shop title of a trip. The design shows Udaipur with its price promise. */
 export const cardTitle = (t: { id: string; title: string; shopTitle?: string }) => (t.id === 'anaya-udaipur' ? `${t.title} under ₹15,000` : t.shopTitle ?? t.title);
 
+/** The short trip names the refined designs use on the feed, trip page, checkout and my trips. */
+const SHORT_NAMES: Record<string, string> = { 'anaya-udaipur': 'Udaipur in 3 days', 'anaya-coorg': 'Coorg, slow and misty', 'anaya-jodhpur': 'Jodhpur weekend' };
+export const tripName = (t: { id: string; title: string; shopTitle?: string }) => SHORT_NAMES[t.id] ?? cardTitle(t);
+
+const MON = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/** `Dec 19 – 21` -> `Sat 19 Dec` and `Mon 21 Dec`. Falls back to the label when it can't be read. */
+export function stayDays(label: string) {
+  const m = /^([A-Za-z]{3}) (\d+) – (?:([A-Za-z]{3}) )?(\d+)$/.exec(label);
+  if (!m) return { inn: label, out: label };
+  const m1 = MON.indexOf(m[1]!.toLowerCase()), m2 = m[3] ? MON.indexOf(m[3].toLowerCase()) : m1;
+  if (m1 < 0 || m2 < 0) return { inn: label, out: label };
+  const yr = (mo: number) => (mo === 11 ? 2026 : mo <= 1 ? 2027 : 2026);
+  const cap = (x: string) => x[0]!.toUpperCase() + x.slice(1);
+  return { inn: `${DAYS[new Date(yr(m1), m1, Number(m[2])).getDay()]} ${m[2]} ${cap(MON[m1]!)}`, out: `${DAYS[new Date(yr(m2), m2, Number(m[4])).getDay()]} ${m[4]} ${cap(MON[m2]!)}` };
+}
+const REGION: Record<string, string> = { Udaipur: 'Rajasthan', Jaipur: 'Rajasthan', Jodhpur: 'Rajasthan', Goa: 'Goa', Rishikesh: 'Uttarakhand', Coorg: 'Karnataka', Gokarna: 'Karnataka' };
+export const placeLine = (place: string) => (REGION[place] ? `${place}, ${REGION[place]}` : place);
+
 export async function copyText(text: string) {
   try { await navigator.clipboard.writeText(text); return true; } catch { /* clipboard blocked: fall back */ }
   try {

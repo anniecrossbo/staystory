@@ -43,3 +43,25 @@ export const tripUrl = (handle: string, slug: string) => `staystory.in/${handle}
 export const travelerHref = (slug: string) => { const ns = new URLSearchParams(window.location.search).get('ns'); return `/traveler/${ns ? `?ns=${encodeURIComponent(ns)}` : ''}#/trip/trip?c=anaya&s=${encodeURIComponent(slug)}`; };
 
 export const CloseFooter = ({ onClose, label = 'Close' }: { onClose: () => void; label?: string }) => <Button variant="secondary" onClick={onClose}>{label}</Button>;
+
+const dayMonth = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' });
+/** Commission over the chosen range: a filled line with five date labels, as in the refined designs. */
+export function AreaChart({ values, range, label }: { values: number[]; range: number; label: string }) {
+  const W = 329, LINE = 58, H = 84;
+  const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
+  const pts = values.map((v, i) => [values.length > 1 ? (i / (values.length - 1)) * W : W / 2, 1.5 + (1 - (v - min) / span) * (LINE - 3)] as const);
+  const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  const area = `${line} L${W} ${H} L0 ${H} Z`;
+  const end = new Date();
+  const ticks = [0, 1, 2, 3, 4].map((i) => dayMonth.format(new Date(end.getTime() - range * 86400000 * (1 - i / 4))));
+  return (
+    <div className="area">
+      <svg viewBox={`0 0 ${W} 96`} preserveAspectRatio="none" role="img" aria-label={label}>
+        <defs><linearGradient id="area-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#15616D" stopOpacity=".22" /><stop offset="1" stopColor="#15616D" stopOpacity="0" /></linearGradient></defs>
+        <path d={area} fill="url(#area-fill)" />
+        <path d={line} fill="none" stroke="#15616D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="area-x">{ticks.map((t, i) => <span key={i}>{t}</span>)}</div>
+    </div>
+  );
+}

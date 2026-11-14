@@ -73,3 +73,21 @@ Rules for changing it: keep layouts free of horizontal scroll at 375 (phones) an
 - A big title (24px and up) is judged on its own line; a block of several smaller lines (a name and a caption) is judged as a block; dialog and sheet close buttons are judged on the title line.
 - Headers with a large title use a grid in `apple.css` that centres the back button, avatar, bell or step chips on the title line. A header's text wrapper is recognised by holding the title (`.h1`, `.h2`, `.h-title` or an inline 20px title), so a new header needs one of those, or its name added to the selector list.
 - Run all three after any change to `packages/ui/src/apple.css`, `polish.css` or a screen header. The audit was checked with a negative control: switching the fix off reproduces the 7px offset it exists to catch.
+
+## The Luna grid
+
+Layouts follow `design/ds/luna/tokens.json` ("layout"): four columns of 337.5px at 1512 wide, 20px gap on both axes, 51px side margin (40px on narrow screens), 20px widget padding, dock 24px from the bottom, no shell container. `packages/ui/src/grid.css` provides `.lu-page` (side margin, vertical gap) and `.lu-grid` with `.span-1` to `.span-4` / `.span-full`; it is two columns below 1200px and one below 760px. Build screens on it; do not add flex-wrap rows, `max-width` wrappers or page padding of your own.
+
+Hotel placements: overview (Needs your decision span-3 + Live campaign span-1; four stat tiles span-1; Creator performance span-3 + a span-1 column of Bookings by creator and the AI summary), Bookings (filters row, table span-full), Creators (one card per cell, span-1), Gap Night (form span-3 + traveler preview span-1), Payouts (three stat tiles span-1, statements span-full), Campaign builder (main span-3 + aside span-1). Onboarding keeps its image panel and form column on the grid margins and gap.
+
+`apps/public/grid.js` exposes `window.__grid(doc)`. For every `.lu-grid` it reports the page margin versus `--layout-margin`, the 20px gap on both axes, every child's left edge on a column boundary, every child's width as n columns plus (n-1) gaps for the span its class declares, and 337.5px columns at 1512. The layout audit runs it (`grid` in each row) at hotel widths 1512, 1470, 1280 and 1024; the list must be empty. Negative control: forcing `style="grid-column: span 2"` on a `span-3` widget, or an inline `padding-inline: 70px` on the page, is flagged.
+
+## Side sheets are modals everywhere
+
+No product uses a right-docked sheet or drawer on desktop. The hotel booking detail, message composer and voucher are centred Luna `Modal`s (dialog layout, about 560px, scrim, focus trap, Escape to close, focus returns to the opener). Phones use bottom sheets.
+
+## One fold (hotel console)
+
+The hotel console never scrolls as a page. `.page` is exactly the window height; the header sits on top, the content region (`.fold`) takes what is left, and the dock is `position: fixed`, 24px above the window bottom, on every view. A row that should take the remaining height is `.lu-grid.fill`; widgets scroll inside their own body (`.lu-widget-body`), and the creator cards scroll as a group. Detail that does not fit belongs in a modal, not further down the page. Windows shorter than 620px fall back to a scrolling page so nothing is unreachable.
+
+Segmented controls fill their container with equal segments (compact only in a page header's control cluster).

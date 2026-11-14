@@ -168,7 +168,7 @@ export function Onboarding({ screen, go }: { screen: string; go: Go }) {
   );
 
   return (
-    <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--canvas)', fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums', display: 'flex', flexWrap: 'wrap', gap: 20, padding: 20 }}>
+    <div style={{ boxSizing: 'border-box', minHeight: '100vh', background: 'var(--canvas)', fontFamily: 'var(--font-sans)', color: 'var(--ink)', fontVariantNumeric: 'tabular-nums', display: 'flex', flexWrap: 'wrap', gap: 'var(--layout-gap)', padding: '20px var(--layout-margin)' }}>
       <aside style={{ flex: '1 1 360px', maxWidth: 480, minHeight: 320, position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex' }}>
         <img src={asset(img)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'relative', margin: 'auto 16px 16px', padding: 20, borderRadius: 'var(--radius-lg)', background: 'var(--glass-card)', backdropFilter: 'blur(var(--blur-chrome))', border: '1px solid var(--glass-edge)', display: 'flex', flexDirection: 'column', gap: 8, width: 'calc(100% - 32px)', boxSizing: 'border-box' }}>

@@ -1,0 +1,31 @@
+/*
+ * The Luna OS layout grid (design/ds/luna/tokens.json, "layout").
+ *   Desktop grid at 1512 wide: four columns of 337.5, 20 gap, 51 side margin. No shell container.
+ *   Gap between widgets, both axes: 20. Side margin: 51 at 1512, 40 on narrow screens. Widget padding: 20.
+ *
+ * Use: <div class="lu-page"> ... <div class="lu-grid"><section class="span-3">…</section><section class="span-1">…</section></div> </div>
+ * A widget spans 1 to 4 columns (span-1 … span-4, or span-full). Below 1200px the grid is two columns, below 760px one;
+ * spans collapse with it (span-3 and span-4 become full width, span-1 and span-2 become half width, then everything stacks).
+ * Rows of unequal height stretch their widgets to match, as in the designs. Do not put a wrapper with its own max-width around the grid.
+ */
+:root { --layout-margin: clamp(40px, 3.373vw, 51px); }
+
+.lu-page {
+  box-sizing: border-box; padding-inline: var(--layout-margin);
+  display: flex; flex-direction: column; gap: var(--layout-gap);
+}
+.lu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--layout-gap); align-items: stretch; }
+.lu-grid > * { min-width: 0; }
+.lu-grid > .span-1 { grid-column: span 1; }
+.lu-grid > .span-2 { grid-column: span 2; }
+.lu-grid > .span-3 { grid-column: span 3; }
+.lu-grid > .span-4, .lu-grid > .span-full { grid-column: 1 / -1; }
+
+@media (max-width: 1199px) {
+  .lu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lu-grid > .span-3, .lu-grid > .span-4, .lu-grid > .span-full { grid-column: 1 / -1; }
+}
+@media (max-width: 759px) {
+  .lu-grid { grid-template-columns: minmax(0, 1fr); }
+  .lu-grid > [class*='span-'] { grid-column: 1 / -1; }
+}

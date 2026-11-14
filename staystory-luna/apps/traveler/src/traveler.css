@@ -1,6 +1,6 @@
 body { background: #E3E7EA; }
 .stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.phone { position: relative; width: 393px; height: 852px; max-width: 100vw; max-height: 100dvh; overflow: hidden; background: var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+.phone { position: relative; width: 393px; height: 852px; max-width: 100vw; max-height: 100dvh; overflow: hidden; background: radial-gradient(260px 210px at 80px 10px, rgba(15, 163, 127, .22), transparent 72%), radial-gradient(260px 210px at 380px 770px, rgba(99, 102, 241, .09), transparent 72%), var(--canvas); font-family: var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; }
 @media (min-width: 500px) and (min-height: 900px) { .phone { border-radius: 40px; box-shadow: 0 24px 60px rgba(0,0,0,.18); } }
 .scroll { position: absolute; inset: 0; overflow-y: auto; padding: max(54px, env(safe-area-inset-top)) 16px 136px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; }
 .scroll.d128 { padding-bottom: 128px; }
@@ -29,3 +29,57 @@ body { background: #E3E7EA; }
 
 .btn-row { display: flex; gap: 8px; }
 @media (max-width: 380px) { .btn-row { flex-wrap: wrap; } }
+
+/* ---------- Refined skin (Figma "Refined: Traveler"). Scoped to .tvx pages and the footer bar. ---------- */
+.tv-av .lu-avatar { background: #A68059; color: #fff; }
+.tv-title { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -.024em; color: var(--ink); }
+.tv-hi { font-size: 12px; line-height: 15px; color: var(--muted); }
+.tv-card { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-radius: 20px; box-shadow: var(--shadow-card); overflow: hidden; flex-shrink: 0; }
+.tv-chip { display: inline-flex; align-items: center; border-radius: 99px; padding: 2px 8px; font-size: 10px; line-height: 14px; font-weight: 600; white-space: nowrap; }
+.tv-chip.ok { background: #E3F5EE; color: #0FA37F; }
+.tv-chip.pick { background: #E3EFE6; color: #3F7A52; }
+.tv-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 16px; }
+.tv-row > :first-child { color: var(--muted); }
+.tv-row > :last-child { font-weight: 600; color: var(--ink); }
+.tv-hr { height: 1px; background: #ECEFF1; flex-shrink: 0; }
+.tv-ico { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tv-ico .lu-icon { font-size: 17px; }
+.tv-gapbar { display: flex; align-items: center; gap: 12px; background: #E3F5EE; border-radius: 20px; padding: 12px 14px 12px 12px; text-decoration: none; color: inherit; flex-shrink: 0; }
+.tv-gapbar .dot { width: 40px; height: 40px; border-radius: 99px; background: #15616D; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tv-gapbar .dot .lu-icon { font-size: 18px; }
+.tv-glass { background: rgba(255, 255, 255, .7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+
+.tvx .lu-search, .tvx .lu-field .lu-search { height: 48px; border-radius: 99px; padding: 0 16px; gap: 10px; background: rgba(255, 255, 255, .9); border: 0; box-shadow: 0 1.2px 3.6px rgba(0, 0, 0, .03); }
+.tvx .lu-search .lu-input { font-size: 15px; line-height: 20px; }
+.tvx .lu-search .lu-icon { font-size: 18px; }
+.tvx .pills .lu-chip { height: auto; padding: 8px 14px; font-size: 13px; line-height: 16px; font-weight: 590; color: var(--ink); background: #fff; border: 1px solid #DBDCDD; }
+.tvx .pills .lu-chip[aria-pressed='true'] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tvx .lu-seg { background: #E9EDF0; padding: 3px; gap: 2px; }
+.tvx .lu-seg button { height: 34px; padding: 0 12px; font-size: 13px; font-weight: 590; color: var(--muted); }
+.tvx .lu-seg button[aria-pressed='true'] { background: #fff; color: var(--primary); box-shadow: 0 1.2px 3.6px rgba(0, 0, 0, .03); }
+.tvx .lu-btn, .footer-pill .lu-btn { border-radius: 99px; font-weight: 590; }
+.tvx .lu-btn-lg { height: 50px; font-size: 15px; }
+.tvx .lu-btn-md { height: 40px; font-size: 13px; padding: 0 20px; }
+.tvx .lu-btn-primary, .footer-pill .lu-btn-primary { background: #0F5563; box-shadow: none; }
+.tvx .lu-btn-secondary { background: #fff; color: var(--primary); border: 1px solid #DBDCDD; box-sizing: border-box; box-shadow: none; }
+.tvx .lu-btn-secondary:hover:not(:disabled) { background: var(--primary-tint); }
+.tvx .lu-widget { background: rgba(255, 255, 255, .9); border-radius: 20px; padding: 16px; }
+.tvx .lu-iconbtn-white { background: rgba(255, 255, 255, .85); box-shadow: 0 1.2px 3.6px rgba(0, 0, 0, .03); }
+.tvx .lu-iconbtn-lg, .tvx .lu-iconbtn-md { width: 40px; height: 40px; }
+.footer-pill.tv { left: 16px; right: 16px; bottom: 34px; border-radius: 30px; background: rgba(255, 255, 255, .7); border: 0; padding: 14px 16px 14px 20px; gap: 14px; box-shadow: var(--shadow-card); }
+.footer-pill.tv .lu-btn-lg { height: 48px; padding: 0 22px; font-size: 15px; }
+
+/* Dock: Figma proportions (6px shell, 48px items, track tint, 20px icons) */
+.phone .lu-dock { padding: 6px; gap: 0; background: rgba(255, 255, 255, .6); border-radius: 34px; box-shadow: var(--shadow-card); }
+.phone .lu-dock-track { height: 48px; padding: 0 4px; gap: 4px; background: rgba(15, 85, 99, .1); }
+.phone .lu-dock-item { height: 48px; min-width: 48px; padding: 0; gap: 8px; }
+.phone .lu-dock-item .lu-icon { font-size: 20px; }
+.phone .lu-dock-item[aria-current='page'] { height: 48px; padding: 0 16px 0 14px; background: #15616D; box-shadow: none; font-size: 14px; font-weight: 510; }
+
+.tvt { padding: 0 0 136px; gap: 0; }
+.tv-sheet { position: relative; margin-top: -38px; background: var(--canvas); border-radius: 28px 28px 0 0; padding: 20px 16px 0; display: flex; flex-direction: column; gap: 16px; flex: 1 0 auto; }
+.tvt .lu-iconbtn { background: rgba(255, 255, 255, .7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: none; color: var(--ink); }
+.tvt .lu-iconbtn-primary { background: var(--primary); color: #fff; }
+.tv-av22 .lu-avatar { width: 22px; height: 22px; font-size: 8px; }
+.tvb { padding: 70px 16px 28px; gap: 18px; align-items: stretch; }
+.tvx .lu-seg .lu-count { background: none; color: inherit; min-width: 0; height: auto; padding: 0; margin-left: 4px; font-size: 13px; font-weight: 590; }
